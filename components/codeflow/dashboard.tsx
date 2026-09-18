@@ -86,6 +86,28 @@ export default function Dashboard() {
     return result;
   }, []);
 
+  useEffect(() => {
+    const campaignId = campaign?.campaign.id;
+    const status = campaign?.campaign.status;
+    if (!campaignId || status === 'AwaitingApproval' || status === 'PublishingReady' || status === 'Failed') return;
+
+    let cancelled = false;
+    const poll = async () => {
+      try {
+        const current = await refreshCampaign(campaignId);
+        if (cancelled || current.campaign.status === 'AwaitingApproval' || current.campaign.status === 'PublishingReady' || current.campaign.status === 'Failed') return;
+      } catch {
+        // Keep the existing campaign visible and retry on the next interval.
+      }
+    };
+
+    const timer = window.setInterval(() => void poll(), 3000);
+    return () => {
+      cancelled = true;
+      window.clearInterval(timer);
+    };
+  }, [campaign?.campaign.id, campaign?.campaign.status, refreshCampaign]);
+
   async function createCampaign() {
     if (!brandId || !selectedTrend) return;
     setWorking(true); setError('');
@@ -93,11 +115,7 @@ export default function Dashboard() {
       const response = await fetch('/api/marketing/campaigns', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ brandProfileId: brandId, trendSignalId: selectedTrend }) });
       if (!response.ok) throw new Error('create failed');
       const created = await response.json() as { id: string };
-      for (let attempt = 0; attempt < 12; attempt += 1) {
-        const current = await refreshCampaign(created.id);
-        if (current.campaign.status === 'AwaitingApproval' || current.campaign.status === 'Failed') break;
-        await new Promise(resolve => setTimeout(resolve, 900));
-      }
+      await refreshCampaign(created.id);
     } catch { setError(t.error); } finally { setWorking(false); }
   }
 
@@ -107,11 +125,7 @@ export default function Dashboard() {
     try {
       const response = await fetch(`/api/marketing/campaigns/${encodeURIComponent(campaign.campaign.id)}`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ approved: true, reason: null }) });
       if (!response.ok) throw new Error('approval failed');
-      for (let attempt = 0; attempt < 12; attempt += 1) {
-        const current = await refreshCampaign(campaign.campaign.id);
-        if (current.campaign.status === 'PublishingReady' || current.campaign.status === 'Failed') break;
-        await new Promise(resolve => setTimeout(resolve, 900));
-      }
+      await refreshCampaign(campaign.campaign.id);
     } catch { setError(t.error); } finally { setWorking(false); }
   }
 
