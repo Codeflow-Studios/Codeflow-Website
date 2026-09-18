@@ -5,7 +5,7 @@ import { ArrowRight, Check, CircleAlert, Clock3, LoaderCircle, Sparkles, Trendin
 import { Header, useLanguage } from './shared';
 
 type Trend = { trend: { id: string; title: string; summary: string; keywords: string[]; provider: string }; score: { total: number; explanation: string } };
-type CampaignView = { campaign: { id: string; status: string; hook?: string; script?: string; caption?: string; videoUrl?: string }; publishingJobs: Array<{ id: string; platform: string; status: string }> };
+type CampaignView = { campaign: { id: string; status: string; hook?: string; script?: string; caption?: string; videoUrl?: string; videoProvider?: string }; publishingJobs: Array<{ id: string; platform: string; status: string }> };
 
 const copy = {
   en: {
@@ -17,7 +17,7 @@ const copy = {
     generate: 'Create campaign',
     generating: 'Creating your draft…',
     review: 'Your campaign draft',
-    hook: 'Hook', script: 'Video script', caption: 'Caption', image: 'Generated image',
+    hook: 'Hook', script: 'Video script', caption: 'Caption', image: 'Generated image', video: 'Generated video',
     approve: 'Approve for publishing', approving: 'Preparing publishing…',
     ready: 'Ready for publishing', creating: 'Generating media', reviewNeeded: 'Review needed', failed: 'Generation failed',
     readyText: 'Your approved content is queued. A social publishing connection can send it to the selected channel.',
@@ -37,7 +37,7 @@ const copy = {
     generate: 'Campagne maken',
     generating: 'Je concept wordt gemaakt…',
     review: 'Jouw campagneconcept',
-    hook: 'Hook', script: 'Videoscript', caption: 'Caption', image: 'Gegenereerde afbeelding',
+    hook: 'Hook', script: 'Videoscript', caption: 'Caption', image: 'Gegenereerde afbeelding', video: 'Gegenereerde video',
     approve: 'Goedkeuren voor publicatie', approving: 'Publicatie voorbereiden…',
     ready: 'Klaar voor publicatie', creating: 'Media wordt gemaakt', reviewNeeded: 'Controle nodig', failed: 'Generatie mislukt',
     readyText: 'Je goedgekeurde content staat klaar. Een social publishing-koppeling kan dit naar je gekozen kanaal sturen.',
@@ -119,6 +119,19 @@ export default function Dashboard() {
   const awaitingApproval = campaign?.campaign.status === 'AwaitingApproval';
   const failed = campaign?.campaign.status === 'Failed';
   const mediaUrl = campaign?.campaign.videoUrl;
+  const mediaProvider = campaign?.campaign.videoProvider || '';
+  const isVideo = Boolean(mediaUrl) && (
+    mediaProvider.toLowerCase().startsWith('runway-') ||
+    /^data:video\//i.test(mediaUrl || '') ||
+    /\.(mp4|webm|mov|m4v)(?:[?#]|$)/i.test(mediaUrl || '')
+  );
+  const renderMedia = () => !mediaUrl ? null : isVideo ? (
+    <video className="campaign-image" src={mediaUrl} controls playsInline preload="metadata">
+      {en ? 'Your browser does not support video playback.' : 'Je browser ondersteunt het afspelen van video niet.'}
+    </video>
+  ) : (
+    <img className="campaign-image" src={mediaUrl} alt={t.image} />
+  );
   return <div className="dashboard-page"><Header lang={lang} setLang={setLang} onboarding />
     <main className="dashboard container">
       <section className="dashboard-intro"><div><p className="eyebrow">{t.eyebrow}</p><h1>{t.title}</h1><p>{t.intro}</p></div><div className="approval-note"><Check size={18}/><span>{t.approval}</span></div></section>
@@ -131,7 +144,7 @@ export default function Dashboard() {
         </div>
         <div className="campaign-panel"><div className="panel-heading"><div><p className="eyebrow">02 / {campaign ? t.review : 'CAMPAIGN'}</p><h2>{campaign ? t.review : en ? 'Choose a trend to start.' : 'Kies een trend om te beginnen.'}</h2></div>{campaign && <span className={`campaign-status ${publishingReady ? 'ready' : ''} ${failed ? 'failed' : ''}`}>{publishingReady ? t.ready : failed ? t.failed : awaitingApproval ? <><Clock3 size={14}/> {t.reviewNeeded}</> : <><LoaderCircle className="spin" size={14}/> {t.creating}</>}</span>}</div>
           {!campaign && <div className="campaign-empty"><Video size={28}/><p>{en ? 'Your selected trend will become a tailored hook, video script and caption.' : 'Je gekozen trend wordt een hook, videoscript en caption op maat.'}</p></div>}
-          {campaign && <div className="campaign-content">{publishingReady ? <div className="publishing-card"><Check size={28}/><h3>{t.ready}</h3><p>{t.readyText}</p>{mediaUrl && <img className="campaign-image" src={mediaUrl} alt={t.image} />}<div>{campaign.publishingJobs.map(job => <span key={job.id}>{job.platform}</span>)}</div></div> : <><article><span>{t.hook}</span><h3>{campaign.campaign.hook}</h3></article>{mediaUrl && <article><span>{t.image}</span><img className="campaign-image" src={mediaUrl} alt={t.image} /></article>}<article><span>{t.script}</span><p>{campaign.campaign.script}</p></article><article><span>{t.caption}</span><p>{campaign.campaign.caption}</p></article>{awaitingApproval ? <button className="button dashboard-action" type="button" disabled={working} onClick={() => void approveCampaign()}>{working ? <LoaderCircle className="spin" size={18}/> : <Check size={18}/>}{working ? t.approving : t.approve}<ArrowRight size={18}/></button> : failed ? <div className="campaign-wait failed"><CircleAlert size={18}/>{t.failed}</div> : <div className="campaign-wait"><LoaderCircle className="spin" size={18}/>{t.creating}</div>}</>}</div>}
+          {campaign && <div className="campaign-content">{publishingReady ? <div className="publishing-card"><Check size={28}/><h3>{t.ready}</h3><p>{t.readyText}</p>{renderMedia()}<div>{campaign.publishingJobs.map(job => <span key={job.id}>{job.platform}</span>)}</div></div> : <><article><span>{t.hook}</span><h3>{campaign.campaign.hook}</h3></article>{mediaUrl && <article><span>{isVideo ? t.video : t.image}</span>{renderMedia()}</article>}<article><span>{t.script}</span><p>{campaign.campaign.script}</p></article><article><span>{t.caption}</span><p>{campaign.campaign.caption}</p></article>{awaitingApproval ? <button className="button dashboard-action" type="button" disabled={working} onClick={() => void approveCampaign()}>{working ? <LoaderCircle className="spin" size={18}/> : <Check size={18}/>}{working ? t.approving : t.approve}<ArrowRight size={18}/></button> : failed ? <div className="campaign-wait failed"><CircleAlert size={18}/>{t.failed}</div> : <div className="campaign-wait"><LoaderCircle className="spin" size={18}/>{t.creating}</div>}</>}</div>}
         </div>
       </section>}
     </main>
