@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { ArrowRight, Check, CircleAlert, Clock3, LoaderCircle, Sparkles, TrendingUp, Video } from 'lucide-react';
 import { Header, useLanguage } from './shared';
 
-type Trend = { trend: { id: string; title: string; summary: string; keywords: string[]; provider: string }; score: { total: number; explanation: string } };
+type Trend = { trend: { id: string; title: string; summary: string; keywords: string[]; provider: string }; score: { score?: number; total?: number; explanation: string } };
 type CampaignView = { campaign: { id: string; status: string; hook?: string; script?: string; caption?: string; videoUrl?: string; videoProvider?: string }; publishingJobs: Array<{ id: string; platform: string; status: string }> };
 
 const copy = {
@@ -153,7 +153,7 @@ export default function Dashboard() {
       {error && <div className="dashboard-error" role="alert"><CircleAlert size={20}/>{error}</div>}
       {brandId && <section className="dashboard-grid">
         <div className="trend-panel"><div className="panel-heading"><div><p className="eyebrow">01 / {t.trends}</p><h2>{t.trends}</h2></div><button className="text-button" type="button" onClick={() => void loadTrends(brandId)} disabled={loading || working}>{t.restart}</button></div>
-          {loading ? <div className="dashboard-loading"><LoaderCircle size={22}/>{t.loading}</div> : <div className="trend-list">{trends.map(({ trend, score }) => <button key={trend.id} type="button" className={`trend-card ${selectedTrend === trend.id ? 'selected' : ''}`} onClick={() => setSelectedTrend(trend.id)} disabled={working}><span className="trend-icon"><TrendingUp size={19}/></span><span className="trend-card-copy"><strong>{trend.title}</strong><span>{trend.summary}</span><small>{Math.round(score.total * 100)}% {t.score}</small></span>{selectedTrend === trend.id && <Check className="trend-check" size={18}/>}</button>)}</div>}
+          {loading ? <div className="dashboard-loading"><LoaderCircle size={22}/>{t.loading}</div> : <div className="trend-list">{trends.map(({ trend, score }) => <button key={trend.id} type="button" className={`trend-card ${selectedTrend === trend.id ? 'selected' : ''}`} onClick={() => setSelectedTrend(trend.id)} disabled={working}><span className="trend-icon"><TrendingUp size={19}/></span><span className="trend-card-copy"><strong>{trend.title}</strong><span>{trend.summary}</span><small>{Math.round(score.score ?? (score.total ?? 0) * 100)}% {t.score}</small></span>{selectedTrend === trend.id && <Check className="trend-check" size={18}/>}</button>)}</div>}
           {!loading && trends.length > 0 && <button className="button dashboard-action" type="button" disabled={working} onClick={() => void createCampaign()}>{working && !campaign ? <LoaderCircle className="spin" size={18}/> : <Sparkles size={18}/>}{working && !campaign ? t.generating : t.generate}<ArrowRight size={18}/></button>}
         </div>
         <div className="campaign-panel"><div className="panel-heading"><div><p className="eyebrow">02 / {campaign ? t.review : 'CAMPAIGN'}</p><h2>{campaign ? t.review : en ? 'Choose a trend to start.' : 'Kies een trend om te beginnen.'}</h2></div>{campaign && <span className={`campaign-status ${publishingReady ? 'ready' : ''} ${failed ? 'failed' : ''}`}>{publishingReady ? t.ready : failed ? t.failed : awaitingApproval ? <><Clock3 size={14}/> {t.reviewNeeded}</> : <><LoaderCircle className="spin" size={14}/> {t.creating}</>}</span>}</div>
