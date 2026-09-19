@@ -9,7 +9,7 @@ export async function POST(request: Request, context: { params: Promise<{ campai
       method: 'POST',
       headers: { 'content-type': 'application/json' },
       body: await request.text(),
-      signal: AbortSignal.timeout(15000),
+      signal: AbortSignal.timeout(210000),
     });
     return new Response(await response.text(), {
       status: response.status,
