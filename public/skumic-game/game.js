@@ -21,6 +21,26 @@ for (const source of ['./assets/oostende.png', './assets/background-ravy.png', '
 for (const [name, source] of Object.entries({ runner: './assets/runner-atlas.png', objects: './assets/objects.png', deck: './assets/skumic-deck.png' })) {
   images[name] = new Image(); images[name].src = source;
 }
+const ROAD_STYLES = [
+  { dark: '38,48,54', light: '255,220,164', accent: '#233b51' },
+  { dark: '8,17,42', light: '79,225,255', accent: '#ff3fc5' },
+  { dark: '31,20,19', light: '255,111,48', accent: '#ff4a24' },
+  { dark: '12,17,19', light: '255,201,73', accent: '#ffc83d' }
+];
+function roadTexture(style, seed) {
+  const texture = document.createElement('canvas'); texture.width = 256; texture.height = 512;
+  const paint = texture.getContext('2d'); let state = seed >>> 0;
+  const random = () => ((state = Math.imul(1664525, state) + 1013904223 >>> 0) / 4294967296);
+  paint.fillStyle = `rgba(${style.dark},.2)`; paint.fillRect(0, 0, texture.width, texture.height);
+  for (let i = 0; i < 780; i++) {
+    const x = random() * texture.width, y = random() * texture.height;
+    const size = .35 + random() * (random() > .93 ? 3.2 : 1.35);
+    paint.fillStyle = random() > .7 ? `rgba(${style.light},${.04 + random() * .13})` : `rgba(${style.dark},${.13 + random() * .22})`;
+    paint.beginPath(); paint.ellipse(x, y, size * (1.2 + random() * 1.8), size * .24, 0, 0, Math.PI * 2); paint.fill();
+  }
+  return texture;
+}
+const roadTextures = ROAD_STYLES.map((style, index) => roadTexture(style, 9187 + index * 733));
 const padScore = value => Math.floor(value).toString().padStart(5, '0');
 $('best').textContent = padScore(best);
 const rankValue = rank => ({ S: 4, A: 3, B: 2, C: 1, D: 0 }[rank] ?? -1);
@@ -237,7 +257,7 @@ function drawBackdrop() {
   const horizon = height * .43, roadLeft = project(-.5, -55), roadRight = project(2.5, -55), bottom = Math.max(roadLeft.y, height);
   const roadShade = ctx.createLinearGradient(0, horizon, 0, bottom); roadShade.addColorStop(0, 'rgba(15,20,24,0)'); roadShade.addColorStop(.65, 'rgba(15,20,24,.16)'); roadShade.addColorStop(1, 'rgba(15,20,24,.30)');
   polygon([[width / 2 - 13, horizon], [width / 2 + 13, horizon], [roadRight.x, bottom], [roadLeft.x, bottom]], roadShade);
-  drawGroundFlow();
+  drawMovingRoadLayer();
   for (const lane of [.5, 1.5]) {
     const a = project(lane, -32), b = project(lane, 126);
     ctx.strokeStyle = 'rgba(255,247,229,.16)'; ctx.lineWidth = width < 600 ? 1 : 1.5;
@@ -249,34 +269,32 @@ function drawBackdrop() {
     ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
   }
 }
-function drawGroundFlow() {
+function drawMovingRoadLayer() {
   if (reducedMotion || mode !== 'playing') return;
-  const travel = model.distance * (model.boost ? 1.8 : 1.35);
+  const texture = roadTextures[selectedLevel], horizon = height * .43, near = height * (width < 600 ? .88 : .97);
   ctx.save();
-  for (let i = 0; i < 22; i++) {
-    const z = 5 + ((i * 43 + 130 - travel) % 125 + 125) % 125;
-    const lane = -.34 + ((i * 61) % 151) / 151 * 2.68;
-    const pos = project(lane, z);
-    const near = pos.depth * pos.depth;
-    const chipW = .7 + near * (i % 5 === 0 ? 13 : 6);
-    const chipH = .35 + near * (i % 5 === 0 ? 2.8 : 1.5);
-    ctx.fillStyle = `rgba(10,18,22,${.02 + near * .13})`;
-    ctx.beginPath();
-    ctx.ellipse(pos.x, pos.y, chipW, chipH, ((i % 7) - 3) * .08, 0, Math.PI * 2);
-    ctx.fill();
+  ctx.globalAlpha = model.boost ? .58 : .46;
+  for (let y = Math.floor(horizon + 2); y < height; y += 2) {
+    const depth = Math.max(0, (y - horizon) / (near - horizon));
+    const z = 135 * (1 - Math.sqrt(depth));
+    const left = project(-.5, z), right = project(2.5, z);
+    const textureY = ((model.distance + z) * 5.2 % texture.height + texture.height) % texture.height;
+    ctx.drawImage(texture, 0, Math.floor(textureY), texture.width, 2, left.x, y, right.x - left.x, 2.15);
   }
-  drawPassingEdges(travel);
   ctx.restore();
+  drawPassingScenery();
 }
-function drawPassingEdges(travel) {
-  for (let i = 0; i < 7; i++) {
-    const z = 8 + ((i * 22 + 124 - travel) % 116 + 116) % 116;
-    const depth = project(1, z).depth;
-    for (const lane of [-.52, 2.52]) {
-      const pos = project(lane, z), size = 1 + depth * 8;
-      ctx.fillStyle = `rgba(8,15,20,${.025 + depth * .11})`;
-      ctx.beginPath(); ctx.ellipse(pos.x, pos.y, size * 1.8, size * .42, 0, 0, Math.PI * 2); ctx.fill();
-    }
+function drawPassingScenery() {
+  const style = ROAD_STYLES[selectedLevel], travel = model.distance;
+  for (let i = 0; i < 9; i++) {
+    const z = 7 + ((i * 19 + 122 - travel) % 115 + 115) % 115;
+    const side = i % 2 ? -.82 : 2.82, pos = project(side, z), size = 1.2 + pos.depth * 18;
+    ctx.fillStyle = `rgba(8,15,20,${.12 + pos.depth * .34})`;
+    ctx.beginPath(); ctx.ellipse(pos.x, pos.y, size * 1.15, size * .28, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = style.accent;
+    ctx.globalAlpha = .3 + pos.depth * .62;
+    ctx.beginPath(); ctx.ellipse(pos.x, pos.y - size * .08, size * .42, size * .13, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.globalAlpha = 1;
   }
 }
 function shadow(x, y, size, opacity = .32) { ctx.fillStyle = `rgba(6,16,22,${opacity})`; ctx.beginPath(); ctx.ellipse(x, y, size * .55, size * .16, 0, 0, Math.PI * 2); ctx.fill(); }
