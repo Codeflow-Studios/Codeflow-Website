@@ -15,7 +15,7 @@ try { Object.assign(levelRanks, JSON.parse(localStorage.getItem('skumic-run-leve
 best = Number(levelBests[LEVELS[0].id]) || 0;
 const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const images = { backgrounds: [] };
-for (const source of ['./assets/oostende.png', './assets/background-ravy.png', './assets/background-puber.png', './assets/background-manosfeer.png']) {
+for (const source of ['./assets/oostende.png']) {
   const image = new Image(); image.src = source; images.backgrounds.push(image);
 }
 for (const [name, source] of Object.entries({ runner: './assets/runner-atlas.png', objects: './assets/objects.png', deck: './assets/skumic-deck.png' })) {
@@ -218,59 +218,33 @@ async function shareScore() {
 
 function project(lane, z) {
   const p = Math.max(0, 1 - z / 135), depth = p * p;
-  const horizon = height * .35, near = height * (width < 600 ? .73 : .87);
-  const halfRoad = width * (width < 600 ? .49 : .345);
-  return { x: width / 2 + (lane - 1) * (12 + halfRoad * .67 * depth), y: horizon + depth * (near - horizon), scale: .08 + depth * .92, depth };
+  const horizon = height * .43, near = height * (width < 600 ? .88 : .97);
+  const halfRoad = width * (width < 600 ? .52 : .37);
+  return { x: width / 2 + (lane - 1) * (8 + halfRoad * .67 * depth), y: horizon + depth * (near - horizon), scale: .08 + depth * .92, depth };
 }
 function polygon(points, color) {
   ctx.fillStyle = color; ctx.beginPath(); points.forEach(([x, y], i) => i ? ctx.lineTo(x, y) : ctx.moveTo(x, y)); ctx.closePath(); ctx.fill();
 }
 function drawBackdrop() {
-  const image = images.backgrounds[selectedLevel];
+  const image = images.backgrounds[0];
   if (image.complete && image.naturalWidth) {
     const scale = Math.max(width / image.naturalWidth, height / image.naturalHeight), iw = image.naturalWidth * scale, ih = image.naturalHeight * scale;
-    ctx.drawImage(image, (width - iw) / 2, (height - ih) * .38, iw, ih);
+    ctx.drawImage(image, (width - iw) / 2, (height - ih) * .5, iw, ih);
   } else {
     const gradient = ctx.createLinearGradient(0, 0, 0, height); gradient.addColorStop(0, '#ef6960'); gradient.addColorStop(.4, '#eeab83'); gradient.addColorStop(.401, '#456b6a'); gradient.addColorStop(1, '#273941'); ctx.fillStyle = gradient; ctx.fillRect(0, 0, width, height);
   }
-  // Each track gets its own atmosphere without replacing the supplied Oostende art.
-  const grade = [
-    ['rgba(255,78,68,.10)', 'rgba(255,192,98,.06)'],
-    ['rgba(129,43,255,.18)', 'rgba(0,223,255,.08)'],
-    ['rgba(6,18,40,.28)', 'rgba(255,25,105,.10)'],
-    ['rgba(0,8,20,.38)', 'rgba(239,254,89,.08)'],
-  ][selectedLevel];
-  const sky = ctx.createLinearGradient(0, 0, 0, height); sky.addColorStop(0, grade[0]); sky.addColorStop(1, grade[1]); ctx.fillStyle = sky; ctx.fillRect(0, 0, width, height);
-  const horizon = height * .35, roadLeft = project(-.5, -65), roadRight = project(2.5, -65), bottom = roadLeft.y;
-  const roadGradient = ctx.createLinearGradient(0, horizon, 0, bottom); roadGradient.addColorStop(0, 'rgba(43,47,50,.24)'); roadGradient.addColorStop(.27, 'rgba(44,47,48,.88)'); roadGradient.addColorStop(1, '#293136');
-  polygon([[width / 2 - 18, horizon], [width / 2 + 18, horizon], [roadRight.x, bottom], [roadLeft.x, bottom]], roadGradient);
-  const travel = mode === 'ready' ? frameNow * .008 : model.distance;
-  for (let i = 0; i < 19; i++) {
-    const z = ((i * 9 - travel % 9 + 155) % 155) - 12;
-    if (z > 130) continue;
-    const left = project(-.5, z), right = project(2.5, z);
-    ctx.strokeStyle = 'rgba(234,226,199,.08)'; ctx.lineWidth = Math.max(.5, left.scale);
-    ctx.beginPath(); ctx.moveTo(left.x, left.y); ctx.lineTo(right.x, right.y); ctx.stroke();
-  }
+  const horizon = height * .43, roadLeft = project(-.5, -55), roadRight = project(2.5, -55), bottom = Math.max(roadLeft.y, height);
+  const roadShade = ctx.createLinearGradient(0, horizon, 0, bottom); roadShade.addColorStop(0, 'rgba(15,20,24,0)'); roadShade.addColorStop(.65, 'rgba(15,20,24,.16)'); roadShade.addColorStop(1, 'rgba(15,20,24,.30)');
+  polygon([[width / 2 - 13, horizon], [width / 2 + 13, horizon], [roadRight.x, bottom], [roadLeft.x, bottom]], roadShade);
   for (const lane of [.5, 1.5]) {
-    for (let i = 0; i < 12; i++) {
-      const z = ((i * 15 - travel % 15 + 155) % 155) - 14;
-      if (z > 123) continue;
-      const a = project(lane, z), b = project(lane, z + 5);
-      ctx.strokeStyle = model.boost ? '#effe5980' : '#ede4c44d'; ctx.lineWidth = Math.max(1, a.scale * 2.5);
-      ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
-    }
-  }
-  for (const edge of [-.5, 2.5]) {
-    const a = project(edge, -27), b = project(edge, 126);
-    ctx.strokeStyle = model.boost ? '#effe59' : '#e3c3a780'; ctx.lineWidth = width < 600 ? 2 : 3;
+    const a = project(lane, -32), b = project(lane, 126);
+    ctx.strokeStyle = 'rgba(255,247,229,.16)'; ctx.lineWidth = width < 600 ? 1 : 1.5;
     ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
   }
-  if (mode === 'playing' && selectedLevel > 0 && !reducedMotion) {
-    ctx.save(); ctx.strokeStyle = selectedLevel === 3 ? '#effe5938' : '#ffffff22'; ctx.lineWidth = selectedLevel + 1;
-    const count = 6 + selectedLevel * 4;
-    for (let i = 0; i < count; i++) { const x = ((i * 137 + frameNow * (.035 + selectedLevel * .012)) % (width + 120)) - 60, y = (i * 83) % height; ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x - 14 - selectedLevel * 7, y + 38 + selectedLevel * 10); ctx.stroke(); }
-    ctx.restore();
+  for (const edge of [-.5, 2.5]) {
+    const a = project(edge, -32), b = project(edge, 126);
+    ctx.strokeStyle = 'rgba(255,247,229,.12)'; ctx.lineWidth = width < 600 ? 1 : 1.5;
+    ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
   }
 }
 function shadow(x, y, size, opacity = .32) { ctx.fillStyle = `rgba(6,16,22,${opacity})`; ctx.beginPath(); ctx.ellipse(x, y, size * .55, size * .16, 0, 0, Math.PI * 2); ctx.fill(); }
