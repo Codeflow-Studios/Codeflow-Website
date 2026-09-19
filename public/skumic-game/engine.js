@@ -2,10 +2,10 @@ export const ROUND_SECONDS = 45;
 
 // Timings are measured from the supplied recordings. Every level uses a 45-second excerpt.
 export const LEVELS = [
-  { id: 'ca-va-peter', number: '01', title: 'ÇA VA PÉTER', subtitle: 'DE EERSTE DROP', difficulty: 'WARM-UP', src: './assets/ca-va-peter.mp3', bpm: 174, beatOffset: 0, sourceStart: 11.122483, boostWindows: [[11.0, 16.5], [22.1, 27.6], [33.1, 38.6]], speed: 1, density: 1 },
-  { id: 'project-ravy', number: '02', title: 'PROJECT RAVY 2.0', subtitle: 'RAVE OP DE DIJK', difficulty: 'TEMPO OMHOOG', src: './assets/project-ravy-2.mp3', bpm: 175, beatOffset: .012, sourceStart: 234, boostWindows: [[0, 5], [14, 19], [22, 27]], speed: 1.07, density: .94 },
-  { id: 'puber', number: '03', title: 'PUBER', subtitle: 'GEEN REM MEER', difficulty: 'HARD', src: './assets/puber.mp3', bpm: 175, beatOffset: .312, sourceStart: 76, boostWindows: [[18, 23], [29, 34], [40, 45]], speed: 1.13, density: .88 },
-  { id: 'manosfeer', number: '04', title: 'MANOSFEER', subtitle: 'FINALE AAN ZEE', difficulty: 'VOL GAS', src: './assets/manosfeer.mp3', bpm: 174, beatOffset: .184, sourceStart: 44, boostWindows: [[1, 6], [12, 17], [40, 45]], speed: 1.20, density: .82 },
+  { id: 'ca-va-peter', number: '01', title: 'ÇA VA PÉTER', subtitle: 'DE EERSTE DROP', difficulty: 'WARM-UP', src: './assets/ca-va-peter.mp3', bpm: 174, beatOffset: 0, sourceStart: 11.122483, boostWindows: [[11.0, 16.5], [22.1, 27.6], [33.1, 38.6]], speed: 1, density: 1, gullAfter: 17, doubleAfter: 22, mission: { speakers: 8, beats: 4 }, ranks: [2600, 1900, 1200] },
+  { id: 'project-ravy', number: '02', title: 'PROJECT RAVY 2.0', subtitle: 'RAVE OP DE DIJK', difficulty: 'TEMPO OMHOOG', src: './assets/project-ravy-2.mp3', bpm: 175, beatOffset: .012, sourceStart: 234, boostWindows: [[0, 5], [14, 19], [22, 27]], speed: 1.07, density: .94, gullAfter: 13, doubleAfter: 19, mission: { speakers: 10, beats: 5 }, ranks: [3200, 2350, 1500] },
+  { id: 'puber', number: '03', title: 'PUBER', subtitle: 'GEEN REM MEER', difficulty: 'HARD', src: './assets/puber.mp3', bpm: 175, beatOffset: .312, sourceStart: 76, boostWindows: [[18, 23], [29, 34], [40, 45]], speed: 1.13, density: .88, gullAfter: 9, doubleAfter: 15, mission: { speakers: 11, beats: 6 }, ranks: [3800, 2800, 1800] },
+  { id: 'manosfeer', number: '04', title: 'MANOSFEER', subtitle: 'FINALE AAN ZEE', difficulty: 'VOL GAS', src: './assets/manosfeer.mp3', bpm: 174, beatOffset: .184, sourceStart: 44, boostWindows: [[1, 6], [12, 17], [40, 45]], speed: 1.20, density: .82, gullAfter: 6, doubleAfter: 10, mission: { speakers: 12, beats: 7 }, ranks: [4500, 3300, 2200] },
 ];
 export let MUSIC = LEVELS[0];
 export let BPM = MUSIC.bpm;
@@ -53,11 +53,11 @@ export class RunModel {
     if (row % 4 === 0) {
       for (let i = 0; i < 3; i++) this.objects.push({ type: 'speaker', lane, z: 115 + i * 10, checked: false });
     } else {
-      const hazard = this.time > 17 && row % 5 === 0 ? 'gull' : row % 3 === 0 ? 'cone' : 'barrier';
+      const hazard = this.time > MUSIC.gullAfter && row % 5 === 0 ? 'gull' : row % 3 === 0 ? 'cone' : 'barrier';
       this.objects.push({ type: hazard, lane, z: 115, checked: false });
       const safeLane = (lane + (row % 2 ? 1 : 2)) % 3;
       this.objects.push({ type: 'speaker', lane: safeLane, z: 115, checked: false });
-      if (this.time > 22 && row % 3 === 0) {
+      if (this.time > MUSIC.doubleAfter && row % 3 === 0) {
         this.objects.push({ type: 'cone', lane: (safeLane + 1) % 3 === lane ? (safeLane + 2) % 3 : (safeLane + 1) % 3, z: 115, checked: false });
       }
     }

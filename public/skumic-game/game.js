@@ -9,7 +9,9 @@ let best = 0, mutedByChoice = false, feedbackUntil = 0, particles = [], popups =
 let pointerStart = null, uiUpdated = 0, lastBeat = -1, lastCombo = 0;
 let selectedCharacter = 1, selectedLevel = 0;
 const levelBests = {};
+const levelRanks = {};
 try { Object.assign(levelBests, JSON.parse(localStorage.getItem('skumic-run-level-bests') || '{}')); } catch {}
+try { Object.assign(levelRanks, JSON.parse(localStorage.getItem('skumic-run-level-ranks') || '{}')); } catch {}
 best = Number(levelBests[LEVELS[0].id]) || 0;
 const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const images = {};
@@ -18,6 +20,14 @@ for (const [name, source] of Object.entries({ background: './assets/oostende.png
 }
 const padScore = value => Math.floor(value).toString().padStart(5, '0');
 $('best').textContent = padScore(best);
+const rankValue = rank => ({ S: 4, A: 3, B: 2, C: 1, D: 0 }[rank] ?? -1);
+function calculateRank(score) {
+  if (!model.lives) return 'D';
+  if (score >= MUSIC.ranks[0] && model.lives === 3) return 'S';
+  if (score >= MUSIC.ranks[1]) return 'A';
+  if (score >= MUSIC.ranks[2]) return 'B';
+  return 'C';
+}
 
 function selectCharacter(choice) {
   if (mode === 'playing' || mode === 'starting') return;
@@ -41,10 +51,13 @@ function selectLevel(index) {
   $('selected-track').textContent = `${level.title} · SKUMIC`;
   $('result-demo').textContent = `Soundtrack: ${level.title} — Skumic.`;
   $('start-caption').textContent = `${level.number} · ${level.difficulty} · 45 SECONDEN`;
+  $('mission-title').textContent = level.subtitle;
+  $('mission-copy').textContent = `Pak ${level.mission.speakers} speakers en raak ${level.mission.beats} beats.`;
   document.documentElement.dataset.level = String(selectedLevel + 1);
   for (let i = 0; i < LEVELS.length; i++) {
     const button = $(`level-${i + 1}`), selected = i === selectedLevel;
     button.classList.toggle('selected', selected); button.setAttribute('aria-pressed', String(selected));
+    $(`rank-${i + 1}`).textContent = levelRanks[LEVELS[i].id] ? `RANK ${levelRanks[LEVELS[i].id]}` : 'NIET GESPEELD';
   }
 }
 
@@ -83,6 +96,8 @@ async function start() {
   $('start-screen').hidden = true; $('result-screen').hidden = true; $('pause-screen').hidden = true;
   $('pause').hidden = false; $('share-status').textContent = ''; $('feedback').classList.remove('show');
   $('game-frame').classList.add('started'); mode = 'playing'; audio.start(0);
+  $('intro-kicker').textContent = `LEVEL ${MUSIC.number} · ${MUSIC.difficulty}`; $('intro-title').textContent = MUSIC.title; $('intro-go').textContent = MUSIC.subtitle;
+  const intro = $('level-intro'); intro.hidden = false; intro.classList.remove('play'); void intro.offsetWidth; intro.classList.add('play'); setTimeout(() => { intro.hidden = true; }, 1900);
   soundState(); lastFrame = performance.now(); $('start').disabled = false; $('restart').disabled = false;
   $('start').innerHTML = startLabel; $('restart').innerHTML = restartLabel;
   canvas.focus({ preventScroll: true }); updateUI();
@@ -102,14 +117,19 @@ async function resume() {
 function finish() {
   mode = 'finished'; audio.stop(); $('pause').hidden = true;
   $('game-frame').classList.remove('boosting'); $('feedback').classList.remove('show');
-  const score = Math.floor(model.score), record = score > best;
+  const score = Math.floor(model.score), record = score > best, rank = calculateRank(score);
   if (record) { best = score; levelBests[MUSIC.id] = best; try { localStorage.setItem('skumic-run-level-bests', JSON.stringify(levelBests)); } catch {} }
+  if (!levelRanks[MUSIC.id] || rankValue(rank) > rankValue(levelRanks[MUSIC.id])) { levelRanks[MUSIC.id] = rank; try { localStorage.setItem('skumic-run-level-ranks', JSON.stringify(levelRanks)); } catch {} }
+  const missionComplete = model.speakers >= MUSIC.mission.speakers && model.beats >= MUSIC.mission.beats;
   $('result-eyebrow').textContent = record ? 'NIEUWE PERSOONLIJKE BEST!' : model.lives ? '45 SECONDEN. ALLES GEGEVEN.' : 'DE DIJK HAD ANDERE PLANNEN';
   $('result-title').innerHTML = model.lives ? 'DIJK VAN<br>EEN RUN.' : 'NOG NIET<br>UITGERAASD?';
   $('result-score').textContent = score.toLocaleString('nl-BE'); $('result-best').textContent = best.toLocaleString('nl-BE');
   $('result-speakers').textContent = model.speakers; $('result-beats').textContent = model.beats; $('result-flow').textContent = model.maxCombo;
+  $('result-rank').textContent = rank; $('result-mission').textContent = missionComplete ? 'MISSIE VOLTOOID' : 'MISSIE NIET VOLTOOID';
+  $('result-mission').classList.toggle('complete', missionComplete);
   $('next-level').innerHTML = selectedLevel < LEVELS.length - 1 ? 'VOLGEND LEVEL <span aria-hidden="true">↗</span>' : 'LEVELS KIEZEN <span aria-hidden="true">↗</span>';
   $('best').textContent = padScore(best); $('result-screen').hidden = false;
+  $(`rank-${selectedLevel + 1}`).textContent = `RANK ${levelRanks[MUSIC.id]}`;
   $('next-level').focus({ preventScroll: true });
 }
 function showLevelMenu() {
@@ -210,6 +230,14 @@ function drawBackdrop() {
   } else {
     const gradient = ctx.createLinearGradient(0, 0, 0, height); gradient.addColorStop(0, '#ef6960'); gradient.addColorStop(.4, '#eeab83'); gradient.addColorStop(.401, '#456b6a'); gradient.addColorStop(1, '#273941'); ctx.fillStyle = gradient; ctx.fillRect(0, 0, width, height);
   }
+  // Each track gets its own atmosphere without replacing the supplied Oostende art.
+  const grade = [
+    ['rgba(255,78,68,.10)', 'rgba(255,192,98,.06)'],
+    ['rgba(129,43,255,.18)', 'rgba(0,223,255,.08)'],
+    ['rgba(6,18,40,.28)', 'rgba(255,25,105,.10)'],
+    ['rgba(0,8,20,.38)', 'rgba(239,254,89,.08)'],
+  ][selectedLevel];
+  const sky = ctx.createLinearGradient(0, 0, 0, height); sky.addColorStop(0, grade[0]); sky.addColorStop(1, grade[1]); ctx.fillStyle = sky; ctx.fillRect(0, 0, width, height);
   const horizon = height * .35, roadLeft = project(-.5, -65), roadRight = project(2.5, -65), bottom = roadLeft.y;
   const roadGradient = ctx.createLinearGradient(0, horizon, 0, bottom); roadGradient.addColorStop(0, 'rgba(43,47,50,.24)'); roadGradient.addColorStop(.27, 'rgba(44,47,48,.88)'); roadGradient.addColorStop(1, '#293136');
   polygon([[width / 2 - 18, horizon], [width / 2 + 18, horizon], [roadRight.x, bottom], [roadLeft.x, bottom]], roadGradient);
@@ -234,6 +262,12 @@ function drawBackdrop() {
     const a = project(edge, -27), b = project(edge, 126);
     ctx.strokeStyle = model.boost ? '#effe59' : '#e3c3a780'; ctx.lineWidth = width < 600 ? 2 : 3;
     ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
+  }
+  if (mode === 'playing' && selectedLevel > 0 && !reducedMotion) {
+    ctx.save(); ctx.strokeStyle = selectedLevel === 3 ? '#effe5938' : '#ffffff22'; ctx.lineWidth = selectedLevel + 1;
+    const count = 6 + selectedLevel * 4;
+    for (let i = 0; i < count; i++) { const x = ((i * 137 + frameNow * (.035 + selectedLevel * .012)) % (width + 120)) - 60, y = (i * 83) % height; ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x - 14 - selectedLevel * 7, y + 38 + selectedLevel * 10); ctx.stroke(); }
+    ctx.restore();
   }
 }
 function shadow(x, y, size, opacity = .32) { ctx.fillStyle = `rgba(6,16,22,${opacity})`; ctx.beginPath(); ctx.ellipse(x, y, size * .55, size * .16, 0, 0, Math.PI * 2); ctx.fill(); }
@@ -305,6 +339,8 @@ function updateUI() {
   $('beat-label').textContent = model.boost ? 'BEATBOOST ACTIEF' : 'VIND JE RITME';
   $('beat-tip').textContent = model.boost ? 'PAK ALLES. JE BREEKT ERDOORHEEN.' : 'SPRING ALS DE BALK VOL IS';
   $('multiplier').textContent = `×${model.multiplier}`;
+  $('mission-progress').textContent = `${Math.min(model.speakers, MUSIC.mission.speakers)}/${MUSIC.mission.speakers} SPEAKERS · ${Math.min(model.beats, MUSIC.mission.beats)}/${MUSIC.mission.beats} BEATS`;
+  $('mission-hud').classList.toggle('complete', model.speakers >= MUSIC.mission.speakers && model.beats >= MUSIC.mission.beats);
   $('game-frame').classList.toggle('boosting', model.boost && mode === 'playing');
   if (beat !== lastBeat) { lastBeat = beat; $('beat-meter').style.borderColor = '#effe59'; }
   else if (fraction > .22) $('beat-meter').style.borderColor = 'rgba(255,255,255,.18)';
