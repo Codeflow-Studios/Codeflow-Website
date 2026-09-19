@@ -99,4 +99,38 @@ html[data-level="4"]{--level-glow:#effe59}
   .result-stats{gap:3px}.result-stats>div{padding-inline:2px}.result-stats span{font-size:8px}
   .mission-hud{max-width:calc(100% - 116px)}.mission-hud>b{white-space:normal;line-height:1.25}
 }
+
+/* Calmer selection screen: keep the choices clear and let the level art breathe. */
+.start-screen{padding-left:6%;background:linear-gradient(90deg,rgba(5,5,5,.92) 0%,rgba(5,5,5,.74) 43%,rgba(5,5,5,.08) 76%)}
+.start-copy{width:min(470px,51%)}
+.start-copy h1{font-size:clamp(58px,5.8vw,88px);line-height:.84;margin:7px 0 12px;transform:none;letter-spacing:-1px;text-shadow:2px 2px 0 var(--ink)}
+.start-copy p{font-size:15px;margin-bottom:14px}
+.start-sticker{display:none}
+.level-picker{gap:6px;margin-bottom:9px}
+.level-choice{min-height:48px;border:1px solid rgba(255,255,255,.24);border-left:3px solid var(--tile-accent);box-shadow:none;padding:7px 9px;background:rgba(5,5,5,.82)}
+.level-choice:after{display:none}
+.level-choice>b{font-size:20px;text-shadow:none}
+.level-choice>span{font-size:11px;max-width:calc(100% - 35px)}
+.level-choice small{font-size:8px;margin-top:5px;letter-spacing:.55px}
+.level-choice:hover{transform:none;box-shadow:none;border-color:var(--tile-accent)}
+.level-choice.selected{transform:none;border-color:var(--sk-orange);border-left-color:var(--sk-orange);box-shadow:none}
+.mission-brief{margin-bottom:8px;padding:7px 9px;border:1px solid rgba(255,173,24,.72);border-left-width:3px;box-shadow:none;background:rgba(5,5,5,.78)}
+.mission-brief>span{writing-mode:initial;transform:none;grid-row:auto;font-size:8px}
+.mission-brief strong{font-size:13px}
+.mission-brief p{font-size:10px!important}
+.character-picker{gap:6px;margin-bottom:8px}
+.character-choice{min-height:40px;border-width:1px;box-shadow:none;padding:7px 8px 7px 43px;background:rgba(5,5,5,.82)}
+.character-choice:before{width:36px}
+.character-choice:hover{transform:none;box-shadow:none}
+.character-choice.selected:after{display:none}
+.start-copy .primary-button{min-height:43px;padding:9px 16px;font-size:18px;box-shadow:3px 3px 0 #000}
+.start-caption{margin-top:8px}
+@media(max-width:760px){
+  .start-screen{padding:72px 18px 86px;background:linear-gradient(90deg,rgba(5,5,5,.92),rgba(5,5,5,.5))}
+  .start-copy{width:100%}
+  .start-copy h1{font-size:clamp(52px,16vw,68px);margin-bottom:8px}
+  .start-copy p{font-size:13px;margin-bottom:8px}
+  .level-choice{min-height:43px;padding:6px 7px}.level-choice>b{font-size:18px}.level-choice>span{font-size:10px}
+  .mission-brief{padding:6px 8px}.character-choice{min-height:38px;padding-left:40px}.character-choice:before{width:34px}
+}
 @media(prefers-reduced-motion:reduce){.level-intro.play,.level-intro.play span,.level-intro.play strong,.level-intro.play em{animation:none}.level-intro{display:none!important}}
