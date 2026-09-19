@@ -140,7 +140,8 @@ body.theater .game-frame.ravy::after{content:'';position:absolute;inset:0;z-inde
   .level-choice.selected>span{font-size:10px;white-space:normal;line-height:1.2}
   .character-choice{padding-inline:8px;font-size:10px;letter-spacing:.45px}
   .start-copy h1{margin-bottom:17px}
-  .beat-panel,.game-frame.started .beat-panel{left:50%;right:auto;transform:translateX(-50%);width:min(250px,calc(100% - 32px));bottom:calc(max(14px,env(safe-area-inset-bottom)) + 64px)}
+  /* A transform here would anchor the fixed Ravy timer to the bottom panel. */
+  .beat-panel,.game-frame.started .beat-panel{left:max(16px,calc((100% - 250px)/2));right:auto;transform:none;width:min(250px,calc(100% - 32px));bottom:calc(max(14px,env(safe-area-inset-bottom)) + 64px)}
   .beat-heading,.beat-heading>span:last-child{font-size:9px;letter-spacing:.5px}
   .beat-caption>span:first-child{font-size:8px}
   .ravy-status{position:fixed;top:109px;left:14px;width:168px;margin-top:0;padding:9px;background:rgba(8,12,16,.75)}

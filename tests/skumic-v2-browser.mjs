@@ -233,6 +233,29 @@ try {
       assert.equal(await page.locator('#countdown').isVisible(), false);
     });
 
+    await check(`${name}: Ravy timer stays fully visible during a drop`, async () => {
+      const drop = await page.evaluate(() => window.__qaEngine.MUSIC.boostWindows[0][0]);
+      await arrangeTime(page, drop + .1);
+      await page.evaluate(() => {
+        const game = window.__qaGame;
+        game.model.update(.001);
+        game.model.events.forEach(game.handleEvent);
+        game.updateUI();
+      });
+      assert.equal((await state(page)).boost, true);
+      const timer = await inViewport(page, '#ravy-status');
+      if (name === 'portrait') {
+        const hud = await page.locator('#hud').boundingBox();
+        assert.ok(timer.y > hud.y + hud.height, 'Ravy timer overlaps the top HUD');
+        assert.ok(timer.y + timer.height < page.viewportSize().height * .3, 'Ravy timer is not anchored below the HUD');
+      }
+      await screenshot(game, 'ravy-visible');
+      await restoreTransport(page);
+      // The drop banner intentionally outranks beat feedback for 950 ms. Let it
+      // expire before the following scenario rewinds to a normal beat.
+      await page.waitForFunction(() => !document.getElementById('feedback').classList.contains('show'));
+    });
+
     if (name === 'portrait') {
       await check('mobile: rotation preserves run and fits controls', async () => {
         const before = await state(page);

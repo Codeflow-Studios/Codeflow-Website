@@ -74,6 +74,7 @@ De bestaande spawnpatronen blijven gedeeld: nieuwe dichtheid/snelheid kan via co
 - Botsingen gebruiken de spelerpositie op het moment dat het object de speler passeert; een korte beschermingsperiode voorkomt meerdere verloren levens bij één botsingsgroep.
 - Eerdere CSS kon de nieuwe intro volledig verbergen. De countdown heeft nu een expliciete, transparante zichtbare staat.
 - Op mobiel overlapten voeten, beatbalk en Ravy-informatie. De onderkant van het speelveld en de HUD zijn per schermindeling afgestemd.
+- Een transform op de mobiele beatbalk maakte die balk onbedoeld het anker van de vaste Ravy-timer. Centreren zonder transform houdt de timer nu onder de bovenste HUD; een aparte viewportcheck bewaakt dit in elk schermformaat.
 - Touchbediening bleef niet altijd zichtbaar na rotatie of een wisseling van primair invoerapparaat. De layout houdt nu rekening met de touchmogelijkheden van het toestel.
 - HUD-feedback voor levensverlies en drops wordt meteen bijgewerkt. Belangrijke feedback wordt niet direct door een kleine pickupmelding overschreven.
 
@@ -93,7 +94,7 @@ De browsercheck gebruikt bestaande Playwright-tooling buiten de projectdependenc
 
 Testdekking:
 
-Resultaat op 20 september 2026: **12/12 enginetests en 48/48 browserchecks geslaagd**, build en gerichte lintcontrole geslaagd, geen nieuwe console- of runtimefouten. In de vier gemeten schermformaten bleef de gemiddelde frame-interval ongeveer 16,67 ms (p95 16,8 ms; geen frames boven 34 ms in de 120-frame steekproeven). Dat is vergelijkbaar met de meting vóór de wijzigingen in dezelfde omgeving; het is geen prestatiegarantie voor alle telefoons.
+Resultaat op 20 september 2026: **12/12 enginetests en 52/52 browserchecks geslaagd**, build en gerichte lintcontrole geslaagd, geen nieuwe console- of runtimefouten. In de vier gemeten schermformaten bleef de gemiddelde frame-interval ongeveer 16,67 ms (p95 16,8 ms; geen frames boven 34 ms in de 120-frame steekproeven). Dat is vergelijkbaar met de meting vóór de wijzigingen in dezelfde omgeving; het is geen prestatiegarantie voor alle telefoons.
 
 - Engine: 12 tests, inclusief 30/60/120 Hz en onregelmatige frames, timinggrenzen, sprongbuffer, combodecay, veilige spawnrijen en audio-races.
 - Chrome: 1920×1080, 1024×768, 390×844 en 844×390; selectie, countdown, toetsenbord/touch, pauze/mute, PERFECT/GOOD, botsing/levens, drop/Ravy, game over/retry, refresh, opslag en rotatie.
