@@ -15,7 +15,7 @@ try { Object.assign(levelRanks, JSON.parse(localStorage.getItem('skumic-run-leve
 best = Number(levelBests[LEVELS[0].id]) || 0;
 const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const images = { backgrounds: [] };
-for (const source of ['./assets/oostende.png']) {
+for (const source of ['./assets/oostende.png', './assets/background-ravy.png', './assets/background-puber.png', './assets/background-manosfeer.png']) {
   const image = new Image(); image.src = source; images.backgrounds.push(image);
 }
 for (const [name, source] of Object.entries({ runner: './assets/runner-atlas.png', objects: './assets/objects.png', deck: './assets/skumic-deck.png' })) {
@@ -226,7 +226,7 @@ function polygon(points, color) {
   ctx.fillStyle = color; ctx.beginPath(); points.forEach(([x, y], i) => i ? ctx.lineTo(x, y) : ctx.moveTo(x, y)); ctx.closePath(); ctx.fill();
 }
 function drawBackdrop() {
-  const image = images.backgrounds[0];
+  const image = images.backgrounds[selectedLevel];
   if (image.complete && image.naturalWidth) {
     const scale = Math.max(width / image.naturalWidth, height / image.naturalHeight), iw = image.naturalWidth * scale, ih = image.naturalHeight * scale;
     ctx.drawImage(image, (width - iw) / 2, (height - ih) * .5, iw, ih);

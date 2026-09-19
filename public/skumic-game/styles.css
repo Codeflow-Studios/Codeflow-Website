@@ -198,7 +198,8 @@ html[data-level="4"]{--level-glow:#effe59}
 .controls-guide>span{font-size:12px}
 .demo-note{opacity:.72}
 .level-grade{display:none!important}
-body{background:linear-gradient(115deg,var(--sk-red) 0 38%,#ff5a19 38% 62%,var(--sk-red) 62% 100%) fixed}
+html,body{min-height:100%;background:linear-gradient(115deg,var(--sk-red) 0 38%,#ff5a19 38% 62%,var(--sk-red) 62% 100%) fixed;background-size:cover}
+.site-shell{min-height:100svh}
 @media(max-width:760px){
   .hud{top:15px;left:15px;right:14px;gap:13px}
   .score-block strong{font-size:31px}
