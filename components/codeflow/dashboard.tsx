@@ -20,7 +20,8 @@ const copy = {
     hook: 'Hook', script: 'Video script', caption: 'Caption', image: 'Generated image', video: 'Generated video',
     approve: 'Approve for publishing', approving: 'Preparing publishing…',
     ready: 'Ready for publishing', creating: 'Generating media', reviewNeeded: 'Review needed', failed: 'Generation failed',
-    readyText: 'Your approved content is queued. A social publishing connection can send it to the selected channel.',
+    readyText: 'Your approved content is queued. Publish sends it to the prepared social channels.',
+    publish: 'Publish now', publishing: 'Publishing…', published: 'Published',
     restart: 'Find fresh trends',
     missing: 'This dashboard link is incomplete. Return to onboarding to create a brand profile.',
     error: 'We could not load your marketing workspace. Please try again.',
@@ -40,7 +41,8 @@ const copy = {
     hook: 'Hook', script: 'Videoscript', caption: 'Caption', image: 'Gegenereerde afbeelding', video: 'Gegenereerde video',
     approve: 'Goedkeuren voor publicatie', approving: 'Publicatie voorbereiden…',
     ready: 'Klaar voor publicatie', creating: 'Media wordt gemaakt', reviewNeeded: 'Controle nodig', failed: 'Generatie mislukt',
-    readyText: 'Je goedgekeurde content staat klaar. Een social publishing-koppeling kan dit naar je gekozen kanaal sturen.',
+    readyText: 'Je goedgekeurde content staat klaar. Publiceren stuurt dit naar de voorbereide social kanalen.',
+    publish: 'Nu publiceren', publishing: 'Publiceren…', published: 'Gepubliceerd',
     restart: 'Nieuwe trends zoeken',
     missing: 'Deze dashboardlink is niet volledig. Ga terug naar de onboarding om een merkprofiel aan te maken.',
     error: 'We konden je marketingwerkruimte niet laden. Probeer het opnieuw.',
@@ -89,13 +91,13 @@ export default function Dashboard() {
   useEffect(() => {
     const campaignId = campaign?.campaign.id;
     const status = campaign?.campaign.status;
-    if (!campaignId || status === 'AwaitingApproval' || status === 'PublishingReady' || status === 'Failed') return;
+    if (!campaignId || status === 'AwaitingApproval' || status === 'Approved' || status === 'PublishingReady' || status === 'Failed') return;
 
     let cancelled = false;
     const poll = async () => {
       try {
         const current = await refreshCampaign(campaignId);
-        if (cancelled || current.campaign.status === 'AwaitingApproval' || current.campaign.status === 'PublishingReady' || current.campaign.status === 'Failed') return;
+        if (cancelled || current.campaign.status === 'AwaitingApproval' || current.campaign.status === 'Approved' || current.campaign.status === 'PublishingReady' || current.campaign.status === 'Failed') return;
       } catch {
         // Keep the existing campaign visible and retry on the next interval.
       }
@@ -129,9 +131,22 @@ export default function Dashboard() {
     } catch { setError(t.error); } finally { setWorking(false); }
   }
 
-  const publishingReady = campaign?.campaign.status === 'PublishingReady';
+  async function publishCampaign() {
+    if (!campaign) return;
+    setWorking(true); setError('');
+    try {
+      const response = await fetch(`/api/marketing/campaigns/${encodeURIComponent(campaign.campaign.id)}/publish`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ platform: null }) });
+      if (!response.ok) throw new Error('publish failed');
+      const result = await response.json() as CampaignView;
+      setCampaign(result);
+    } catch { setError(t.error); } finally { setWorking(false); }
+  }
+
+  const publishingReady = campaign?.campaign.status === 'PublishingReady' || campaign?.campaign.status === 'Approved';
   const awaitingApproval = campaign?.campaign.status === 'AwaitingApproval';
   const failed = campaign?.campaign.status === 'Failed';
+  const publishingJobs = campaign?.publishingJobs ?? [];
+  const allPublished = publishingJobs.length > 0 && publishingJobs.every(job => job.status === 'Published');
   const mediaUrl = campaign?.campaign.videoUrl;
   const mediaProvider = campaign?.campaign.videoProvider || '';
   const isVideo = Boolean(mediaUrl) && (
@@ -158,7 +173,7 @@ export default function Dashboard() {
         </div>
         <div className="campaign-panel"><div className="panel-heading"><div><p className="eyebrow">02 / {campaign ? t.review : 'CAMPAIGN'}</p><h2>{campaign ? t.review : en ? 'Choose a trend to start.' : 'Kies een trend om te beginnen.'}</h2></div>{campaign && <span className={`campaign-status ${publishingReady ? 'ready' : ''} ${failed ? 'failed' : ''}`}>{publishingReady ? t.ready : failed ? t.failed : awaitingApproval ? <><Clock3 size={14}/> {t.reviewNeeded}</> : <><LoaderCircle className="spin" size={14}/> {t.creating}</>}</span>}</div>
           {!campaign && <div className="campaign-empty"><Video size={28}/><p>{en ? 'Your selected trend will become a tailored hook, video script and caption.' : 'Je gekozen trend wordt een hook, videoscript en caption op maat.'}</p></div>}
-          {campaign && <div className="campaign-content">{publishingReady ? <div className="publishing-card"><Check size={28}/><h3>{t.ready}</h3><p>{t.readyText}</p>{renderMedia()}<div>{campaign.publishingJobs.map(job => <span key={job.id}>{job.platform}</span>)}</div></div> : <><article><span>{t.hook}</span><h3>{campaign.campaign.hook}</h3></article>{mediaUrl && <article><span>{isVideo ? t.video : t.image}</span>{renderMedia()}</article>}<article><span>{t.script}</span><p>{campaign.campaign.script}</p></article><article><span>{t.caption}</span><p>{campaign.campaign.caption}</p></article>{awaitingApproval ? <button className="button dashboard-action" type="button" disabled={working} onClick={() => void approveCampaign()}>{working ? <LoaderCircle className="spin" size={18}/> : <Check size={18}/>}{working ? t.approving : t.approve}<ArrowRight size={18}/></button> : failed ? <div className="campaign-wait failed"><CircleAlert size={18}/>{t.failed}</div> : <div className="campaign-wait"><LoaderCircle className="spin" size={18}/>{t.creating}</div>}</>}</div>}
+          {campaign && <div className="campaign-content">{publishingReady ? <div className="publishing-card"><Check size={28}/><h3>{allPublished ? t.published : t.ready}</h3><p>{t.readyText}</p>{renderMedia()}<div>{publishingJobs.map(job => <span key={job.id}>{job.platform} · {job.status}</span>)}</div>{allPublished ? <div className="campaign-wait"><Check size={18}/>{t.published}</div> : <button className="button dashboard-action" type="button" disabled={working} onClick={() => void publishCampaign()}>{working ? <LoaderCircle className="spin" size={18}/> : <Check size={18}/>}{working ? t.publishing : t.publish}<ArrowRight size={18}/></button>}</div> : <><article><span>{t.hook}</span><h3>{campaign.campaign.hook}</h3></article>{mediaUrl && <article><span>{isVideo ? t.video : t.image}</span>{renderMedia()}</article>}<article><span>{t.script}</span><p>{campaign.campaign.script}</p></article><article><span>{t.caption}</span><p>{campaign.campaign.caption}</p></article>{awaitingApproval ? <button className="button dashboard-action" type="button" disabled={working} onClick={() => void approveCampaign()}>{working ? <LoaderCircle className="spin" size={18}/> : <Check size={18}/>}{working ? t.approving : t.approve}<ArrowRight size={18}/></button> : failed ? <div className="campaign-wait failed"><CircleAlert size={18}/>{t.failed}</div> : <div className="campaign-wait"><LoaderCircle className="spin" size={18}/>{t.creating}</div>}</>}</div>}
         </div>
       </section>}
     </main>
