@@ -44,7 +44,9 @@ const copy = {
     eyebrow: 'CODEFLOW MARKETING AI',
     title: 'Your trend desk is ready.',
     intro: 'Choose a relevant signal and turn it into a campaign you can review before anything is published.',
-    trends: 'Relevant trends',
+    trends: 'Campaign signals',
+    customerSignal: 'Customer data',
+    liveTrend: 'Live Google trend',
     loading: 'Finding signals that fit your brand…',
     generate: 'Create campaign',
     generating: 'Creating your draft…',
@@ -78,7 +80,9 @@ const copy = {
     eyebrow: 'CODEFLOW MARKETING AI',
     title: 'Jouw trenddesk staat klaar.',
     intro: 'Kies een relevant signaal en maak er een campagne van die je eerst zelf bekijkt, voordat er iets wordt gepubliceerd.',
-    trends: 'Relevante trends',
+    trends: 'Campagnesignalen',
+    customerSignal: 'Klantdata',
+    liveTrend: 'Live Google-trend',
     loading: 'Signalen zoeken die bij jouw merk passen…',
     generate: 'Campagne maken',
     generating: 'Je concept wordt gemaakt…',
@@ -306,7 +310,7 @@ export default function Dashboard() {
             : <div className="trend-list">{trends.map(({ trend, score }) =>
               <button key={trend.id} type="button" className={`trend-card ${selectedTrend === trend.id ? 'selected' : ''}`} onClick={() => setSelectedTrend(trend.id)} disabled={working}>
                 <span className="trend-icon"><TrendingUp size={19}/></span>
-                <span className="trend-card-copy"><strong>{trend.title}</strong><span>{trend.summary}</span><small>{Math.round(score.score ?? (score.total ?? 0) * 100)}% {t.score}</small></span>
+                <span className="trend-card-copy"><strong>{trend.title}</strong><span>{trend.summary}</span><small>{trend.provider === 'customer-profile' ? t.customerSignal : t.liveTrend} · {Math.round(score.score ?? (score.total ?? 0) * 100)}% {t.score}</small></span>
                 {selectedTrend === trend.id && <Check className="trend-check" size={18}/>}
               </button>)}</div>}
           {!loading && trends.length > 0 &&
