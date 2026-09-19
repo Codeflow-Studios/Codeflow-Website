@@ -134,3 +134,37 @@ html[data-level="4"]{--level-glow:#effe59}
   .mission-brief{padding:6px 8px}.character-choice{min-height:38px;padding-left:40px}.character-choice:before{width:34px}
 }
 @media(prefers-reduced-motion:reduce){.level-intro.play,.level-intro.play span,.level-intro.play strong,.level-intro.play em{animation:none}.level-intro{display:none!important}}
+
+/* Focused selection screen: one active level, one character toggle, one action. */
+.start-copy{width:min(430px,48%)}
+.start-copy .eyebrow{margin-bottom:7px}
+.start-copy h1{font-size:clamp(54px,5.2vw,78px);margin:4px 0 22px}
+.start-copy>p,.mission-brief,.start-caption{display:none}
+.level-picker{display:flex;grid-template-columns:none;gap:5px;margin:0 0 14px;width:100%}
+.level-choice{flex:0 0 44px;min-width:44px;min-height:46px;padding:0;display:flex;justify-content:center;gap:0;border:1px solid rgba(255,255,255,.28);border-left-width:1px;background:rgba(5,5,5,.72);transition:flex-basis .2s ease,background .2s ease}
+.level-choice>b{font-size:18px;min-width:auto}
+.level-choice>span{display:none}
+.level-choice.selected{flex:1 1 auto;justify-content:flex-start;padding:0 13px;gap:12px;background:var(--sk-orange);border-color:var(--sk-orange)}
+.level-choice.selected>span{display:block;max-width:none;font-size:12px;color:#080808;white-space:nowrap}
+.level-choice small{display:none}
+.character-picker{display:flex;gap:5px;margin:0 0 14px;width:max-content;padding:3px;border:1px solid rgba(255,255,255,.22);background:rgba(5,5,5,.62)}
+.character-choice{min-height:34px;padding:0 12px;border:0;background:transparent;font-size:10px;letter-spacing:.75px}
+.character-choice:before{display:none}
+.character-choice.selected{background:var(--cream);color:#080808}
+.start-copy .primary-button{width:100%;min-height:50px;padding:11px 16px;font-size:20px;box-shadow:none;border:0}
+.start-copy .primary-button:hover{transform:none;box-shadow:none;background:#fff}
+@media(max-width:900px){
+  .start-copy{width:min(390px,58%)}
+  .start-copy h1{font-size:clamp(50px,7vw,68px)}
+  .level-choice.selected>span{font-size:11px}
+}
+@media(max-width:760px){
+  .start-screen{padding:76px 18px 90px;background:linear-gradient(90deg,rgba(5,5,5,.94),rgba(5,5,5,.6))}
+  .start-copy{width:100%;max-width:400px}
+  .start-copy h1{font-size:clamp(50px,15vw,64px);margin-bottom:20px}
+  .level-choice{flex-basis:40px;min-width:40px;min-height:44px}
+  .level-choice.selected{padding-inline:10px;gap:9px}
+  .level-choice.selected>span{font-size:10px}
+  .character-picker{width:100%}
+  .character-choice{flex:1;padding-inline:7px}
+}
