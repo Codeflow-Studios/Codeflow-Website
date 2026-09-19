@@ -229,10 +229,13 @@ function drawBackdrop() {
   const image = images.backgrounds[selectedLevel];
   if (image.complete && image.naturalWidth) {
     const cameraLane = mode === 'playing' ? model.x : 1;
-    const scale = Math.max(width / image.naturalWidth, height / image.naturalHeight) * 1.025;
+    const running = mode === 'playing' && !reducedMotion;
+    const stride = running ? Math.sin(model.distance * .34) : 0;
+    const scale = Math.max(width / image.naturalWidth, height / image.naturalHeight) * (1.035 + (model.boost && running ? .008 : 0));
     const iw = image.naturalWidth * scale, ih = image.naturalHeight * scale;
-    const parallaxX = reducedMotion ? 0 : -(cameraLane - 1) * Math.min(8, width * .009);
-    ctx.drawImage(image, (width - iw) / 2 + parallaxX, (height - ih) * .5, iw, ih);
+    const parallaxX = reducedMotion ? 0 : -(cameraLane - 1) * Math.min(16, width * .017);
+    const cameraBob = stride * Math.min(2.2, height * .0035);
+    ctx.drawImage(image, (width - iw) / 2 + parallaxX, (height - ih) * .5 + cameraBob, iw, ih);
   } else {
     const gradient = ctx.createLinearGradient(0, 0, 0, height); gradient.addColorStop(0, '#ef6960'); gradient.addColorStop(.4, '#eeab83'); gradient.addColorStop(.401, '#456b6a'); gradient.addColorStop(1, '#273941'); ctx.fillStyle = gradient; ctx.fillRect(0, 0, width, height);
   }
@@ -253,17 +256,23 @@ function drawBackdrop() {
 }
 function drawGroundFlow() {
   if (reducedMotion || mode !== 'playing') return;
-  const travel = model.distance * 1.35;
+  const travel = model.distance * (model.boost ? 2.05 : 1.55);
   ctx.save();
-  for (let i = 0; i < 24; i++) {
-    const z = 8 + ((i * 31 + 131 - travel) % 123 + 123) % 123;
-    const lane = -.36 + ((i * 47) % 137) / 137 * 2.72;
+  for (let i = 0; i < 34; i++) {
+    const z = 3 + ((i * 37 + 132 - travel) % 129 + 129) % 129;
+    const lane = -.4 + ((i * 53) % 149) / 149 * 2.8;
     const pos = project(lane, z);
-    const alpha = Math.min(.12, .018 + pos.depth * .105);
-    ctx.fillStyle = `rgba(255,247,229,${alpha})`;
+    const near = pos.depth * pos.depth;
+    const chipW = .7 + near * (i % 5 === 0 ? 16 : 8);
+    const chipH = .35 + near * (i % 5 === 0 ? 3.2 : 1.8);
+    ctx.fillStyle = `rgba(10,18,22,${.025 + near * .17})`;
     ctx.beginPath();
-    ctx.ellipse(pos.x, pos.y, Math.max(.45, pos.scale * 2.2), Math.max(.35, pos.scale * .9), 0, 0, Math.PI * 2);
+    ctx.ellipse(pos.x, pos.y, chipW, chipH, ((i % 7) - 3) * .08, 0, Math.PI * 2);
     ctx.fill();
+    if (i % 3 === 0) {
+      ctx.fillStyle = `rgba(255,247,229,${.02 + near * .09})`;
+      ctx.beginPath(); ctx.ellipse(pos.x - chipW * .18, pos.y - chipH, chipW * .42, Math.max(.3, chipH * .35), 0, 0, Math.PI * 2); ctx.fill();
+    }
   }
   ctx.restore();
 }
@@ -297,6 +306,14 @@ function drawRunner(idle = false) {
   const size = (width < 600 ? 128 : 152), jumping = idle ? 0 : model.height;
   const running = idle ? .1 : Math.sin(frameNow / (model.boost ? 47 : 66));
   const y = pos.y - jumping * (height * .17) + (reducedMotion ? 0 : Math.abs(running) * 4);
+  if (!idle && jumping < .08 && !reducedMotion) {
+    const step = (model.distance * .72) % 1;
+    for (let i = 0; i < 3; i++) {
+      const drift = (step + i / 3) % 1;
+      ctx.fillStyle = `rgba(225,211,184,${(1 - drift) * .11})`;
+      ctx.beginPath(); ctx.ellipse(pos.x + (i - 1) * 9, pos.y + 5 - drift * 8, 3 + drift * 8, 1 + drift * 2.5, 0, 0, Math.PI * 2); ctx.fill();
+    }
+  }
   shadow(pos.x, pos.y + 7, size * (.5 - jumping * .14), .42 - jumping * .2);
   if (model.boost && !idle) {
     ctx.save(); ctx.globalAlpha = .25; ctx.fillStyle = '#effe59'; ctx.beginPath(); ctx.ellipse(pos.x, y - size * .36, size * .36, size * .55, 0, 0, Math.PI * 2); ctx.fill(); ctx.restore();
