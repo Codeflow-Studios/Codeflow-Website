@@ -168,3 +168,40 @@ html[data-level="4"]{--level-glow:#effe59}
   .character-picker{width:100%}
   .character-choice{flex:1;padding-inline:7px}
 }
+
+/* Minimal play HUD and an unboxed character toggle. */
+.character-picker{padding:0;border:0;background:transparent}
+.character-choice{border:0}
+.character-choice:not(.selected){color:rgba(255,247,229,.72)}
+.hud{top:18px;left:24px;right:20px;gap:22px;align-items:center}
+.score-block strong{font-size:36px}
+.best-label,.combo-stat,.mission-hud{display:none!important}
+.run-stats{gap:14px;align-items:center}
+.time-stat{display:flex;align-items:baseline;gap:7px}
+.time-stat .hud-label{margin:0}
+.time-stat strong{font-size:28px;min-width:44px}
+.time-stat strong span{font-size:17px}
+.lives{padding:0;font-size:15px;letter-spacing:4px}
+.game-tools{align-self:flex-start}
+.beat-panel{bottom:18px;width:min(270px,30%)}
+.beat-heading{justify-content:flex-end;margin-bottom:6px}
+.beat-heading>span:first-child,.beat-caption>span:first-child{display:none}
+.beat-heading>span:last-child{font-size:9px;opacity:.9}
+.beat-meter{height:5px;border:0;background:rgba(255,255,255,.2)}
+.beat-target{inset-block:-3px}
+.beat-cursor{top:-3px;height:11px;width:2px}
+.beat-caption{justify-content:flex-end;margin-top:6px}
+.beat-caption>span:last-child{font-size:13px}
+.tips-row{display:none}
+.below-game{margin:15px 0 18px}
+.controls-guide{gap:14px}
+.controls-guide>span{font-size:12px}
+.demo-note{opacity:.72}
+@media(max-width:760px){
+  .hud{top:15px;left:15px;right:14px;gap:13px}
+  .score-block strong{font-size:31px}
+  .time-stat{gap:5px}.time-stat strong{font-size:25px;min-width:38px}
+  .lives{position:static;font-size:14px;letter-spacing:3px}
+  .game-frame.started .beat-panel{bottom:82px;left:50%;right:auto;transform:translateX(-50%);width:180px}
+  .below-game{margin:13px 0 16px}
+}
