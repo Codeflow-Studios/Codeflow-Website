@@ -56,6 +56,7 @@ export class BeatAudio {
     if (!this.ctx || !this.enabled || !this.active) return;
     const t = this.ctx.currentTime;
     if (type === 'speaker') { this.tone(660, .09, t, .22); this.tone(990, .08, t + .05, .15); }
+    if (type === 'deck') { this.tone(440, .08, t, .18); this.tone(880, .10, t + .055, .19); this.tone(1320, .12, t + .11, .12); }
     if (type === 'beat') this.tone(1320, .055, t, .07);
     if (type === 'hit') this.tone(125, .18, t, .2, 40);
   }

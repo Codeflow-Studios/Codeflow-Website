@@ -22,7 +22,7 @@ export class RunModel {
   reset() {
     this.time = 0; this.distance = 0; this.score = 0; this.lives = 3;
     this.lane = 1; this.x = 1; this.jumpAge = -1; this.invincible = 0;
-    this.speakers = 0; this.beats = 0; this.combo = 0; this.maxCombo = 0;
+    this.speakers = 0; this.decks = 0; this.beats = 0; this.combo = 0; this.maxCombo = 0;
     this.lastRhythmBeat = -Infinity;
     this.objects = []; this.spawnIn = 0.6; this.pattern = 0;
     this.boost = false; this.done = false; this.events = [];
@@ -50,7 +50,11 @@ export class RunModel {
     const lane = Math.floor(this.random() * 3);
     const row = this.pattern++;
     // Every row has a clear lane. A speaker trail shows a route through the hazards.
-    if (row % 4 === 0) {
+    if (row % 9 === 6) {
+      this.objects.push({ type: 'deck', lane, z: 115, checked: false });
+      const pressureLane = (lane + (row % 2 ? 1 : 2)) % 3;
+      this.objects.push({ type: row % 2 ? 'cone' : 'barrier', lane: pressureLane, z: 115, checked: false });
+    } else if (row % 4 === 0) {
       for (let i = 0; i < 3; i++) this.objects.push({ type: 'speaker', lane, z: 115 + i * 10, checked: false });
     } else {
       const hazard = this.time > MUSIC.gullAfter && row % 5 === 0 ? 'gull' : row % 3 === 0 ? 'cone' : 'barrier';
@@ -82,11 +86,15 @@ export class RunModel {
       object.z -= speed * dt;
       if (object.z <= 5 && !object.checked) {
         object.checked = true;
-        const aligned = Math.abs(object.lane - this.x) < (this.boost && object.type === 'speaker' ? 1.08 : 0.46);
+        const collectible = object.type === 'speaker' || object.type === 'deck';
+        const aligned = Math.abs(object.lane - this.x) < (this.boost && collectible ? 1.08 : 0.46);
         if (!aligned) continue;
         if (object.type === 'speaker') {
           object.collected = true; this.speakers++; this.score += 100 * this.multiplier;
           this.events.push({ type: 'speaker', lane: object.lane, points: 100 * this.multiplier });
+        } else if (object.type === 'deck') {
+          object.collected = true; this.decks++; this.score += 350 * this.multiplier;
+          this.events.push({ type: 'deck', lane: object.lane, points: 350 * this.multiplier });
         } else if (this.boost) {
           object.collected = true; this.score += 40;
           this.events.push({ type: 'smash', lane: object.lane });

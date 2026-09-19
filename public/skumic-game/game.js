@@ -14,8 +14,11 @@ try { Object.assign(levelBests, JSON.parse(localStorage.getItem('skumic-run-leve
 try { Object.assign(levelRanks, JSON.parse(localStorage.getItem('skumic-run-level-ranks') || '{}')); } catch {}
 best = Number(levelBests[LEVELS[0].id]) || 0;
 const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
-const images = {};
-for (const [name, source] of Object.entries({ background: './assets/oostende.png', runner: './assets/runner-atlas.png', objects: './assets/objects.png' })) {
+const images = { backgrounds: [] };
+for (const source of ['./assets/oostende.png', './assets/background-ravy.png', './assets/background-puber.png', './assets/background-manosfeer.png']) {
+  const image = new Image(); image.src = source; images.backgrounds.push(image);
+}
+for (const [name, source] of Object.entries({ runner: './assets/runner-atlas.png', objects: './assets/objects.png', deck: './assets/skumic-deck.png' })) {
   images[name] = new Image(); images[name].src = source;
 }
 const padScore = value => Math.floor(value).toString().padStart(5, '0');
@@ -52,7 +55,7 @@ function selectLevel(index) {
   $('result-demo').textContent = `Soundtrack: ${level.title} — Skumic.`;
   $('start-caption').textContent = `${level.number} · ${level.difficulty} · 45 SECONDEN`;
   $('mission-title').textContent = level.subtitle;
-  $('mission-copy').textContent = `Pak ${level.mission.speakers} speakers en raak ${level.mission.beats} beats.`;
+  $('mission-copy').textContent = `Pak ${level.mission.speakers} speakers, limited decks en ${level.mission.beats} beats.`;
   document.documentElement.dataset.level = String(selectedLevel + 1);
   for (let i = 0; i < LEVELS.length; i++) {
     const button = $(`level-${i + 1}`), selected = i === selectedLevel;
@@ -124,7 +127,7 @@ function finish() {
   $('result-eyebrow').textContent = record ? 'NIEUWE PERSOONLIJKE BEST!' : model.lives ? '45 SECONDEN. ALLES GEGEVEN.' : 'DE DIJK HAD ANDERE PLANNEN';
   $('result-title').innerHTML = model.lives ? 'DIJK VAN<br>EEN RUN.' : 'NOG NIET<br>UITGERAASD?';
   $('result-score').textContent = score.toLocaleString('nl-BE'); $('result-best').textContent = best.toLocaleString('nl-BE');
-  $('result-speakers').textContent = model.speakers; $('result-beats').textContent = model.beats; $('result-flow').textContent = model.maxCombo;
+  $('result-speakers').textContent = model.speakers; $('result-decks').textContent = model.decks; $('result-beats').textContent = model.beats; $('result-flow').textContent = model.maxCombo;
   $('result-rank').textContent = rank; $('result-mission').textContent = missionComplete ? 'MISSIE VOLTOOID' : 'MISSIE NIET VOLTOOID';
   $('result-mission').classList.toggle('complete', missionComplete);
   $('next-level').innerHTML = selectedLevel < LEVELS.length - 1 ? 'VOLGEND LEVEL <span aria-hidden="true">↗</span>' : 'LEVELS KIEZEN <span aria-hidden="true">↗</span>';
@@ -205,7 +208,7 @@ $('share').addEventListener('click', event => {
 });
 async function shareScore() {
   const url = new URL(location.href); url.search = ''; url.hash = '';
-  const text = `Ik scoorde ${Math.floor(model.score).toLocaleString('nl-BE')} punten in level ${MUSIC.number} · ${MUSIC.title} van Skumic Run. Klop jij mijn score?`;
+  const text = `Ik scoorde ${Math.floor(model.score).toLocaleString('nl-BE')} punten en pakte ${model.decks} limited deck${model.decks === 1 ? '' : 's'} in level ${MUSIC.number} · ${MUSIC.title} van Skumic Run. Klop jij mijn score?`;
   try {
     if (navigator.share) { await navigator.share({ title: 'Skumic Run', text, url: url.href }); $('share-status').textContent = 'Score gedeeld!'; }
     else if (navigator.clipboard?.writeText) { await navigator.clipboard.writeText(`${text}\n${url.href}`); $('share-status').textContent = 'Score en link gekopieerd!'; }
@@ -223,7 +226,7 @@ function polygon(points, color) {
   ctx.fillStyle = color; ctx.beginPath(); points.forEach(([x, y], i) => i ? ctx.lineTo(x, y) : ctx.moveTo(x, y)); ctx.closePath(); ctx.fill();
 }
 function drawBackdrop() {
-  const image = images.background;
+  const image = images.backgrounds[selectedLevel];
   if (image.complete && image.naturalWidth) {
     const scale = Math.max(width / image.naturalWidth, height / image.naturalHeight), iw = image.naturalWidth * scale, ih = image.naturalHeight * scale;
     ctx.drawImage(image, (width - iw) / 2, (height - ih) * .38, iw, ih);
@@ -276,10 +279,18 @@ function drawObject(object, idle = false) {
   if (object.type !== 'gull') shadow(pos.x, pos.y + 2, size * .84);
   const atlas = images.objects;
   const bob = ['speaker', 'gull'].includes(object.type) ? Math.sin(frameNow / 220 + object.lane) * 4 * pos.scale : 0;
-  if (object.type === 'speaker') {
+  if (object.type === 'speaker' || object.type === 'deck') {
     ctx.save(); ctx.globalAlpha = .20 + (model.boost ? .13 : 0); ctx.fillStyle = '#effe59'; ctx.beginPath(); ctx.ellipse(pos.x, pos.y - size * .45 + bob, size * .5, size * .6, 0, 0, Math.PI * 2); ctx.fill(); ctx.restore();
   }
-  if (atlas.complete && atlas.naturalWidth) {
+  if (object.type === 'deck' && images.deck.complete && images.deck.naturalWidth) {
+    const deckW = size * 2.05, deckH = size * .72;
+    ctx.save();
+    ctx.translate(pos.x, pos.y - size * .68 + bob);
+    ctx.rotate(-.10 + Math.sin(frameNow / 310) * .035);
+    ctx.shadowColor = '#ffb000'; ctx.shadowBlur = 18 * pos.scale;
+    ctx.drawImage(images.deck, 260, 1030, 4480, 1380, -deckW / 2, -deckH / 2, deckW, deckH);
+    ctx.restore();
+  } else if (atlas.complete && atlas.naturalWidth) {
     const cellW = atlas.naturalWidth / 2, cellH = atlas.naturalHeight / 2;
     const column = ['barrier', 'gull'].includes(object.type) ? 1 : 0, row = ['cone', 'gull'].includes(object.type) ? 1 : 0;
     const objectSize = object.type === 'gull' ? size * 1.65 : size * 1.36;
@@ -318,6 +329,7 @@ function handleEvent(event) {
   audio.effect(event.type);
   if (navigator.vibrate) navigator.vibrate(event.type === 'hit' ? [55, 35, 70] : event.type === 'drop' ? [25, 25, 45] : event.type === 'beat' ? 12 : event.type === 'speaker' ? 8 : 0);
   if (event.type === 'speaker') { burst(event.lane, '#effe59', 10); popups.push({ lane: event.lane, text: `+${event.points}`, age: 0 }); }
+  if (event.type === 'deck') { burst(event.lane, '#ffad18', 24); feedback(`LIMITED DECK! +${event.points}`, 1.35); popups.push({ lane: event.lane, text: `DECK +${event.points}`, age: 0 }); }
   if (event.type === 'smash') burst(event.lane, '#f9aa89', 20);
   if (event.type === 'beat') {
     const levelUp = event.combo === 3 ? 'FLOW ×2!' : event.combo === 6 ? 'FLOW ×3!' : null;
@@ -339,7 +351,8 @@ function updateUI() {
   $('beat-label').textContent = model.boost ? 'BEATBOOST ACTIEF' : 'VIND JE RITME';
   $('beat-tip').textContent = model.boost ? 'PAK ALLES. JE BREEKT ERDOORHEEN.' : 'SPRING ALS DE BALK VOL IS';
   $('multiplier').textContent = `×${model.multiplier}`;
-  $('mission-progress').textContent = `${Math.min(model.speakers, MUSIC.mission.speakers)}/${MUSIC.mission.speakers} SPEAKERS · ${Math.min(model.beats, MUSIC.mission.beats)}/${MUSIC.mission.beats} BEATS`;
+  $('mission-progress').textContent = `${Math.min(model.speakers, MUSIC.mission.speakers)}/${MUSIC.mission.speakers} SPEAKERS · ${model.decks} DECKS · ${Math.min(model.beats, MUSIC.mission.beats)}/${MUSIC.mission.beats} BEATS`;
+  $('decks').textContent = model.decks;
   $('mission-hud').classList.toggle('complete', model.speakers >= MUSIC.mission.speakers && model.beats >= MUSIC.mission.beats);
   $('game-frame').classList.toggle('boosting', model.boost && mode === 'playing');
   if (beat !== lastBeat) { lastBeat = beat; $('beat-meter').style.borderColor = '#effe59'; }
