@@ -404,11 +404,6 @@ function drawBackdrop(cameraX = 0, cameraY = 0) {
     const horizon = getHorizon();
     const roadShade = paint.createLinearGradient(0, horizon, 0, height); roadShade.addColorStop(0, 'rgba(15,20,24,0)'); roadShade.addColorStop(1, 'rgba(15,20,24,.22)');
     paint.fillStyle = roadShade; paint.fillRect(0, horizon, width, height - horizon);
-    for (const lane of [.5, 1.5]) {
-      const a = project(lane, -32), b = project(lane, 126);
-      paint.strokeStyle = 'rgba(255,247,229,.12)'; paint.lineWidth = 1;
-      paint.beginPath(); paint.moveTo(a.x, a.y); paint.lineTo(b.x, b.y); paint.stroke();
-    }
   }
   if (backdropCache) {
     const overscan = 4;
@@ -426,6 +421,7 @@ function drawMovingRoadLayer() {
   }
   ctx.restore();
   drawRoadSurfaceMotion();
+  drawLaneGuides();
   drawWorldLayer();
 }
 function worldItemState(item, distance = model.distance) {
@@ -493,6 +489,24 @@ function drawRoadSurfaceMotion() {
   }
   ctx.restore();
 }
+function drawLaneGuides() {
+  const farZ = 129;
+  const style = MUSIC.roadStyle;
+  const shadow = ctx.createLinearGradient(0, getHorizon(), 0, height);
+  shadow.addColorStop(0, `rgba(${style.dark},0)`);
+  shadow.addColorStop(.3, `rgba(${style.dark},.16)`);
+  shadow.addColorStop(1, `rgba(${style.dark},.52)`);
+  const edge = ctx.createLinearGradient(0, getHorizon(), 0, height);
+  edge.addColorStop(0, `rgba(${style.light},0)`);
+  edge.addColorStop(.25, `rgba(${style.light},.16)`);
+  edge.addColorStop(1, `rgba(${style.light},.48)`);
+  for (const lane of [.5, 1.5]) {
+    const far = project(lane, farZ), near = project(lane, 0);
+    const wide = width < 600 ? 4 : 5.5;
+    polygon([[far.x - .35, far.y], [near.x - wide, near.y], [near.x + wide, near.y], [far.x + .35, far.y]], shadow);
+    polygon([[far.x - .12, far.y], [near.x - .8, near.y], [near.x + .8, near.y], [far.x + .12, far.y]], edge);
+  }
+}
 function drawRavyLight() {
   if (!model.boost || ['ready', 'starting'].includes(mode)) return;
   // A warm edge wash keeps Oostende recognizable and leaves the obstacle lanes clear.
@@ -509,7 +523,9 @@ function drawRavyLight() {
 }
 function shadow(x, y, size, opacity = .32) { ctx.fillStyle = `rgba(6,16,22,${opacity})`; ctx.beginPath(); ctx.ellipse(x, y, size * .55, size * .16, 0, 0, Math.PI * 2); ctx.fill(); }
 function drawObject(object, idle = false) {
-  const pos = project(object.lane, object.z), size = (width < 600 ? 83 : 103) * pos.scale;
+  const pos = project(object.lane, object.z);
+  const visualScale = .18 + pos.depth * .9;
+  const size = (width < 600 ? 104 : 128) * visualScale;
   const pickup = object.type === 'speaker' || object.type === 'deck';
   const pulse = reducedMotion || idle ? 0 : Math.pow(1 - model.beatPhase, 3);
   if (object.type !== 'gull') shadow(pos.x, pos.y + 2, size * .84);
@@ -517,17 +533,18 @@ function drawObject(object, idle = false) {
   const bob = !reducedMotion && ['speaker', 'deck', 'gull'].includes(object.type) ? Math.sin(model.time * 5 + object.lane) * 3 * pos.scale : 0;
   if (pickup) {
     ctx.save(); ctx.globalAlpha = .15 + pulse * .10; ctx.fillStyle = '#effe59'; ctx.beginPath(); ctx.ellipse(pos.x, pos.y - size * .45 + bob, size * .5, size * .6, 0, 0, Math.PI * 2); ctx.fill(); ctx.restore();
-    ctx.strokeStyle = '#effe59'; ctx.lineWidth = Math.max(1, 2 * pos.scale);
+    ctx.strokeStyle = '#effe59'; ctx.lineWidth = Math.max(1.5, 3 * visualScale);
     ctx.beginPath(); ctx.ellipse(pos.x, pos.y + 2, size * .4, size * .10, 0, 0, Math.PI * 2); ctx.stroke();
   } else {
     polygon([[pos.x - size * .5, pos.y + 3], [pos.x, pos.y - size * .14], [pos.x + size * .5, pos.y + 3], [pos.x, pos.y + size * .13]], 'rgba(255,64,32,.32)');
-    if (pos.scale > .23) {
+    if (visualScale > .23) {
       ctx.fillStyle = '#ff794d'; ctx.font = `900 ${Math.max(11, size * .25)}px Barlow, sans-serif`; ctx.textAlign = 'center';
       ctx.fillText('!', pos.x, pos.y - size * (object.type === 'gull' ? 1.95 : 1.32));
     }
   }
   if (object.type === 'deck' && images.deck.complete && images.deck.naturalWidth) {
-    const deckW = size * 2.05, deckH = size * .72;
+    const laneSpan = Math.abs(project(object.lane + 1, object.z).x - pos.x);
+    const deckW = Math.min(size * 1.8, laneSpan * .9), deckH = deckW * .35;
     ctx.save();
     ctx.translate(pos.x, pos.y - size * .68 + bob);
     ctx.rotate(-.10 + (reducedMotion ? 0 : Math.sin(model.time * 3) * .035));
