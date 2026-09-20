@@ -12,6 +12,7 @@ let selectedCharacter = 1, selectedLevel = 0;
 let countdownLeft = 0, pausedMode = 'playing', startToken = 0, tutorialSeen = false;
 let landingAge = 1, dropAge = 1, hitAge = 1, tutorialUntil = 0, feedbackPriority = 0;
 let fallbackEpoch = 0, savedScroll = 0, roadScanlines = [], backdropCache = null;
+const camera = { x: 0, y: 0 };
 const drawObjects = [];
 const levelBests = {};
 const levelRanks = {};
@@ -160,6 +161,7 @@ async function start(options = {}) {
   try { audioReady = await audio.init(); audio.setEnabled(audioReady && !mutedByChoice); } catch { audio.setEnabled(false); }
   if (token !== startToken) return;
   model.reset(); particles = []; popups = []; lastBeat = -1; lastCombo = 0; feedbackUntil = 0; feedbackPriority = 0;
+  camera.x = 0; camera.y = 0;
   landingAge = 1; dropAge = 1; hitAge = 1; pointerStart = null; tutorialUntil = 0; $('tutorial').hidden = true;
   $('start-screen').hidden = true; $('result-screen').hidden = true; $('pause-screen').hidden = true;
   $('pause').hidden = false; $('share-status').textContent = ''; $('feedback').classList.remove('show');
@@ -330,9 +332,10 @@ function project(lane, z) {
 function polygon(points, color) {
   ctx.fillStyle = color; ctx.beginPath(); points.forEach(([x, y], i) => i ? ctx.lineTo(x, y) : ctx.moveTo(x, y)); ctx.closePath(); ctx.fill();
 }
-function drawBackdrop() {
+function drawBackdrop(cameraX = 0, cameraY = 0) {
   const image = images.backgrounds[selectedLevel];
-  // The stable artwork is rasterized once per resize/level, not rescaled every frame.
+  // The artwork is rasterized once. A small overscan allows gentle background
+  // parallax without ever exposing the canvas edge.
   if (!backdropCache && width > 0 && height > 0) {
     backdropCache = document.createElement('canvas'); backdropCache.width = canvas.width; backdropCache.height = canvas.height;
     const paint = backdropCache.getContext('2d'); paint.scale(canvas.width / width, canvas.height / height);
@@ -352,9 +355,10 @@ function drawBackdrop() {
       paint.beginPath(); paint.moveTo(a.x, a.y); paint.lineTo(b.x, b.y); paint.stroke();
     }
   }
-  if (backdropCache) ctx.drawImage(backdropCache, 0, 0, width, height);
-  drawMovingRoadLayer();
-  drawRavyLight();
+  if (backdropCache) {
+    const overscan = 4;
+    ctx.drawImage(backdropCache, cameraX - overscan, cameraY - overscan, width + overscan * 2, height + overscan * 2);
+  }
 }
 function drawMovingRoadLayer() {
   if (mode === 'ready' || mode === 'starting') return;
@@ -534,10 +538,32 @@ function updateUI() {
   if (beat !== lastBeat) { lastBeat = beat; $('beat-meter').style.borderColor = '#effe59'; }
   else if (fraction > .22) $('beat-meter').style.borderColor = 'rgba(255,255,255,.18)';
 }
+function updateCamera(dt) {
+  let targetX = 0, targetY = 0;
+  if (!reducedMotion && mode === 'playing') {
+    const phase = model.distance * 1.35;
+    const grounded = model.jumpAge < 0 || model.height < .035;
+    const scale = width < 600 ? .78 : 1;
+    const stride = grounded ? Math.abs(Math.sin(phase)) - .5 : 0;
+    const sway = grounded ? Math.sin(phase * .5) : 0;
+    // The world moves opposite a lane change, as if a shoulder camera follows
+    // the runner. Jump follow reduces the detached "sprite over wallpaper" feel.
+    targetX = (sway * .9 - (model.lane - model.x) * 2.5) * scale;
+    targetY = (stride * 2.2 + model.height * 3.6) * scale;
+    if (landingAge < .18) targetY += Math.sin(landingAge / .18 * Math.PI) * 1.5 * scale;
+  }
+  const blend = dt > 0 ? 1 - Math.exp(-dt * 16) : 0;
+  camera.x += (targetX - camera.x) * blend;
+  camera.y += (targetY - camera.y) * blend;
+  if (reducedMotion) { camera.x = 0; camera.y = 0; }
+}
 function render(dt) {
   ctx.save(); ctx.clearRect(0, 0, width, height);
   landingAge += dt; dropAge += dt; hitAge += dt;
-  drawBackdrop();
+  updateCamera(dt);
+  drawBackdrop(camera.x * .16, camera.y * .16);
+  ctx.save(); ctx.translate(camera.x, camera.y);
+  drawMovingRoadLayer();
   if (mode === 'ready' || mode === 'starting') {
     for (const o of [{ type: 'speaker', lane: 1.72, z: 36 }, { type: 'speaker', lane: 1.72, z: 51 }, { type: 'barrier', lane: .8, z: 62 }, { type: 'cone', lane: .15, z: 21 }]) drawObject(o, true);
     drawRunner(true);
@@ -558,6 +584,8 @@ function render(dt) {
     }
     popups = popups.filter(p => p.age < .8); ctx.globalAlpha = 1;
   }
+  ctx.restore();
+  drawRavyLight();
   ctx.restore();
 }
 function frame(now) {
@@ -587,3 +615,4 @@ setMode('ready'); selectLevel(0); resize(); soundState(); requestAnimationFrame(
 // Module-level integration hooks: tests exercise the same model and handlers as real inputs.
 export { model, audio, start, pause, resume, selectLevel, selectCharacter, showLevelMenu, updateUI, handleEvent };
 export function getGameState() { return { mode, selectedLevel, selectedCharacter, reducedMotion, countdownLeft }; }
+export function getCameraState() { return { x: camera.x, y: camera.y }; }

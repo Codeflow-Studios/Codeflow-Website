@@ -15,7 +15,7 @@ De bestaande Canvas 2D-game is uitgebreid binnen de bestaande Codeflow-site (Rea
 - Touch: links/rechts vegen om te wisselen, tikken om te springen; ook losse knoppen van minimaal 44 px. Portret en landscape hebben een aangepaste HUD.
 - Highscores en ranks blijven per level lokaal bewaard. Mute en de afgeronde tutorial worden ook onthouden.
 
-De camera blijft vast vanwege eerdere feedback over misselijkheid. Voorwaartse beweging komt uit de bestaande bewegende grond- en omgevingslagen en naderende objecten. Geen schermschudden, camerabob of zoom. Reduced motion schakelt grondbeweging en zware decoratieve reacties uit.
+De spelwereld heeft een kleine, vloeiende camera-follow. De beweging volgt echte loopafstand, lane-wissels, springen en landen; de verre achtergrond beweegt slechts 16% mee voor rustige diepte. De HUD blijft volledig stil. Er is geen schermschudden of zoom en de maximale verplaatsing blijft enkele pixels. Reduced motion zet camera- en grondbeweging volledig uit.
 
 ## 2. Bestanden
 
@@ -94,7 +94,7 @@ De browsercheck gebruikt bestaande Playwright-tooling buiten de projectdependenc
 
 Testdekking:
 
-Resultaat op 20 september 2026: **12/12 enginetests en 52/52 browserchecks geslaagd**, build en gerichte lintcontrole geslaagd, geen nieuwe console- of runtimefouten. In de vier gemeten schermformaten bleef de gemiddelde frame-interval ongeveer 16,67 ms (p95 16,8 ms; geen frames boven 34 ms in de 120-frame steekproeven). Dat is vergelijkbaar met de meting vóór de wijzigingen in dezelfde omgeving; het is geen prestatiegarantie voor alle telefoons.
+Resultaat op 20 september 2026: **12/12 enginetests en 56/56 browserchecks geslaagd**, build en gerichte lintcontrole geslaagd, geen nieuwe console- of runtimefouten. In de vier gemeten schermformaten bleef de gemiddelde frame-interval ongeveer 16,67 ms (p95 16,8 ms; geen frames boven 34 ms in de 120-frame steekproeven). Dat is vergelijkbaar met de meting vóór de wijzigingen in dezelfde omgeving; het is geen prestatiegarantie voor alle telefoons.
 
 - Engine: 12 tests, inclusief 30/60/120 Hz en onregelmatige frames, timinggrenzen, sprongbuffer, combodecay, veilige spawnrijen en audio-races.
 - Chrome: 1920×1080, 1024×768, 390×844 en 844×390; selectie, countdown, toetsenbord/touch, pauze/mute, PERFECT/GOOD, botsing/levens, drop/Ravy, game over/retry, refresh, opslag en rotatie.
@@ -109,7 +109,7 @@ Nog niet volledig gevalideerd of uitgebreid:
 - Browsertests gebruiken echte Chrome met mobiele emulatie. Fysieke iPhone/Android-apparaten, Safari en Bluetooth-latentie zijn nog niet geverifieerd. Er is geen persoonlijke audio-latentiekalibratie.
 - MP3's worden nog volledig gedownload en tijdelijk gedecodeerd voordat het fragment wordt uitgesneden. Voor trage mobiele verbindingen is het vooraf exporteren van de vier speelbare fragmenten de volgende optimalisatie.
 - Coyote time is niet toegevoegd: er zijn geen platformranden. De buffer vlak vóór de landing behandelt de relevante vroege input.
-- Grote camerabewegingen en extra drukke omgevingslagen zijn bewust niet toegevoegd vanwege de eerdere gebruiksfeedback.
+- Grote camerabewegingen en extra drukke omgevingslagen zijn bewust niet toegevoegd. De kleine camera-follow moet op fysieke telefoons nog subjectief worden beoordeeld op comfort.
 - Scores zijn lokaal; er is geen servervalidatie of bescherming voor een competitief online leaderboard.
 
 ## 6. Volgende fase

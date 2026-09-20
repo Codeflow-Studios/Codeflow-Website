@@ -163,6 +163,29 @@ try {
       await screenshot(game, 'playing');
     });
 
+    await check(`${name}: grounded camera follow stays subtle while the HUD remains fixed`, async () => {
+      await page.waitForFunction(() => {
+        const camera = window.__qaGame.getCameraState();
+        return Math.abs(camera.x) > .03 || Math.abs(camera.y) > .03;
+      });
+      const samples = await page.evaluate(() => new Promise(resolve => {
+        const values = [];
+        const collect = () => {
+          values.push(window.__qaGame.getCameraState());
+          if (values.length === 30) resolve(values);
+          else requestAnimationFrame(collect);
+        };
+        requestAnimationFrame(collect);
+      }));
+      const maxX = Math.max(...samples.map(value => Math.abs(value.x)));
+      const maxY = Math.max(...samples.map(value => Math.abs(value.y)));
+      assert.ok(maxX > .03 || maxY > .03, 'camera remains completely static');
+      assert.ok(maxX < 3.5 && maxY < 5.5, `camera movement too strong: ${maxX}, ${maxY}`);
+      const hudTransform = await page.locator('#hud').evaluate(element => getComputedStyle(element).transform);
+      assert.equal(hudTransform, 'none');
+      return { maxX, maxY };
+    });
+
     await check(`${name}: responsive keyboard or real touch input`, async () => {
       if (touch) {
         await touchGesture(game, -65);
@@ -180,6 +203,9 @@ try {
         await page.keyboard.press('Space');
       }
       assert.ok((await state(page)).jumpAge >= 0, 'jump input missed');
+      await page.waitForTimeout(80);
+      const camera = await page.evaluate(() => window.__qaGame.getCameraState());
+      assert.ok(Math.abs(camera.x) > .12 || Math.abs(camera.y) > .3, `camera did not follow the action: ${JSON.stringify(camera)}`);
     });
 
     await check(`${name}: pause freezes gameplay; mute and resume work`, async () => {
@@ -511,6 +537,8 @@ try {
     await page.keyboard.press('Space');
     assert.ok((await state(page)).jumpAge >= 0);
     assert.equal(await page.evaluate(() => matchMedia('(prefers-reduced-motion: reduce)').matches), true);
+    await page.waitForTimeout(150);
+    assert.deepEqual(await page.evaluate(() => window.__qaGame.getCameraState()), { x: 0, y: 0 });
     const transforms = await page.evaluate(() => ['game', 'game-frame'].map(id => getComputedStyle(document.getElementById(id)).transform));
     assert.deepEqual(transforms, ['none', 'none']);
     await screenshot(reduced, 'playing');

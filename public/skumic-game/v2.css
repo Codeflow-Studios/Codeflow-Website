@@ -37,7 +37,7 @@ body.theater #exit-theater{display:grid}
 .run-progress i{display:none}
 .vignette{background:linear-gradient(180deg,rgba(5,8,12,.55),transparent 26%,transparent 67%,rgba(5,8,12,.48))}
 
-/* A fixed camera and restrained UI feedback are deliberate accessibility choices. */
+/* The Canvas camera can move subtly; HUD and interface layers remain stable. */
 .game-frame.boosting,.game-frame.ravy{box-shadow:inset 0 0 0 2px rgba(239,254,89,.48);border-color:var(--ink)}
 .game-frame.building .drop-meter{border-color:var(--yellow)}
 .game-frame.ravy #multiplier{background:var(--yellow);color:var(--ink);border-color:var(--yellow)}
