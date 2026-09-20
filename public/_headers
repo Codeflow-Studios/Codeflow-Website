@@ -1,5 +1,5 @@
 /atn/ATN-contact.vcf
   Content-Type: text/vcard; charset=utf-8
-  Content-Disposition: attachment; filename="ATN-contact.vcf"
+  Content-Disposition: inline; filename="ATN-contact.vcf"
   Cache-Control: public, max-age=300
   X-Content-Type-Options: nosniff
