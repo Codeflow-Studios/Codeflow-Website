@@ -207,6 +207,18 @@ try {
       return moving;
     });
 
+    await check(`${name}: roadside world passes the runner in depth`, async () => {
+      const before = await page.evaluate(() => window.__qaGame.getWorldMotionState());
+      await page.waitForTimeout(180);
+      const after = await page.evaluate(() => window.__qaGame.getWorldMotionState());
+      const moving = before.map((item, index) => ({ before: item, after: after[index] }))
+        .find(pair => pair.before.z > 25 && pair.before.z < 100 && pair.after.z < pair.before.z);
+      assert.ok(moving, 'no roadside world object remained inside the visible cycle');
+      assert.ok(moving.after.y > moving.before.y, `roadside object did not approach: ${JSON.stringify(moving)}`);
+      assert.ok(moving.after.scale > moving.before.scale, `roadside object did not grow: ${JSON.stringify(moving)}`);
+      return moving;
+    });
+
     await check(`${name}: responsive keyboard or real touch input`, async () => {
       if (touch) {
         await touchGesture(game, -65);
