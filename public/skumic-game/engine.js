@@ -2,9 +2,9 @@ export const ROUND_SECONDS = 45;
 
 // Authored timing estimates for the supplied excerpts, retained from the original game.
 // Adjust these against the recordings before describing them as measured beat maps.
-const configureLevel = (level, background, roadStyle) => ({
+const configureLevel = (level, background, horizon, roadStyle) => ({
   ...level, duration: ROUND_SECONDS, artist: 'SKUMIC', available: true,
-  background: `./assets/${background}`, roadStyle,
+  background: `./assets/${background}`, horizon, roadStyle,
   colors: { accent: roadStyle.accent, pickup: '#effe59', danger: '#ff4a24' },
   audioOffset: level.beatOffset, beatTimes: null,
   timing: { perfect: .08, good: .15, comboGraceBeats: 4, decayBeats: 2 },
@@ -13,10 +13,10 @@ const configureLevel = (level, background, roadStyle) => ({
   sections: level.boostWindows.map(([start, end]) => ({ type: 'ravy', start, end })),
 });
 export const LEVELS = [
-  configureLevel({ id: 'ca-va-peter', number: '01', title: 'ÇA VA PÉTER', subtitle: 'DE EERSTE DROP', difficulty: 'WARM-UP', src: './assets/ca-va-peter.mp3', bpm: 174, beatOffset: 0, sourceStart: 11.122483, boostWindows: [[11.0, 16.5], [22.1, 27.6], [33.1, 38.6]], speed: 1, density: 1, gullAfter: 17, doubleAfter: 22, mission: { speakers: 8, beats: 4 }, ranks: [2600, 1900, 1200] }, 'oostende.png', { dark: '38,48,54', light: '255,220,164', accent: '#233b51' }),
-  configureLevel({ id: 'project-ravy', number: '02', title: 'PROJECT RAVY 2.0', subtitle: 'RAVE OP DE DIJK', difficulty: 'TEMPO OMHOOG', src: './assets/project-ravy-2.mp3', bpm: 175, beatOffset: .012, sourceStart: 234, boostWindows: [[0, 5], [14, 19], [22, 27]], speed: 1.07, density: .94, gullAfter: 13, doubleAfter: 19, mission: { speakers: 10, beats: 5 }, ranks: [3200, 2350, 1500] }, 'background-ravy.png', { dark: '8,17,42', light: '79,225,255', accent: '#ff3fc5' }),
-  configureLevel({ id: 'puber', number: '03', title: 'PUBER', subtitle: 'GEEN REM MEER', difficulty: 'HARD', src: './assets/puber.mp3', bpm: 175, beatOffset: .312, sourceStart: 76, boostWindows: [[18, 23], [29, 34], [40, 45]], speed: 1.13, density: .88, gullAfter: 9, doubleAfter: 15, mission: { speakers: 11, beats: 6 }, ranks: [3800, 2800, 1800] }, 'background-puber.png', { dark: '31,20,19', light: '255,111,48', accent: '#ff4a24' }),
-  configureLevel({ id: 'manosfeer', number: '04', title: 'MANOSFEER', subtitle: 'FINALE AAN ZEE', difficulty: 'VOL GAS', src: './assets/manosfeer.mp3', bpm: 174, beatOffset: .184, sourceStart: 44, boostWindows: [[1, 6], [12, 17], [40, 45]], speed: 1.20, density: .82, gullAfter: 6, doubleAfter: 10, mission: { speakers: 12, beats: 7 }, ranks: [4500, 3300, 2200] }, 'background-manosfeer.png', { dark: '12,17,19', light: '255,201,73', accent: '#ffc83d' }),
+  configureLevel({ id: 'ca-va-peter', number: '01', title: 'ÇA VA PÉTER', subtitle: 'DE EERSTE DROP', difficulty: 'WARM-UP', src: './assets/ca-va-peter.mp3', bpm: 174, beatOffset: 0, sourceStart: 11.122483, boostWindows: [[11.0, 16.5], [22.1, 27.6], [33.1, 38.6]], speed: 1, density: 1, gullAfter: 17, doubleAfter: 22, mission: { speakers: 8, beats: 4 }, ranks: [2600, 1900, 1200] }, 'background-oostende-v2.png', .37, { dark: '38,48,54', light: '255,220,164', accent: '#233b51' }),
+  configureLevel({ id: 'project-ravy', number: '02', title: 'PROJECT RAVY 2.0', subtitle: 'RAVE OP DE DIJK', difficulty: 'TEMPO OMHOOG', src: './assets/project-ravy-2.mp3', bpm: 175, beatOffset: .012, sourceStart: 234, boostWindows: [[0, 5], [14, 19], [22, 27]], speed: 1.07, density: .94, gullAfter: 13, doubleAfter: 19, mission: { speakers: 10, beats: 5 }, ranks: [3200, 2350, 1500] }, 'background-ravy-v2.png', .375, { dark: '8,17,42', light: '79,225,255', accent: '#ff3fc5' }),
+  configureLevel({ id: 'puber', number: '03', title: 'PUBER', subtitle: 'GEEN REM MEER', difficulty: 'HARD', src: './assets/puber.mp3', bpm: 175, beatOffset: .312, sourceStart: 76, boostWindows: [[18, 23], [29, 34], [40, 45]], speed: 1.13, density: .88, gullAfter: 9, doubleAfter: 15, mission: { speakers: 11, beats: 6 }, ranks: [3800, 2800, 1800] }, 'background-puber-v2.png', .38, { dark: '31,20,19', light: '255,111,48', accent: '#ff4a24' }),
+  configureLevel({ id: 'manosfeer', number: '04', title: 'MANOSFEER', subtitle: 'FINALE AAN ZEE', difficulty: 'VOL GAS', src: './assets/manosfeer.mp3', bpm: 174, beatOffset: .184, sourceStart: 44, boostWindows: [[1, 6], [12, 17], [40, 45]], speed: 1.20, density: .82, gullAfter: 6, doubleAfter: 10, mission: { speakers: 12, beats: 7 }, ranks: [4500, 3300, 2200] }, 'background-manosfeer-v2.png', .405, { dark: '12,17,19', light: '255,201,73', accent: '#ffc83d' }),
 ];
 export let MUSIC = LEVELS[0];
 export let BPM = MUSIC.bpm;

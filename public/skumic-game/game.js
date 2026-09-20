@@ -73,7 +73,7 @@ for (const [name, source] of Object.entries({ runner: './assets/runner-atlas.png
 }
 function loadLevelArt(index) {
   if (!images.backgrounds[index]) {
-    const image = new Image(); image.onload = () => { backdropCache = null; };
+    const image = new Image(); image.onload = () => { backdropCache = null; rebuildRoadScanlines(); };
     image.src = LEVELS[index].background; images.backgrounds[index] = image;
   }
   if (!images.worldProps[index]) {
@@ -122,7 +122,7 @@ function selectLevel(index) {
   if (mode !== 'ready' && mode !== 'finished') return;
   selectedLevel = Math.max(0, Math.min(LEVELS.length - 1, index));
   const level = setEngineLevel(selectedLevel);
-  loadLevelArt(selectedLevel); backdropCache = null;
+  loadLevelArt(selectedLevel); backdropCache = null; rebuildRoadScanlines();
   best = Number(levelBests[level.id]) || 0;
   $('best').textContent = padScore(best);
   $('selected-best').textContent = best.toLocaleString('nl-BE');
@@ -150,8 +150,12 @@ function resize() {
   canvas.width = Math.round(width * ratio); canvas.height = Math.round(height * ratio);
   ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
   backdropCache = null;
+  rebuildRoadScanlines();
+}
+function rebuildRoadScanlines() {
   roadScanlines = [];
-  const horizon = height * .43, near = height * (width < 600 ? .79 : .97);
+  if (!width || !height) return;
+  const horizon = getHorizon(), near = height * (width < 600 ? .79 : .97);
   for (let y = Math.floor(horizon + 2); y < height; y += 3) {
     const depth = Math.max(0, (y - horizon) / (near - horizon));
     const z = 135 * (1 - Math.sqrt(depth));
@@ -370,9 +374,15 @@ async function shareScore() {
 
 function project(lane, z) {
   const p = Math.max(0, 1 - z / 135), depth = p * p;
-  const horizon = height * .43, near = height * (width < 600 ? .79 : .97);
+  const horizon = getHorizon(), near = height * (width < 600 ? .79 : .97);
   const halfRoad = width * (width < 600 ? .52 : .37);
   return { x: width / 2 + (lane - 1) * (8 + halfRoad * .67 * depth), y: horizon + depth * (near - horizon), scale: .14 + depth * .86, depth };
+}
+function getHorizon() {
+  const image = images.backgrounds[selectedLevel];
+  if (!image?.complete || !image.naturalWidth) return height * MUSIC.horizon;
+  const scale = Math.max(width / image.naturalWidth, height / image.naturalHeight) * 1.025;
+  return (height - image.naturalHeight * scale) * .5 + image.naturalHeight * MUSIC.horizon * scale;
 }
 function polygon(points, color) {
   ctx.fillStyle = color; ctx.beginPath(); points.forEach(([x, y], i) => i ? ctx.lineTo(x, y) : ctx.moveTo(x, y)); ctx.closePath(); ctx.fill();
@@ -391,7 +401,7 @@ function drawBackdrop(cameraX = 0, cameraY = 0) {
     } else {
       const gradient = paint.createLinearGradient(0, 0, 0, height); gradient.addColorStop(0, '#ef6960'); gradient.addColorStop(.4, '#eeab83'); gradient.addColorStop(1, '#273941'); paint.fillStyle = gradient; paint.fillRect(0, 0, width, height);
     }
-    const horizon = height * .43;
+    const horizon = getHorizon();
     const roadShade = paint.createLinearGradient(0, horizon, 0, height); roadShade.addColorStop(0, 'rgba(15,20,24,0)'); roadShade.addColorStop(1, 'rgba(15,20,24,.22)');
     paint.fillStyle = roadShade; paint.fillRect(0, horizon, width, height - horizon);
     for (const lane of [.5, 1.5]) {
@@ -716,3 +726,4 @@ export function getGameState() { return { mode, selectedLevel, selectedCharacter
 export function getCameraState() { return { x: camera.x, y: camera.y }; }
 export function getRoadMotionState() { return roadMarks.map(mark => { const state = roadMarkState(mark); return { id: state.id, z: state.z, y: state.near.y, scale: state.near.scale }; }); }
 export function getWorldMotionState() { return worldItems.map(item => { const state = worldItemState(item); return { id: state.id, type: state.type, z: state.z, y: state.pos.y, scale: state.pos.scale }; }); }
+export function getPerspectiveState() { const far = project(1, 135), near = project(1, 0); return { horizon: getHorizon(), width, height, sourceHorizon: MUSIC.horizon, far, near }; }
