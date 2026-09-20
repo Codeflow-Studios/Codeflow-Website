@@ -23,39 +23,6 @@ const roadMarks = Array.from({ length: 42 }, (_, index) => ({
   width: .7 + (index % 4) * .4,
   light: index % 5 === 0,
 }));
-const WORLD_CYCLE = 250;
-const WORLD_ATLASES = ['./assets/world-oostende.png', './assets/world-ravy.png', './assets/world-puber.png', './assets/world-manosfeer.png'];
-const WORLD_LANES = [
-  { left: -.62, right: 2.62 },
-  { left: -.68, right: 2.68 },
-  { left: -.66, right: 2.66 },
-  { left: -.64, right: 2.64 },
-];
-const WORLD_PROP_SCALE = [
-  [1.12, .98, .94, .9],
-  [1.08, .96, .94, .98],
-  [.88, .98, .96, 1.05],
-  [1.08, .92, 1, .96],
-];
-const WORLD_PROP_SEQUENCES = [
-  [0, 1, 2, 3],
-  [0, 1, 3, 1],
-  [0, 2, 3, 1],
-  [0, 2, 3, 0],
-];
-const worldItems = Array.from({ length: 8 }, (_, index) => {
-  const side = index % 2 ? 1 : -1;
-  const station = Math.floor(index / 2);
-  return {
-    id: index,
-    side,
-    offset: 14 + station * (WORLD_CYCLE / 4) + (side > 0 ? 26 : 0) + (station % 2 ? 3 : 0),
-    variant: index % 4,
-    type: `prop-${index % 4}`,
-    size: .86 + (index % 3) * .08,
-  };
-});
-const drawWorldObjects = [];
 const levelBests = {};
 const levelRanks = {};
 try { Object.assign(levelBests, JSON.parse(localStorage.getItem('skumic-run-level-bests') || '{}')); } catch {}
@@ -67,7 +34,7 @@ const touchDevice = navigator.maxTouchPoints > 0 || matchMedia('(pointer: coarse
 document.body.classList.toggle('touch-device', touchDevice);
 motionPreference.addEventListener('change', event => { reducedMotion = event.matches; particles.length = 0; });
 try { tutorialSeen = localStorage.getItem('skumic-run-tutorial-v2') === 'seen'; mutedByChoice = localStorage.getItem('skumic-run-muted') === 'true'; } catch {}
-const images = { backgrounds: [], worldProps: [] };
+const images = { backgrounds: [] };
 for (const [name, source] of Object.entries({ runner: './assets/runner-atlas.png', objects: './assets/objects.png', deck: './assets/skumic-deck.png' })) {
   images[name] = new Image(); images[name].src = source;
 }
@@ -75,9 +42,6 @@ function loadLevelArt(index) {
   if (!images.backgrounds[index]) {
     const image = new Image(); image.onload = () => { backdropCache = null; rebuildRoadScanlines(); };
     image.src = LEVELS[index].background; images.backgrounds[index] = image;
-  }
-  if (!images.worldProps[index]) {
-    const image = new Image(); image.src = WORLD_ATLASES[index]; images.worldProps[index] = image;
   }
   if (!roadTextures[index]) roadTextures[index] = roadTexture(LEVELS[index].roadStyle, 9187 + index * 733);
 }
@@ -422,51 +386,6 @@ function drawMovingRoadLayer() {
   ctx.restore();
   drawRoadSurfaceMotion();
   drawLaneGuides();
-  drawWorldLayer();
-}
-function worldItemState(item, distance = model.distance) {
-  const travel = reducedMotion ? 0 : distance;
-  const z = 3 + ((item.offset - travel) % WORLD_CYCLE + WORLD_CYCLE) % WORLD_CYCLE;
-  const sprite = WORLD_PROP_SEQUENCES[selectedLevel][item.variant];
-  return { ...item, sprite, z, pos: project(worldLane(item), z) };
-}
-function worldLane(item) {
-  const lanes = width < 600 ? { left: -.34, right: 2.34 } : WORLD_LANES[selectedLevel];
-  const edgeOffset = (item.id % 3) * (width < 600 ? .025 : .06);
-  return item.side < 0 ? lanes.left - edgeOffset : lanes.right + edgeOffset;
-}
-function drawWorldLayer() {
-  const atlas = images.worldProps[selectedLevel];
-  if (!atlas?.complete || !atlas.naturalWidth) return;
-  drawWorldObjects.length = 0;
-  for (const item of worldItems) {
-    const state = worldItemState(item);
-    if (state.z < 145) drawWorldObjects.push(state);
-  }
-  drawWorldObjects.sort((first, second) => second.z - first.z);
-  for (const item of drawWorldObjects) drawWorldItem(item);
-}
-function drawWorldItem(item) {
-  const { pos } = item;
-  const depth = pos.depth;
-  if (depth <= .008) return;
-  const atlas = images.worldProps[selectedLevel];
-  const cellWidth = atlas.naturalWidth / 2, cellHeight = atlas.naturalHeight / 2;
-  const sourceX = (item.sprite % 2) * cellWidth, sourceY = Math.floor(item.sprite / 2) * cellHeight;
-  const propScale = WORLD_PROP_SCALE[selectedLevel][item.sprite];
-  const drawHeight = (width < 600 ? 116 : 180) * pos.scale * item.size * propScale;
-  const drawWidth = drawHeight * cellWidth / cellHeight;
-  const ground = pos.y + 2;
-  const fade = Math.min(1, Math.max(0, (depth - .008) * 12));
-  if (fade <= 0) return;
-  ctx.save();
-  ctx.globalAlpha = .28 * fade;
-  ctx.fillStyle = '#071017';
-  ctx.beginPath(); ctx.ellipse(pos.x, ground + 1, drawWidth * .3, Math.max(1, drawHeight * .04), 0, 0, Math.PI * 2); ctx.fill();
-  ctx.globalAlpha = fade * .9;
-  ctx.filter = ['saturate(.82) contrast(.92) sepia(.08)', 'saturate(1.08) contrast(1.02)', 'sepia(.12) saturate(.95)', 'saturate(.82) contrast(.95)'][selectedLevel];
-  ctx.drawImage(atlas, sourceX, sourceY, cellWidth, cellHeight, pos.x - drawWidth / 2, ground - drawHeight, drawWidth, drawHeight);
-  ctx.restore();
 }
 function roadMarkState(mark, distance = model.distance) {
   const travel = reducedMotion ? 0 : distance;
@@ -769,5 +688,4 @@ export { model, audio, start, pause, resume, selectLevel, selectCharacter, showL
 export function getGameState() { return { mode, selectedLevel, selectedCharacter, reducedMotion, countdownLeft }; }
 export function getCameraState() { return { x: camera.x, y: camera.y }; }
 export function getRoadMotionState() { return roadMarks.map(mark => { const state = roadMarkState(mark); return { id: state.id, z: state.z, y: state.near.y, scale: state.near.scale }; }); }
-export function getWorldMotionState() { return worldItems.map(item => { const state = worldItemState(item); return { id: state.id, type: state.type, z: state.z, y: state.pos.y, scale: state.pos.scale }; }); }
 export function getPerspectiveState() { const far = project(1, 135), near = project(1, 0); return { horizon: getHorizon(), width, height, sourceHorizon: MUSIC.horizon, far, near }; }

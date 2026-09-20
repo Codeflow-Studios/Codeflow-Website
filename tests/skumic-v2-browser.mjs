@@ -137,7 +137,6 @@ try {
         assert.deepEqual(portraitFrame, { background: 'rgba(0, 0, 0, 0)', border: 'none', overflow: 'visible', overlay: 'none' });
       }
       assert.equal(game.requests.some(request => /background-(ravy|puber|manosfeer)-v2\./.test(request)), false, 'unused level backgrounds loaded at first paint');
-      assert.equal(game.requests.some(request => /world-(ravy|puber|manosfeer)\./.test(request)), false, 'unused world props loaded at first paint');
       await screenshot(game, 'selection');
     });
 
@@ -205,18 +204,6 @@ try {
       assert.ok(moving, 'no road detail remained inside the visible cycle');
       assert.ok(moving.after.y > moving.before.y, `road detail did not approach: ${JSON.stringify(moving)}`);
       assert.ok(moving.after.scale > moving.before.scale, `road detail did not grow: ${JSON.stringify(moving)}`);
-      return moving;
-    });
-
-    await check(`${name}: roadside world passes the runner in depth`, async () => {
-      const before = await page.evaluate(() => window.__qaGame.getWorldMotionState());
-      await page.waitForTimeout(180);
-      const after = await page.evaluate(() => window.__qaGame.getWorldMotionState());
-      const moving = before.map((item, index) => ({ before: item, after: after[index] }))
-        .find(pair => pair.before.z > 25 && pair.before.z < 100 && pair.after.z < pair.before.z);
-      assert.ok(moving, 'no roadside world object remained inside the visible cycle');
-      assert.ok(moving.after.y > moving.before.y, `roadside object did not approach: ${JSON.stringify(moving)}`);
-      assert.ok(moving.after.scale > moving.before.scale, `roadside object did not grow: ${JSON.stringify(moving)}`);
       return moving;
     });
 
@@ -443,7 +430,6 @@ try {
   }
 
   const tracks = await openGame('tracks', { width: 1280, height: 800 });
-  const worldAssets = ['world-oostende.png', 'world-ravy.png', 'world-puber.png', 'world-manosfeer.png'];
   const backgroundAssets = ['background-oostende-v2.png', 'background-ravy-v2.png', 'background-puber-v2.png', 'background-manosfeer-v2.png'];
   for (let index = 0; index < 4; index++) {
     await check(`track ${index + 1}: supplied recording, artwork and selectable runner`, async () => {
@@ -465,7 +451,6 @@ try {
       assert.ok(playback.cachedExcerpts <= 2);
       assert.ok(playback.objects > 0, 'normal spawning did not run');
       assert.ok(tracks.requests.some(request => request.includes(backgroundAssets[index])), `level ${index + 1} synchronized background was not loaded`);
-      assert.ok(tracks.requests.some(request => request.includes(worldAssets[index])), `level ${index + 1} world atlas was not loaded`);
       const perspective = await page.evaluate(() => window.__qaGame.getPerspectiveState());
       assert.ok(Math.abs(perspective.far.y - perspective.horizon) < .01, 'road does not meet the background horizon');
       assert.ok(perspective.horizon > perspective.height * .3 && perspective.horizon < perspective.height * .5, 'background horizon falls outside the playable composition');
