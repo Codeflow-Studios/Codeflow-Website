@@ -7,8 +7,8 @@ De bestaande Canvas 2D-game is uitgebreid binnen de bestaande Codeflow-site (Rea
 - De speler is circa 30% groter; op lage schermen begrenst de schermhoogte de grootte.
 - De weg heeft een perspectivische materiaallaag met voegen, scheuren en kleine reflecties. Deze details bewegen naar de speler, versnellen en groeien richting de voorgrond, terwijl de achtergrond en baan uitgelijnd blijven.
 - Vier nieuwe levelachtergronden hebben elk een gekalibreerd verdwijnpunt. De spelcamera rekent dat punt door dezelfde uitsnede als de afbeelding, zodat weg, props en obstakels op desktop en mobiel uit één horizon komen.
-- Twee taps toelopende wegvoegen scheiden de drie banen zonder losse arcade-strepen. Pickups en obstakels hebben een grotere, diepte-afhankelijke weergave zodat ze ook verderop leesbaar blijven.
-- Elk level heeft echte transparante props die bij de map horen: zeedijkmeubilair, neon havenmateriaal, skate/eventmateriaal en stormbestendige kustobjecten. Ze gebruiken dezelfde horizon en perspectieflijnen als de achtergrond, komen uit het verdwijnpunt naar voren en passeren de speler.
+- Drie afzonderlijke wegvlakken, twee taps toelopende voegen en korte bewegende wegmarkeringen maken links, midden en rechts direct leesbaar. Pickups en obstakels hebben een grotere, diepte-afhankelijke weergave zodat ze ook verderop leesbaar blijven.
+- Elk level heeft transparante props die bij de map horen: zeedijkmeubilair, neon havenmateriaal, skate/eventmateriaal en stormbestendige kustobjecten. Ze staan buiten de speelbanen, zijn per wereld ingekleurd en gebruiken dezelfde horizon en perspectieflijnen als de achtergrond.
 - Speakers en decks hebben een lime markering, schaduw en subtiele beatpuls. Gevaren behouden hun rood/oranje silhouet en krijgen een waarschuwingsteken.
 - Snellere lane-wissels, een sprong van 560 ms en een inputbuffer van 120 ms voor de landing. Een korte landingreactie, stof en spelertrail geven feedback.
 - Een transparante countdown van drie beats; score, muziek en speeltijd beginnen daarna. De eerste run toont drie seconden een passende toetsenbord- of touchuitleg.

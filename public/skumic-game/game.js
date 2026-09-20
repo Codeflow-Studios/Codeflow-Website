@@ -23,13 +23,13 @@ const roadMarks = Array.from({ length: 42 }, (_, index) => ({
   width: .7 + (index % 4) * .4,
   light: index % 5 === 0,
 }));
-const WORLD_CYCLE = 220;
+const WORLD_CYCLE = 250;
 const WORLD_ATLASES = ['./assets/world-oostende.png', './assets/world-ravy.png', './assets/world-puber.png', './assets/world-manosfeer.png'];
 const WORLD_LANES = [
-  { left: -.32, right: 2.38 },
-  { left: -.46, right: 2.46 },
-  { left: -.44, right: 2.44 },
-  { left: -.40, right: 2.40 },
+  { left: -.62, right: 2.62 },
+  { left: -.68, right: 2.68 },
+  { left: -.66, right: 2.66 },
+  { left: -.64, right: 2.64 },
 ];
 const WORLD_PROP_SCALE = [
   [1.12, .98, .94, .9],
@@ -43,13 +43,13 @@ const WORLD_PROP_SEQUENCES = [
   [0, 2, 3, 1],
   [0, 2, 3, 0],
 ];
-const worldItems = Array.from({ length: 12 }, (_, index) => {
+const worldItems = Array.from({ length: 8 }, (_, index) => {
   const side = index % 2 ? 1 : -1;
   const station = Math.floor(index / 2);
   return {
     id: index,
     side,
-    offset: 10 + station * (WORLD_CYCLE / 6) + (side > 0 ? 16 : 0) + (station % 2 ? 2 : 0),
+    offset: 14 + station * (WORLD_CYCLE / 4) + (side > 0 ? 26 : 0) + (station % 2 ? 3 : 0),
     variant: index % 4,
     type: `prop-${index % 4}`,
     size: .86 + (index % 3) * .08,
@@ -411,7 +411,7 @@ function drawBackdrop(cameraX = 0, cameraY = 0) {
   }
 }
 function drawMovingRoadLayer() {
-  if (mode === 'ready' || mode === 'starting') return;
+  if (mode === 'ready' || mode === 'starting') { drawLaneGuides(true); return; }
   const texture = roadTextures[selectedLevel];
   ctx.save();
   ctx.globalAlpha = .34;
@@ -431,7 +431,7 @@ function worldItemState(item, distance = model.distance) {
   return { ...item, sprite, z, pos: project(worldLane(item), z) };
 }
 function worldLane(item) {
-  const lanes = width < 600 ? { left: -.08, right: 2.08 } : WORLD_LANES[selectedLevel];
+  const lanes = width < 600 ? { left: -.34, right: 2.34 } : WORLD_LANES[selectedLevel];
   const edgeOffset = (item.id % 3) * (width < 600 ? .025 : .06);
   return item.side < 0 ? lanes.left - edgeOffset : lanes.right + edgeOffset;
 }
@@ -454,16 +454,17 @@ function drawWorldItem(item) {
   const cellWidth = atlas.naturalWidth / 2, cellHeight = atlas.naturalHeight / 2;
   const sourceX = (item.sprite % 2) * cellWidth, sourceY = Math.floor(item.sprite / 2) * cellHeight;
   const propScale = WORLD_PROP_SCALE[selectedLevel][item.sprite];
-  const drawHeight = (width < 600 ? 146 : 220) * pos.scale * item.size * propScale;
+  const drawHeight = (width < 600 ? 116 : 180) * pos.scale * item.size * propScale;
   const drawWidth = drawHeight * cellWidth / cellHeight;
   const ground = pos.y + 2;
   const fade = Math.min(1, Math.max(0, (depth - .008) * 12));
   if (fade <= 0) return;
   ctx.save();
-  ctx.globalAlpha = .15 * fade;
+  ctx.globalAlpha = .28 * fade;
   ctx.fillStyle = '#071017';
-  ctx.beginPath(); ctx.ellipse(pos.x, ground + 1, drawWidth * .24, Math.max(1, drawHeight * .028), 0, 0, Math.PI * 2); ctx.fill();
-  ctx.globalAlpha = fade;
+  ctx.beginPath(); ctx.ellipse(pos.x, ground + 1, drawWidth * .3, Math.max(1, drawHeight * .04), 0, 0, Math.PI * 2); ctx.fill();
+  ctx.globalAlpha = fade * .9;
+  ctx.filter = ['saturate(.82) contrast(.92) sepia(.08)', 'saturate(1.08) contrast(1.02)', 'sepia(.12) saturate(.95)', 'saturate(.82) contrast(.95)'][selectedLevel];
   ctx.drawImage(atlas, sourceX, sourceY, cellWidth, cellHeight, pos.x - drawWidth / 2, ground - drawHeight, drawWidth, drawHeight);
   ctx.restore();
 }
@@ -489,23 +490,49 @@ function drawRoadSurfaceMotion() {
   }
   ctx.restore();
 }
-function drawLaneGuides() {
+function drawLaneGuides(idle = false) {
   const farZ = 129;
   const style = MUSIC.roadStyle;
+  const outerLane = ctx.createLinearGradient(0, getHorizon(), 0, height);
+  outerLane.addColorStop(0, `rgba(${style.dark},0)`);
+  outerLane.addColorStop(.35, `rgba(${style.dark},.035)`);
+  outerLane.addColorStop(1, `rgba(${style.dark},.15)`);
+  const middleLane = ctx.createLinearGradient(0, getHorizon(), 0, height);
+  middleLane.addColorStop(0, `rgba(${style.light},0)`);
+  middleLane.addColorStop(.4, `rgba(${style.light},.025)`);
+  middleLane.addColorStop(1, `rgba(${style.light},.075)`);
+  for (let lane = 0; lane < 3; lane++) {
+    const farLeft = project(lane - .5, farZ), farRight = project(lane + .5, farZ);
+    const nearLeft = project(lane - .5, 0), nearRight = project(lane + .5, 0);
+    polygon([[farLeft.x, farLeft.y], [nearLeft.x, nearLeft.y], [nearRight.x, nearRight.y], [farRight.x, farRight.y]], lane === 1 ? middleLane : outerLane);
+  }
   const shadow = ctx.createLinearGradient(0, getHorizon(), 0, height);
   shadow.addColorStop(0, `rgba(${style.dark},0)`);
-  shadow.addColorStop(.3, `rgba(${style.dark},.16)`);
-  shadow.addColorStop(1, `rgba(${style.dark},.52)`);
+  shadow.addColorStop(.3, `rgba(${style.dark},.22)`);
+  shadow.addColorStop(1, `rgba(${style.dark},.72)`);
   const edge = ctx.createLinearGradient(0, getHorizon(), 0, height);
   edge.addColorStop(0, `rgba(${style.light},0)`);
-  edge.addColorStop(.25, `rgba(${style.light},.16)`);
-  edge.addColorStop(1, `rgba(${style.light},.48)`);
+  edge.addColorStop(.25, `rgba(${style.light},.22)`);
+  edge.addColorStop(1, `rgba(${style.light},.66)`);
   for (const lane of [.5, 1.5]) {
     const far = project(lane, farZ), near = project(lane, 0);
-    const wide = width < 600 ? 4 : 5.5;
+    const wide = width < 600 ? 5 : 7;
     polygon([[far.x - .35, far.y], [near.x - wide, near.y], [near.x + wide, near.y], [far.x + .35, far.y]], shadow);
-    polygon([[far.x - .12, far.y], [near.x - .8, near.y], [near.x + .8, near.y], [far.x + .12, far.y]], edge);
+    polygon([[far.x - .14, far.y], [near.x - 1.15, near.y], [near.x + 1.15, near.y], [far.x + .14, far.y]], edge);
   }
+  const travel = idle || reducedMotion ? 0 : model.distance;
+  ctx.save(); ctx.lineCap = 'round';
+  for (const lane of [.5, 1.5]) {
+    for (let index = 0; index < 9; index++) {
+      const z = 5 + ((index * 14 - travel) % 124 + 124) % 124;
+      const near = project(lane, z), far = project(lane, Math.min(132, z + 5.5));
+      if (near.depth <= .012) continue;
+      ctx.strokeStyle = `rgba(${style.light},${.2 + near.depth * .48})`;
+      ctx.lineWidth = Math.max(.7, near.depth * (width < 600 ? 3 : 4.5));
+      ctx.beginPath(); ctx.moveTo(near.x, near.y); ctx.lineTo(far.x, far.y); ctx.stroke();
+    }
+  }
+  ctx.restore();
 }
 function drawRavyLight() {
   if (!model.boost || ['ready', 'starting'].includes(mode)) return;
