@@ -23,15 +23,36 @@ const roadMarks = Array.from({ length: 42 }, (_, index) => ({
   width: .7 + (index % 4) * .4,
   light: index % 5 === 0,
 }));
-const WORLD_CYCLE = 154;
-const worldItems = Array.from({ length: 30 }, (_, index) => {
-  const types = ['lamp', 'post', 'post', 'planter', 'post', 'facade', 'sign', 'post', 'lamp', 'post'];
+const WORLD_CYCLE = 220;
+const WORLD_ATLASES = ['./assets/world-oostende.png', './assets/world-ravy.png', './assets/world-puber.png', './assets/world-manosfeer.png'];
+const WORLD_LANES = [
+  { left: -.32, right: 2.38 },
+  { left: -.46, right: 2.46 },
+  { left: -.44, right: 2.44 },
+  { left: -.40, right: 2.40 },
+];
+const WORLD_PROP_SCALE = [
+  [1.12, .98, .94, .9],
+  [1.08, .96, .94, .98],
+  [.88, .98, .96, 1.05],
+  [1.08, .92, 1, .96],
+];
+const WORLD_PROP_SEQUENCES = [
+  [0, 1, 2, 3],
+  [0, 1, 3, 1],
+  [0, 2, 3, 1],
+  [0, 2, 3, 0],
+];
+const worldItems = Array.from({ length: 12 }, (_, index) => {
+  const side = index % 2 ? 1 : -1;
+  const station = Math.floor(index / 2);
   return {
     id: index,
-    side: index % 2 ? 1 : -1,
-    offset: 8 + ((index * 29.7 + index * index * 4.1) % WORLD_CYCLE),
-    type: types[index % types.length],
-    size: .82 + (index % 4) * .1,
+    side,
+    offset: 10 + station * (WORLD_CYCLE / 6) + (side > 0 ? 16 : 0) + (station % 2 ? 2 : 0),
+    variant: index % 4,
+    type: `prop-${index % 4}`,
+    size: .86 + (index % 3) * .08,
   };
 });
 const drawWorldObjects = [];
@@ -46,7 +67,7 @@ const touchDevice = navigator.maxTouchPoints > 0 || matchMedia('(pointer: coarse
 document.body.classList.toggle('touch-device', touchDevice);
 motionPreference.addEventListener('change', event => { reducedMotion = event.matches; particles.length = 0; });
 try { tutorialSeen = localStorage.getItem('skumic-run-tutorial-v2') === 'seen'; mutedByChoice = localStorage.getItem('skumic-run-muted') === 'true'; } catch {}
-const images = { backgrounds: [] };
+const images = { backgrounds: [], worldProps: [] };
 for (const [name, source] of Object.entries({ runner: './assets/runner-atlas.png', objects: './assets/objects.png', deck: './assets/skumic-deck.png' })) {
   images[name] = new Image(); images[name].src = source;
 }
@@ -54,6 +75,9 @@ function loadLevelArt(index) {
   if (!images.backgrounds[index]) {
     const image = new Image(); image.onload = () => { backdropCache = null; };
     image.src = LEVELS[index].background; images.backgrounds[index] = image;
+  }
+  if (!images.worldProps[index]) {
+    const image = new Image(); image.src = WORLD_ATLASES[index]; images.worldProps[index] = image;
   }
   if (!roadTextures[index]) roadTextures[index] = roadTexture(LEVELS[index].roadStyle, 9187 + index * 733);
 }
@@ -383,7 +407,6 @@ function drawBackdrop(cameraX = 0, cameraY = 0) {
 }
 function drawMovingRoadLayer() {
   if (mode === 'ready' || mode === 'starting') return;
-  drawWorldLayer();
   const texture = roadTextures[selectedLevel];
   ctx.save();
   ctx.globalAlpha = .34;
@@ -393,15 +416,22 @@ function drawMovingRoadLayer() {
   }
   ctx.restore();
   drawRoadSurfaceMotion();
-  drawPassingScenery();
+  drawWorldLayer();
 }
 function worldItemState(item, distance = model.distance) {
   const travel = reducedMotion ? 0 : distance;
   const z = 3 + ((item.offset - travel) % WORLD_CYCLE + WORLD_CYCLE) % WORLD_CYCLE;
-  return { ...item, z, pos: project(worldLane(item), z) };
+  const sprite = WORLD_PROP_SEQUENCES[selectedLevel][item.variant];
+  return { ...item, sprite, z, pos: project(worldLane(item), z) };
 }
-function worldLane(item) { return item.side < 0 ? -1.02 - (item.id % 3) * .16 : 3.02 + (item.id % 3) * .16; }
+function worldLane(item) {
+  const lanes = width < 600 ? { left: -.08, right: 2.08 } : WORLD_LANES[selectedLevel];
+  const edgeOffset = (item.id % 3) * (width < 600 ? .025 : .06);
+  return item.side < 0 ? lanes.left - edgeOffset : lanes.right + edgeOffset;
+}
 function drawWorldLayer() {
+  const atlas = images.worldProps[selectedLevel];
+  if (!atlas?.complete || !atlas.naturalWidth) return;
   drawWorldObjects.length = 0;
   for (const item of worldItems) {
     const state = worldItemState(item);
@@ -411,64 +441,24 @@ function drawWorldLayer() {
   for (const item of drawWorldObjects) drawWorldItem(item);
 }
 function drawWorldItem(item) {
-  const { pos, side, type } = item;
-  const depth = pos.depth, accent = MUSIC.roadStyle.accent;
+  const { pos } = item;
+  const depth = pos.depth;
   if (depth <= .008) return;
-  const sideSign = side < 0 ? -1 : 1;
+  const atlas = images.worldProps[selectedLevel];
+  const cellWidth = atlas.naturalWidth / 2, cellHeight = atlas.naturalHeight / 2;
+  const sourceX = (item.sprite % 2) * cellWidth, sourceY = Math.floor(item.sprite / 2) * cellHeight;
+  const propScale = WORLD_PROP_SCALE[selectedLevel][item.sprite];
+  const drawHeight = (width < 600 ? 146 : 220) * pos.scale * item.size * propScale;
+  const drawWidth = drawHeight * cellWidth / cellHeight;
   const ground = pos.y + 2;
-  const itemSize = item.size || 1;
+  const fade = Math.min(1, Math.max(0, (depth - .008) * 12));
+  if (fade <= 0) return;
   ctx.save();
-  ctx.lineCap = 'round';
-  ctx.fillStyle = `rgba(5,13,18,${.08 + depth * .2})`;
-  ctx.beginPath(); ctx.ellipse(pos.x, ground + 1, (4 + depth * 18) * itemSize, (1 + depth * 3.5) * itemSize, 0, 0, Math.PI * 2); ctx.fill();
-  if (type === 'facade') {
-    const buildingWidth = (22 + depth * 72) * itemSize, buildingHeight = (20 + depth * 132) * itemSize;
-    const x = pos.x + sideSign * buildingWidth * .22;
-    ctx.fillStyle = `rgba(13,22,28,${.18 + depth * .3})`;
-    ctx.fillRect(x - buildingWidth / 2, ground - buildingHeight, buildingWidth, buildingHeight);
-    ctx.fillStyle = `rgba(255,247,229,${.04 + depth * .10})`;
-    const columns = Math.max(1, Math.floor(buildingWidth / 15)), rows = Math.max(1, Math.floor(buildingHeight / 22));
-    for (let row = 0; row < rows; row++) for (let column = 0; column < columns; column++) {
-      if ((row + column + item.id) % 4 === 0) continue;
-      const windowSize = Math.max(.8, 1.2 + depth * 2.7);
-      const windowX = x - buildingWidth * .36 + column * buildingWidth / columns;
-      const windowY = ground - buildingHeight + 10 + row * buildingHeight / rows;
-      ctx.fillRect(windowX, windowY, windowSize, windowSize * 1.8);
-    }
-  } else if (type === 'lamp') {
-    const poleHeight = (25 + depth * 145) * itemSize, poleWidth = Math.max(.8, (1 + depth * 2.5) * itemSize);
-    ctx.strokeStyle = `rgba(8,15,20,${.38 + depth * .42})`; ctx.lineWidth = poleWidth;
-    ctx.beginPath(); ctx.moveTo(pos.x, ground); ctx.lineTo(pos.x, ground - poleHeight); ctx.lineTo(pos.x + sideSign * poleHeight * .09, ground - poleHeight); ctx.stroke();
-    ctx.fillStyle = `rgba(255,218,119,${.3 + depth * .55})`;
-    ctx.beginPath(); ctx.arc(pos.x + sideSign * poleHeight * .1, ground - poleHeight, Math.max(1, 1.5 + depth * 4), 0, Math.PI * 2); ctx.fill();
-  } else if (type === 'planter') {
-    const boxWidth = (12 + depth * 48) * itemSize, boxHeight = (5 + depth * 15) * itemSize;
-    const x = pos.x + sideSign * boxWidth * .16;
-    ctx.fillStyle = `rgba(18,27,31,${.35 + depth * .4})`; ctx.fillRect(x - boxWidth / 2, ground - boxHeight, boxWidth, boxHeight);
-    ctx.fillStyle = `rgba(${MUSIC.roadStyle.light},${.12 + depth * .3})`;
-    ctx.beginPath(); ctx.ellipse(x, ground - boxHeight - depth * 15, boxWidth * .38, 3 + depth * 12, 0, 0, Math.PI * 2); ctx.fill();
-    ctx.strokeStyle = `rgba(30,65,42,${.4 + depth * .4})`; ctx.lineWidth = Math.max(1, depth * 2);
-    for (let branch = -1; branch <= 1; branch++) { ctx.beginPath(); ctx.moveTo(x + branch * boxWidth * .18, ground - boxHeight); ctx.lineTo(x + branch * boxWidth * .28, ground - boxHeight - depth * 20); ctx.stroke(); }
-  } else if (type === 'sign') {
-    const poleHeight = (14 + depth * 78) * itemSize, signWidth = (20 + depth * 45) * itemSize, signHeight = (7 + depth * 15) * itemSize;
-    const x = pos.x + sideSign * signWidth * .12;
-    ctx.strokeStyle = `rgba(9,16,21,${.5 + depth * .35})`; ctx.lineWidth = Math.max(1, depth * 2.2);
-    ctx.beginPath(); ctx.moveTo(x, ground); ctx.lineTo(x, ground - poleHeight); ctx.stroke();
-    ctx.fillStyle = `rgba(239,254,89,${.62 + depth * .3})`; ctx.fillRect(x - signWidth / 2, ground - poleHeight - signHeight, signWidth, signHeight);
-    if (depth > .12) { ctx.fillStyle = '#10171b'; ctx.font = `900 ${Math.max(3, depth * 9)}px Arial`; ctx.textAlign = 'center'; ctx.fillText(item.id % 2 ? 'BEAT' : 'OOST', x, ground - poleHeight - signHeight * .3); }
-  } else {
-    const postHeight = (7 + depth * 48) * itemSize, postWidth = Math.max(1, (1.5 + depth * 4) * itemSize);
-    ctx.strokeStyle = `rgba(225,211,184,${.18 + depth * .42})`; ctx.lineWidth = postWidth;
-    ctx.beginPath(); ctx.moveTo(pos.x, ground); ctx.lineTo(pos.x, ground - postHeight); ctx.stroke();
-    ctx.fillStyle = accent; ctx.globalAlpha = .22 + depth * .5;
-    ctx.fillRect(pos.x - postWidth * 1.3, ground - postHeight - postWidth * 1.5, postWidth * 2.6, postWidth * 1.4);
-    ctx.globalAlpha = 1;
-    if (depth > .08) {
-      const next = project(worldLane(item), item.z + 10);
-      ctx.strokeStyle = `rgba(225,211,184,${.08 + depth * .22})`; ctx.lineWidth = Math.max(.5, depth * 1.4);
-      for (const lift of [.38, .62]) { ctx.beginPath(); ctx.moveTo(pos.x, ground - postHeight * lift); ctx.lineTo(next.x, next.y - (postHeight * .7) * lift); ctx.stroke(); }
-    }
-  }
+  ctx.globalAlpha = .15 * fade;
+  ctx.fillStyle = '#071017';
+  ctx.beginPath(); ctx.ellipse(pos.x, ground + 1, drawWidth * .24, Math.max(1, drawHeight * .028), 0, 0, Math.PI * 2); ctx.fill();
+  ctx.globalAlpha = fade;
+  ctx.drawImage(atlas, sourceX, sourceY, cellWidth, cellHeight, pos.x - drawWidth / 2, ground - drawHeight, drawWidth, drawHeight);
   ctx.restore();
 }
 function roadMarkState(mark, distance = model.distance) {
@@ -492,19 +482,6 @@ function drawRoadSurfaceMotion() {
     }
   }
   ctx.restore();
-}
-function drawPassingScenery() {
-  const style = MUSIC.roadStyle, travel = reducedMotion ? 0 : model.distance;
-  for (let i = 0; i < 9; i++) {
-    const z = 7 + ((i * 19 + 122 - travel) % 115 + 115) % 115;
-    const side = i % 2 ? -.82 : 2.82, pos = project(side, z), size = 1.2 + pos.depth * 18;
-    ctx.fillStyle = `rgba(8,15,20,${.12 + pos.depth * .34})`;
-    ctx.beginPath(); ctx.ellipse(pos.x, pos.y, size * 1.15, size * .28, 0, 0, Math.PI * 2); ctx.fill();
-    ctx.fillStyle = style.accent;
-    ctx.globalAlpha = .3 + pos.depth * .62;
-    ctx.beginPath(); ctx.ellipse(pos.x, pos.y - size * .08, size * .42, size * .13, 0, 0, Math.PI * 2); ctx.fill();
-    ctx.globalAlpha = 1;
-  }
 }
 function drawRavyLight() {
   if (!model.boost || ['ready', 'starting'].includes(mode)) return;

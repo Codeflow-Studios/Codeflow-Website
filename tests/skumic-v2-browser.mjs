@@ -137,6 +137,7 @@ try {
         assert.deepEqual(portraitFrame, { background: 'rgba(0, 0, 0, 0)', border: 'none', overflow: 'visible', overlay: 'none' });
       }
       assert.equal(game.requests.some(request => /background-(ravy|puber|manosfeer)\./.test(request)), false, 'unused level backgrounds loaded at first paint');
+      assert.equal(game.requests.some(request => /world-(ravy|puber|manosfeer)\./.test(request)), false, 'unused world props loaded at first paint');
       await screenshot(game, 'selection');
     });
 
@@ -442,6 +443,7 @@ try {
   }
 
   const tracks = await openGame('tracks', { width: 1280, height: 800 });
+  const worldAssets = ['world-oostende.png', 'world-ravy.png', 'world-puber.png', 'world-manosfeer.png'];
   for (let index = 0; index < 4; index++) {
     await check(`track ${index + 1}: supplied recording, artwork and selectable runner`, async () => {
       const { page } = tracks;
@@ -461,6 +463,7 @@ try {
       assert.equal(playback.duration, 45);
       assert.ok(playback.cachedExcerpts <= 2);
       assert.ok(playback.objects > 0, 'normal spawning did not run');
+      assert.ok(tracks.requests.some(request => request.includes(worldAssets[index])), `level ${index + 1} world atlas was not loaded`);
       assert.ok(Math.abs(playback.time - playback.gameTime) < .08, 'simulation drifted from the audio clock');
       await screenshot(tracks, `level-${index + 1}-gameplay`);
       await page.locator('#pause').click();
