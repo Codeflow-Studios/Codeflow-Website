@@ -8,7 +8,8 @@ De bestaande Canvas 2D-game is uitgebreid binnen de bestaande Codeflow-site (Rea
 - De weg heeft een perspectivische materiaallaag met voegen, scheuren en kleine reflecties. Deze details bewegen naar de speler, versnellen en groeien richting de voorgrond, terwijl de achtergrond en baan uitgelijnd blijven.
 - Vier nieuwe levelachtergronden hebben elk een gekalibreerd verdwijnpunt. De spelcamera rekent dat punt door dezelfde uitsnede als de afbeelding, zodat weg, props en obstakels op desktop en mobiel uit één horizon komen.
 - Drie afzonderlijke wegvlakken, twee taps toelopende voegen en korte bewegende wegmarkeringen maken links, midden en rechts direct leesbaar. Pickups en obstakels hebben een grotere, diepte-afhankelijke weergave zodat ze ook verderop leesbaar blijven.
-- Losse zijobjecten zijn verwijderd; de vaste omgeving komt volledig uit de gekalibreerde levelachtergrond.`n- Speakers en decks hebben een lime markering, schaduw en subtiele beatpuls. Gevaren behouden hun rood/oranje silhouet en krijgen een waarschuwingsteken.
+- Losse zijobjecten zijn verwijderd; de vaste omgeving komt volledig uit de gekalibreerde levelachtergrond.
+- Skateboards en limited decks hebben een lime markering, schaduw en subtiele beatpuls. Gevaren behouden hun rood/oranje silhouet en krijgen een waarschuwingsteken.
 - Snellere lane-wissels, een sprong van 560 ms en een inputbuffer van 120 ms voor de landing. Een korte landingreactie, stof en spelertrail geven feedback.
 - Een transparante countdown van drie beats; score, muziek en speeltijd beginnen daarna. De eerste run toont drie seconden een passende toetsenbord- of touchuitleg.
 - Compacte HUD met score, beatreeks, totale multiplier, levens, tijd en opbouw naar de drop.

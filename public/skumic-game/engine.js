@@ -106,7 +106,7 @@ export class RunModel {
   spawn() {
     const lane = Math.floor(this.random() * 3);
     const row = this.pattern++;
-    // Every row has a clear lane. A speaker trail shows a route through the hazards.
+    // Every row has a clear lane. A skateboard trail shows a route through the hazards.
     if (row % 9 === 6) {
       this.objects.push({ type: 'deck', lane, z: 115, checked: false });
       const pressureLane = (lane + (row % 2 ? 1 : 2)) % 3;

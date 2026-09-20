@@ -97,7 +97,7 @@ function selectLevel(index) {
   $('result-demo').textContent = `Soundtrack: ${level.title} — Skumic.`;
   $('start-caption').textContent = `${level.number} · ${level.difficulty} · ${level.duration} SECONDEN`;
   $('mission-title').textContent = level.subtitle;
-  $('mission-copy').textContent = `Pak ${level.mission.speakers} speakers, limited decks en ${level.mission.beats} beats.`;
+  $('mission-copy').textContent = `Pak ${level.mission.speakers} skateboards, limited decks en ${level.mission.beats} beats.`;
   document.documentElement.dataset.level = String(selectedLevel + 1);
   $('beat-meter').style.setProperty('--beat-window', `${Math.min(45, level.timing.perfect / BEAT * 100)}%`);
   for (let i = 0; i < LEVELS.length; i++) {
@@ -488,7 +488,7 @@ function drawObject(object, idle = false) {
       ctx.fillText('!', pos.x, pos.y - size * (object.type === 'gull' ? 1.95 : 1.32));
     }
   }
-  if (object.type === 'deck' && images.deck.complete && images.deck.naturalWidth) {
+  if (pickup && images.deck.complete && images.deck.naturalWidth) {
     const laneSpan = Math.abs(project(object.lane + 1, object.z).x - pos.x);
     const deckW = Math.min(size * 1.8, laneSpan * .9), deckH = deckW * .35;
     ctx.save();
@@ -594,7 +594,7 @@ function updateUI() {
   $('beat-label').textContent = 'SPRING OP DE BEAT';
   $('beat-tip').textContent = model.boost ? 'ONKWETSBAAR · DUBBELE SCORE' : 'SPRING BIJ DE GELE RAND → BEATREEKS';
   $('multiplier').textContent = `SCORE ×${model.multiplier}`;
-  $('mission-progress').textContent = `${Math.min(model.speakers, MUSIC.mission.speakers)}/${MUSIC.mission.speakers} SPEAKERS · ${model.decks} DECKS · ${Math.min(model.beats, MUSIC.mission.beats)}/${MUSIC.mission.beats} BEATS`;
+  $('mission-progress').textContent = `${Math.min(model.speakers, MUSIC.mission.speakers)}/${MUSIC.mission.speakers} SKATEBOARDS · ${model.decks} DECKS · ${Math.min(model.beats, MUSIC.mission.beats)}/${MUSIC.mission.beats} BEATS`;
   $('decks').textContent = model.decks;
   $('mission-hud').classList.toggle('complete', model.speakers >= MUSIC.mission.speakers && model.beats >= MUSIC.mission.beats);
   $('game-frame').classList.toggle('boosting', model.boost && mode === 'playing');
