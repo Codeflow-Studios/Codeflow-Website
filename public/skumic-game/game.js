@@ -14,6 +14,15 @@ let landingAge = 1, dropAge = 1, hitAge = 1, tutorialUntil = 0, feedbackPriority
 let fallbackEpoch = 0, savedScroll = 0, roadScanlines = [], backdropCache = null;
 const camera = { x: 0, y: 0 };
 const drawObjects = [];
+const ROAD_CYCLE = 131;
+const roadMarks = Array.from({ length: 42 }, (_, index) => ({
+  id: index,
+  offset: (index * 37.7 + index * index * 3.1) % ROAD_CYCLE,
+  lane: -.42 + ((index * 53) % 283) / 100,
+  length: 1.6 + (index % 5) * .7,
+  width: .7 + (index % 4) * .4,
+  light: index % 5 === 0,
+}));
 const levelBests = {};
 const levelRanks = {};
 try { Object.assign(levelBests, JSON.parse(localStorage.getItem('skumic-run-level-bests') || '{}')); } catch {}
@@ -364,13 +373,36 @@ function drawMovingRoadLayer() {
   if (mode === 'ready' || mode === 'starting') return;
   const texture = roadTextures[selectedLevel];
   ctx.save();
-  ctx.globalAlpha = .46;
+  ctx.globalAlpha = .34;
   for (const row of roadScanlines) {
-    const textureY = (((reducedMotion ? 0 : model.distance) + row.z) * 5.2 % texture.height + texture.height) % texture.height;
+    const textureY = (row.z * 5.2 % texture.height + texture.height) % texture.height;
     ctx.drawImage(texture, 0, Math.min(texture.height - 3, Math.floor(textureY)), texture.width, 3, row.x, row.y, row.width, 3);
   }
   ctx.restore();
+  drawRoadSurfaceMotion();
   drawPassingScenery();
+}
+function roadMarkState(mark, distance = model.distance) {
+  const travel = reducedMotion ? 0 : distance;
+  const z = 4 + ((mark.offset - travel) % ROAD_CYCLE + ROAD_CYCLE) % ROAD_CYCLE;
+  return { id: mark.id, z, near: project(mark.lane, z), middle: project(mark.lane + ((mark.id % 3) - 1) * .025, z + mark.length * .48), far: project(mark.lane, z + mark.length) };
+}
+function drawRoadSurfaceMotion() {
+  const style = MUSIC.roadStyle;
+  ctx.save(); ctx.lineCap = 'round';
+  for (const mark of roadMarks) {
+    const state = roadMarkState(mark), depth = state.near.depth;
+    if (depth <= .015) continue;
+    const alpha = .055 + depth * .25;
+    ctx.strokeStyle = mark.light ? `rgba(${style.light},${alpha * .75})` : `rgba(${style.dark},${alpha})`;
+    ctx.lineWidth = Math.max(.45, mark.width * (.25 + depth * 1.55));
+    ctx.beginPath(); ctx.moveTo(state.near.x, state.near.y); ctx.lineTo(state.middle.x, state.middle.y); ctx.lineTo(state.far.x, state.far.y); ctx.stroke();
+    if (mark.id % 4 === 0) {
+      ctx.fillStyle = `rgba(${mark.light ? style.light : style.dark},${alpha * .42})`;
+      ctx.beginPath(); ctx.ellipse(state.near.x, state.near.y, mark.width * (1 + depth * 4.2), .35 + depth * 2.1, 0, 0, Math.PI * 2); ctx.fill();
+    }
+  }
+  ctx.restore();
 }
 function drawPassingScenery() {
   const style = MUSIC.roadStyle, travel = reducedMotion ? 0 : model.distance;
@@ -616,3 +648,4 @@ setMode('ready'); selectLevel(0); resize(); soundState(); requestAnimationFrame(
 export { model, audio, start, pause, resume, selectLevel, selectCharacter, showLevelMenu, updateUI, handleEvent };
 export function getGameState() { return { mode, selectedLevel, selectedCharacter, reducedMotion, countdownLeft }; }
 export function getCameraState() { return { x: camera.x, y: camera.y }; }
+export function getRoadMotionState() { return roadMarks.map(mark => { const state = roadMarkState(mark); return { id: state.id, z: state.z, y: state.near.y, scale: state.near.scale }; }); }

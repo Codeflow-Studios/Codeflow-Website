@@ -5,6 +5,7 @@
 De bestaande Canvas 2D-game is uitgebreid binnen de bestaande Codeflow-site (React/Vinext). De rode/oranje microsite, Barlow-typografie, vier achtergronden, supplied tracks, skateboard-deck en beide personages zijn behouden. Er zijn geen dependencies toegevoegd.
 
 - De speler is circa 30% groter; op lage schermen begrenst de schermhoogte de grootte.
+- De weg heeft een perspectivische materiaallaag met voegen, scheuren en kleine reflecties. Deze details bewegen naar de speler, versnellen en groeien richting de voorgrond, terwijl de achtergrond en baan uitgelijnd blijven.
 - Speakers en decks hebben een lime markering, schaduw en subtiele beatpuls. Gevaren behouden hun rood/oranje silhouet en krijgen een waarschuwingsteken.
 - Snellere lane-wissels, een sprong van 560 ms en een inputbuffer van 120 ms voor de landing. Een korte landingreactie, stof en spelertrail geven feedback.
 - Een transparante countdown van drie beats; score, muziek en speeltijd beginnen daarna. De eerste run toont drie seconden een passende toetsenbord- of touchuitleg.
@@ -94,7 +95,7 @@ De browsercheck gebruikt bestaande Playwright-tooling buiten de projectdependenc
 
 Testdekking:
 
-Resultaat op 20 september 2026: **12/12 enginetests en 56/56 browserchecks geslaagd**, build en gerichte lintcontrole geslaagd, geen nieuwe console- of runtimefouten. In de vier gemeten schermformaten bleef de gemiddelde frame-interval ongeveer 16,67 ms (p95 16,8 ms; geen frames boven 34 ms in de 120-frame steekproeven). Dat is vergelijkbaar met de meting vóór de wijzigingen in dezelfde omgeving; het is geen prestatiegarantie voor alle telefoons.
+Resultaat op 20 september 2026: **12/12 enginetests en 60/60 browserchecks geslaagd**, build en gerichte lintcontrole geslaagd, geen nieuwe console- of runtimefouten. In de vier gemeten schermformaten bleef de gemiddelde frame-interval ongeveer 16,67 ms (p95 16,8 ms; geen frames boven 34 ms in de 120-frame steekproeven). Dat is vergelijkbaar met de meting vóór de wijzigingen in dezelfde omgeving; het is geen prestatiegarantie voor alle telefoons.
 
 - Engine: 12 tests, inclusief 30/60/120 Hz en onregelmatige frames, timinggrenzen, sprongbuffer, combodecay, veilige spawnrijen en audio-races.
 - Chrome: 1920×1080, 1024×768, 390×844 en 844×390; selectie, countdown, toetsenbord/touch, pauze/mute, PERFECT/GOOD, botsing/levens, drop/Ravy, game over/retry, refresh, opslag en rotatie.

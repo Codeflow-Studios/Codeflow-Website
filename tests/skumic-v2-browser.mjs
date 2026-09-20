@@ -186,6 +186,18 @@ try {
       return { maxX, maxY };
     });
 
+    await check(`${name}: street texture moves toward the player in perspective`, async () => {
+      const before = await page.evaluate(() => window.__qaGame.getRoadMotionState());
+      await page.waitForTimeout(180);
+      const after = await page.evaluate(() => window.__qaGame.getRoadMotionState());
+      const moving = before.map((mark, index) => ({ before: mark, after: after[index] }))
+        .find(pair => pair.before.z > 25 && pair.before.z < 100 && pair.after.z < pair.before.z);
+      assert.ok(moving, 'no road detail remained inside the visible cycle');
+      assert.ok(moving.after.y > moving.before.y, `road detail did not approach: ${JSON.stringify(moving)}`);
+      assert.ok(moving.after.scale > moving.before.scale, `road detail did not grow: ${JSON.stringify(moving)}`);
+      return moving;
+    });
+
     await check(`${name}: responsive keyboard or real touch input`, async () => {
       if (touch) {
         await touchGesture(game, -65);
