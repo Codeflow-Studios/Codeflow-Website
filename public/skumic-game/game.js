@@ -398,9 +398,9 @@ function drawMovingRoadLayer() {
 function worldItemState(item, distance = model.distance) {
   const travel = reducedMotion ? 0 : distance;
   const z = 3 + ((item.offset - travel) % WORLD_CYCLE + WORLD_CYCLE) % WORLD_CYCLE;
-  const lane = item.side < 0 ? -.68 - (item.id % 3) * .11 : 2.68 + (item.id % 3) * .11;
-  return { ...item, z, pos: project(lane, z) };
+  return { ...item, z, pos: project(worldLane(item), z) };
 }
+function worldLane(item) { return item.side < 0 ? -1.02 - (item.id % 3) * .16 : 3.02 + (item.id % 3) * .16; }
 function drawWorldLayer() {
   drawWorldObjects.length = 0;
   for (const item of worldItems) {
@@ -416,10 +416,13 @@ function drawWorldItem(item) {
   if (depth <= .008) return;
   const sideSign = side < 0 ? -1 : 1;
   const ground = pos.y + 2;
+  const itemSize = item.size || 1;
   ctx.save();
   ctx.lineCap = 'round';
+  ctx.fillStyle = `rgba(5,13,18,${.08 + depth * .2})`;
+  ctx.beginPath(); ctx.ellipse(pos.x, ground + 1, (4 + depth * 18) * itemSize, (1 + depth * 3.5) * itemSize, 0, 0, Math.PI * 2); ctx.fill();
   if (type === 'facade') {
-    const buildingWidth = 22 + depth * 72, buildingHeight = 20 + depth * 132;
+    const buildingWidth = (22 + depth * 72) * itemSize, buildingHeight = (20 + depth * 132) * itemSize;
     const x = pos.x + sideSign * buildingWidth * .22;
     ctx.fillStyle = `rgba(13,22,28,${.18 + depth * .3})`;
     ctx.fillRect(x - buildingWidth / 2, ground - buildingHeight, buildingWidth, buildingHeight);
@@ -433,13 +436,13 @@ function drawWorldItem(item) {
       ctx.fillRect(windowX, windowY, windowSize, windowSize * 1.8);
     }
   } else if (type === 'lamp') {
-    const poleHeight = 25 + depth * 145, poleWidth = Math.max(.8, 1 + depth * 2.5);
+    const poleHeight = (25 + depth * 145) * itemSize, poleWidth = Math.max(.8, (1 + depth * 2.5) * itemSize);
     ctx.strokeStyle = `rgba(8,15,20,${.38 + depth * .42})`; ctx.lineWidth = poleWidth;
     ctx.beginPath(); ctx.moveTo(pos.x, ground); ctx.lineTo(pos.x, ground - poleHeight); ctx.lineTo(pos.x + sideSign * poleHeight * .09, ground - poleHeight); ctx.stroke();
     ctx.fillStyle = `rgba(255,218,119,${.3 + depth * .55})`;
     ctx.beginPath(); ctx.arc(pos.x + sideSign * poleHeight * .1, ground - poleHeight, Math.max(1, 1.5 + depth * 4), 0, Math.PI * 2); ctx.fill();
   } else if (type === 'planter') {
-    const boxWidth = 12 + depth * 48, boxHeight = 5 + depth * 15;
+    const boxWidth = (12 + depth * 48) * itemSize, boxHeight = (5 + depth * 15) * itemSize;
     const x = pos.x + sideSign * boxWidth * .16;
     ctx.fillStyle = `rgba(18,27,31,${.35 + depth * .4})`; ctx.fillRect(x - boxWidth / 2, ground - boxHeight, boxWidth, boxHeight);
     ctx.fillStyle = `rgba(${MUSIC.roadStyle.light},${.12 + depth * .3})`;
@@ -447,21 +450,21 @@ function drawWorldItem(item) {
     ctx.strokeStyle = `rgba(30,65,42,${.4 + depth * .4})`; ctx.lineWidth = Math.max(1, depth * 2);
     for (let branch = -1; branch <= 1; branch++) { ctx.beginPath(); ctx.moveTo(x + branch * boxWidth * .18, ground - boxHeight); ctx.lineTo(x + branch * boxWidth * .28, ground - boxHeight - depth * 20); ctx.stroke(); }
   } else if (type === 'sign') {
-    const poleHeight = 14 + depth * 78, signWidth = 20 + depth * 45, signHeight = 7 + depth * 15;
+    const poleHeight = (14 + depth * 78) * itemSize, signWidth = (20 + depth * 45) * itemSize, signHeight = (7 + depth * 15) * itemSize;
     const x = pos.x + sideSign * signWidth * .12;
     ctx.strokeStyle = `rgba(9,16,21,${.5 + depth * .35})`; ctx.lineWidth = Math.max(1, depth * 2.2);
     ctx.beginPath(); ctx.moveTo(x, ground); ctx.lineTo(x, ground - poleHeight); ctx.stroke();
     ctx.fillStyle = `rgba(239,254,89,${.62 + depth * .3})`; ctx.fillRect(x - signWidth / 2, ground - poleHeight - signHeight, signWidth, signHeight);
     if (depth > .12) { ctx.fillStyle = '#10171b'; ctx.font = `900 ${Math.max(3, depth * 9)}px Arial`; ctx.textAlign = 'center'; ctx.fillText(item.id % 2 ? 'BEAT' : 'OOST', x, ground - poleHeight - signHeight * .3); }
   } else {
-    const postHeight = 7 + depth * 48, postWidth = Math.max(1, 1.5 + depth * 4);
+    const postHeight = (7 + depth * 48) * itemSize, postWidth = Math.max(1, (1.5 + depth * 4) * itemSize);
     ctx.strokeStyle = `rgba(225,211,184,${.18 + depth * .42})`; ctx.lineWidth = postWidth;
     ctx.beginPath(); ctx.moveTo(pos.x, ground); ctx.lineTo(pos.x, ground - postHeight); ctx.stroke();
     ctx.fillStyle = accent; ctx.globalAlpha = .22 + depth * .5;
     ctx.fillRect(pos.x - postWidth * 1.3, ground - postHeight - postWidth * 1.5, postWidth * 2.6, postWidth * 1.4);
     ctx.globalAlpha = 1;
     if (depth > .08) {
-      const next = project(side < 0 ? -.68 - (item.id % 3) * .11 : 2.68 + (item.id % 3) * .11, item.z + 10);
+      const next = project(worldLane(item), item.z + 10);
       ctx.strokeStyle = `rgba(225,211,184,${.08 + depth * .22})`; ctx.lineWidth = Math.max(.5, depth * 1.4);
       for (const lift of [.38, .62]) { ctx.beginPath(); ctx.moveTo(pos.x, ground - postHeight * lift); ctx.lineTo(next.x, next.y - (postHeight * .7) * lift); ctx.stroke(); }
     }
