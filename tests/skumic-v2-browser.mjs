@@ -127,6 +127,15 @@ try {
       for (const id of ['#level-1', '#level-2', '#level-3', '#level-4', '#character-1', '#character-2']) {
         assert.ok(await page.locator(id).isVisible(), `${id} missing`);
       }
+      if (viewport.width > 760) {
+        const portraitFrame = await page.locator('.character-card').evaluate(element => ({
+          background: getComputedStyle(element).backgroundColor,
+          border: getComputedStyle(element).borderStyle,
+          overflow: getComputedStyle(element).overflow,
+          overlay: getComputedStyle(element, '::after').display,
+        }));
+        assert.deepEqual(portraitFrame, { background: 'rgba(0, 0, 0, 0)', border: 'none', overflow: 'visible', overlay: 'none' });
+      }
       assert.equal(game.requests.some(request => /background-(ravy|puber|manosfeer)\./.test(request)), false, 'unused level backgrounds loaded at first paint');
       await screenshot(game, 'selection');
     });
