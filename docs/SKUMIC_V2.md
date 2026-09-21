@@ -13,7 +13,7 @@ De bestaande Canvas 2D-game is uitgebreid binnen de bestaande Codeflow-site (Rea
 - Snellere lane-wissels, een sprong van 560 ms en een inputbuffer van 120 ms voor de landing. Een korte landingreactie, stof en spelertrail geven feedback.
 - Een transparante countdown van drie beats; score, muziek en speeltijd beginnen daarna. De eerste run toont drie seconden een passende toetsenbord- of touchuitleg.
 - Compacte HUD met score, beatreeks, totale multiplier, levens, tijd en opbouw naar de drop.
-- Ravy Mode heeft een resterende-tijdbalk, dubbele score, onkwetsbaarheid, obstakel-smashes en beperkt licht/particles. De oorspronkelijke dropvensters van 5–5,5 seconden blijven behouden.
+- Ravy Mode heeft een resterende-tijdbalk, dubbele pickupscore, onkwetsbaarheid, puntloze obstakel-smashes en beperkt licht/particles. De oorspronkelijke dropvensters van 5–5,5 seconden blijven behouden.
 - Start activeert theatermodus; Escape pauzeert en verlaat die modus. Browser-fullscreen wordt niet afgedwongen.
 - Retry gebruikt het geladen muziekfragment en slaat de countdown over. Een volgend level krijgt wel een countdown.
 - Touch: links/rechts vegen om te wisselen, tikken om te springen; ook losse knoppen van minimaal 44 px. Portret en landscape hebben een aangepaste HUD.

@@ -105,8 +105,11 @@ test('collision, grace after a hit, jumping and Ravy obstacle smashing remain fu
   assert.equal(model.events.filter(event => event.type === 'hit').length, 1);
   model.invincible = 0; model.jumpAge = model.jumpDuration / 2;
   model.objects = [obstacle('barrier')]; model.update(.02); assert.equal(model.lives, 2);
-  model.time = 11; model.objects = [obstacle('barrier')]; model.update(.02);
+  model.time = 11; model.objects = [obstacle('barrier')];
+  const scoreBeforeSmash = model.score; model.update(.02);
   assert.equal(model.lives, 2); assert.equal(model.events.some(event => event.type === 'smash'), true);
+  near(model.score - scoreBeforeSmash, .02 * 21 * model.multiplier);
+  assert.equal(model.events.some(event => event.type === 'smash' && 'points' in event), false);
   assert.equal(model.objects.length, 0);
 });
 

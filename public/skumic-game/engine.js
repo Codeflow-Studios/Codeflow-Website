@@ -184,9 +184,8 @@ export class RunModel {
           object.collected = true; this.decks++; this.score += 350 * this.multiplier;
           this.events.push({ type: 'deck', lane: object.lane, points: 350 * this.multiplier });
         } else if (this.boost) {
-          const points = 40 * this.multiplier;
-          object.collected = true; this.score += points;
-          this.events.push({ type: 'smash', lane: object.lane, points });
+          object.collected = true;
+          this.events.push({ type: 'smash', lane: object.lane });
         } else if ((object.type === 'gull' ? crossingHeight > 0.28 : crossingHeight < 0.46) && this.invincible === 0) {
           const lostCombo = this.combo;
           this.combo = 0;

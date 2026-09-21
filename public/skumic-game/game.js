@@ -557,7 +557,7 @@ function handleEvent(event) {
   if (!reducedMotion && navigator.vibrate && ['hit', 'drop', 'beat'].includes(event.type)) navigator.vibrate(event.type === 'hit' ? 35 : event.type === 'drop' ? [20, 20, 30] : 8);
   if (event.type === 'speaker') { burst(event.lane, '#effe59', 6); popups.push({ lane: event.lane, text: `+${event.points}`, age: 0 }); }
   if (event.type === 'deck') { burst(event.lane, '#ffad18', 14); feedback(`LIMITED DECK +${event.points}`, .8, 2); }
-  if (event.type === 'smash') { burst(event.lane, '#ff794d', 18); popups.push({ lane: event.lane, text: `SMASH +${event.points || 40}`, age: 0 }); }
+  if (event.type === 'smash') { burst(event.lane, '#ff794d', 18); popups.push({ lane: event.lane, text: 'SMASH', age: 0 }); }
   if (event.type === 'beat') {
     feedback(`${event.judgement.toUpperCase()} +${event.points}`, .5, 1, event.judgement);
     burst(model.x, '#fff7e5', Math.min(12, 3 + Math.floor(event.combo / 2)));
