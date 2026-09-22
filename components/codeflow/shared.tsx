@@ -3,9 +3,9 @@ import { useEffect, useState } from 'react';
 import { ArrowUpRight, ArrowRight } from 'lucide-react';
 export type Language = 'en' | 'nl';
 export const email = 'codeflowstudios@proton.me';
-export function useLanguage() {
-  const [lang, set] = useState<Language>('nl');
-  useEffect(() => { const query = new URLSearchParams(location.search).get('lang'); if (query === 'en' || query === 'nl') set(query); else { try { const saved = localStorage.getItem('codeflow-language'); if (saved === 'en' || saved === 'nl') set(saved); } catch {} } }, []);
+export function useLanguage(initialLang: Language = 'nl') {
+  const [lang, set] = useState<Language>(initialLang);
+  useEffect(() => { const query = new URLSearchParams(location.search).get('lang'); if (query === 'en' || query === 'nl') { set(query); try { localStorage.setItem('codeflow-language', query); } catch {} } else { try { const saved = localStorage.getItem('codeflow-language'); if (saved === 'en' || saved === 'nl') set(saved); } catch {} } }, []);
   useEffect(() => { document.documentElement.lang = lang; }, [lang]);
   const setLang = (value: Language) => { set(value); try { localStorage.setItem('codeflow-language', value); } catch {} const url = new URL(location.href); url.searchParams.set('lang', value); history.replaceState(null, '', url); };
   return { lang, setLang, en: lang === 'en' };
