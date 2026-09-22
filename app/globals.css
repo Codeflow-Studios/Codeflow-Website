@@ -20,14 +20,14 @@
 .language-entry-content{width:min(900px,100%);min-width:0;max-width:100%;align-self:center;padding:clamp(52px,8vh,100px) 0}
 .language-entry-label{display:flex;align-items:center;gap:12px;margin-bottom:clamp(23px,3vw,34px);font-size:.72rem;font-weight:600;line-height:1.4;letter-spacing:.16em;text-transform:uppercase;color:var(--quiet)}
 .language-entry-label:before{content:"";width:25px;height:2px;background:var(--orange)}
-.language-entry h1{max-width:900px;font-size:clamp(3.05rem,7.1vw,7.2rem);line-height:.99;letter-spacing:-.065em;text-wrap:balance}
+.language-entry h1{max-width:1080px;font-size:clamp(2.9rem,5.4vw,5.9rem);line-height:1.02;letter-spacing:-.06em;text-wrap:balance}
 .language-entry h1 em{background:linear-gradient(110deg,#ff9c51 5%,#ff4971 92%);background-clip:text;-webkit-background-clip:text;color:transparent}
 .language-entry-options{display:flex;align-items:center;gap:12px;min-width:0;max-width:100%;margin-top:clamp(38px,5vw,58px)}
 .language-entry-options a{display:flex;align-items:center;justify-content:space-between;gap:34px;min-width:190px;max-width:100%;padding:15px 17px;border:1px solid var(--line);border-radius:5px;color:var(--ink);font-size:.9rem;font-weight:600;line-height:1.4;transition:border-color .2s,background .2s,color .2s}
 .language-entry-options a span:last-child{color:var(--orange);font-size:1.15rem;line-height:1}
 .language-entry-options a:hover{border-color:var(--orange);background:#211b19}
 .language-entry-location{align-self:end;padding-top:18px;border-top:1px solid var(--line);color:var(--quiet);font-size:.68rem;font-weight:600;line-height:1.5;letter-spacing:.14em;text-transform:uppercase}
-@media(max-width:600px){.language-entry{padding:24px}.language-entry:before{background-size:96px 100%}.language-entry-content{padding:56px 0}.language-entry-label{font-size:.65rem;letter-spacing:.13em}.language-entry h1{font-size:clamp(3rem,15vw,4.6rem);line-height:1.01}.language-entry-options{align-items:stretch;flex-direction:column;gap:10px;margin-top:38px}.language-entry-options a{width:100%;min-width:0;padding:15px 16px}.language-entry-location{font-size:.61rem;letter-spacing:.11em}}
+@media(max-width:600px){.language-entry{padding:24px}.language-entry:before{background-size:96px 100%}.language-entry-content{padding:52px 0}.language-entry-label{font-size:.65rem;letter-spacing:.13em}.language-entry h1{font-size:clamp(2.75rem,12.5vw,4rem);line-height:1.03}.language-entry-options{align-items:stretch;flex-direction:column;gap:10px;margin-top:34px}.language-entry-options a{width:100%;min-width:0;padding:15px 16px}.language-entry-location{font-size:.61rem;letter-spacing:.11em}}
 
 /* Separate services and complete rebranding packages. */
 .service-package-link{margin-top:17px;color:#a53b20;font-weight:600}
