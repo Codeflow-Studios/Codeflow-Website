@@ -1,9 +1,10 @@
 'use client';
 import { ArrowUpRight, Radio, Palette, Code2, Layers3 } from 'lucide-react';
 import { Header, Footer, CTA, useLanguage, email } from './shared';
+import type { Language } from './shared';
 
-export default function Home(){
- const {lang,setLang,en}=useLanguage();
+export default function Home({initialLang='nl'}:{initialLang?:Language}){
+ const {lang,setLang,en}=useLanguage(initialLang);
  const services=en?[
   {key:'marketing',number:'01',title:'Marketing',kicker:'Real-time relevance',description:'Trend-driven strategy and automated marketing built around your company, audience and market.',href:'/services/marketing',Icon:Radio},
   {key:'design',number:'02',title:'Graphic design',kicker:'A recognisable identity',description:'Logos, visual identities, digital artwork and web design with one consistent visual language.',href:'/services/graphic-design',Icon:Palette},
