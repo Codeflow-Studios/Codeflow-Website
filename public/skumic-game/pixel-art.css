@@ -1,0 +1,359 @@
+@font-face {
+  font-family: "Skumic Pixel";
+  src: url("assets/fonts/PixelifySans.ttf") format("truetype");
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Skumic Arcade";
+  src: url("assets/fonts/PressStart2P-Regular.ttf") format("truetype");
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+}
+
+:root {
+  --ink: #040714;
+  --panel: #0a1021;
+  --panel-2: #141e35;
+  --red: #f23b54;
+  --cyan: #39d9ed;
+  --yellow: #ffe451;
+  --white: #f5f1dc;
+  --muted: #a8b5ca;
+  font-family: "Skumic Pixel", monospace;
+  font-synthesis: none;
+}
+
+body {
+  background-color: #030612;
+  background-image:
+    repeating-linear-gradient(0deg, transparent 0 24px, #0a1022 24px 28px),
+    repeating-linear-gradient(90deg, transparent 0 24px, #0a1022 24px 28px);
+}
+
+button { font-family: "Skumic Pixel", monospace; }
+
+#arcade[data-era="32bit"] {
+  --red: #f23b54;
+  --cyan: #39d9ed;
+  --yellow: #ffe451;
+  filter: none;
+}
+
+#arcade[data-era="32bit"] #game-frame {
+  border: 4px solid #7284a0;
+  border-radius: 0;
+  background: #050a19;
+  box-shadow: inset 0 0 0 4px #17233c, 8px 8px 0 #01020a;
+}
+
+#arcade[data-era="32bit"] #game {
+  image-rendering: pixelated;
+  filter: none;
+}
+
+#arcade[data-era="32bit"] .scanlines {
+  opacity: .12;
+  background: repeating-linear-gradient(180deg, transparent 0 3px, #000 3px 4px);
+  mix-blend-mode: multiply;
+}
+
+#arcade[data-era="32bit"] .vignette { box-shadow: inset 0 0 0 6px rgb(2 4 11 / 24%); }
+#arcade[data-era="32bit"] .screen { animation: screenInPixels .15s steps(3, end) both; }
+
+.screen { image-rendering: pixelated; }
+.loading-screen { background: #050a19; }
+.loading-screen p { font: 400 clamp(.7rem, 1.15vw, 1rem)/1.5 "Skumic Arcade", monospace; }
+.bolt { font: 400 clamp(3rem, 8vw, 6rem)/1 "Skumic Arcade", monospace; text-shadow: 5px 5px 0 #000; }
+
+.title-screen,
+.select-screen,
+.difficulty-screen,
+.winner-screen {
+  background-color: #060c19;
+  background-image:
+    linear-gradient(180deg, rgb(3 7 17 / 60%) 0 65%, rgb(3 7 17 / 88%) 65% 100%),
+    url("assets/skumic-street-v2.png?v=7");
+  background-position: center;
+  background-size: cover;
+  background-repeat: no-repeat;
+}
+
+#arcade[data-era="32bit"] .title-fighter,
+#arcade[data-era="32bit"] .fighter-card img,
+#arcade[data-era="32bit"] #winner-portrait {
+  image-rendering: pixelated;
+  filter: drop-shadow(6px 6px 0 #01030a);
+}
+
+.title-fighter-left { transform: translateX(6px); }
+.title-fighter-right { transform: translateX(-6px); }
+
+.title-core {
+  gap: clamp(.45rem, 1.5vh, 1rem);
+  padding: clamp(.8rem, 1.9vw, 1.5rem) clamp(.65rem, 1.3vw, 1.2rem);
+  border-block: 4px solid var(--yellow);
+  background: rgb(5 9 21 / 92%);
+  box-shadow: 6px 6px 0 #000;
+  text-shadow: none;
+}
+
+.micro-label,
+.press-key,
+.winner-kicker {
+  font-family: "Skumic Pixel", monospace;
+  font-size: clamp(.75rem, 1.2vw, 1.1rem);
+  line-height: 1.1;
+  letter-spacing: .1em;
+}
+
+h1 { line-height: 1; transform: none; }
+h1 span {
+  color: var(--white);
+  font: 400 clamp(1.7rem, 3.35vw, 3.9rem)/1.18 "Skumic Arcade", monospace;
+  letter-spacing: -.07em;
+  -webkit-text-stroke: 0;
+  text-shadow: 4px 4px 0 #000, 8px 8px 0 #b62b43;
+}
+h1 strong {
+  margin-top: .55rem;
+  color: var(--yellow);
+  font: 400 clamp(.74rem, 1.35vw, 1.3rem)/1.45 "Skumic Arcade", monospace;
+  letter-spacing: .08em;
+  transform: none;
+  text-shadow: 3px 3px 0 #000;
+}
+.title-rule { font: 700 clamp(1.2rem, 2vw, 2rem)/1 "Skumic Pixel", monospace; font-style: normal; transform: none; }
+.title-rule i, .title-rule i:last-child { height: 4px; background: var(--yellow); transform: none; }
+
+#arcade[data-era="32bit"] .pixel-button {
+  min-height: 2.65rem;
+  padding: .48rem 1rem;
+  border: 3px solid #07101b;
+  border-radius: 0;
+  background-image: none;
+  color: var(--white);
+  font: 700 clamp(.95rem, 1.35vw, 1.25rem)/1.15 "Skumic Pixel", monospace;
+  letter-spacing: .06em;
+  text-shadow: 2px 2px 0 #000;
+  box-shadow: inset 3px 3px 0 #ff8d9a, inset -3px -3px 0 #9e1e39, 6px 6px 0 #000;
+  transition: none;
+}
+#arcade[data-era="32bit"] .primary-button { background: var(--red); }
+#arcade[data-era="32bit"] .secondary-button {
+  background: #26324b;
+  box-shadow: inset 3px 3px 0 #5e7196, inset -3px -3px 0 #111a2d, 6px 6px 0 #000;
+}
+#arcade[data-era="32bit"] .pixel-button:hover,
+#arcade[data-era="32bit"] .pixel-button:focus-visible {
+  background: var(--yellow);
+  color: #081019;
+  filter: none;
+  text-shadow: none;
+  outline: 3px solid var(--cyan);
+  outline-offset: 3px;
+  box-shadow: inset 3px 3px 0 #fff4aa, inset -3px -3px 0 #b99125, 6px 6px 0 #000;
+}
+#arcade[data-era="32bit"] .pixel-button:active { transform: translate(4px, 4px); box-shadow: inset 3px 3px 0 #fff4aa, inset -3px -3px 0 #b99125, 2px 2px 0 #000; }
+
+.select-screen,
+.difficulty-screen { text-shadow: 2px 2px 0 #000; }
+.select-header::before,
+.select-header::after { height: 3px; background: #6c7d9c; }
+.select-header-row { font-size: clamp(.62rem, .95vw, .85rem); letter-spacing: .08em; }
+.select-header-row b { color: var(--yellow); letter-spacing: .12em; }
+.select-header h2,
+.difficulty-header h2 {
+  font: 400 clamp(1.2rem, 2.55vw, 2.65rem)/1.35 "Skumic Arcade", monospace;
+  font-style: normal;
+  letter-spacing: -.025em;
+  text-shadow: 4px 4px 0 #000;
+}
+.select-header small,
+.difficulty-header small { font-size: clamp(.7rem, 1vw, .92rem); letter-spacing: .06em; }
+
+#arcade[data-era="32bit"] .fighter-card,
+#arcade[data-era="32bit"] .fighter-card[data-fighter="gauthier"],
+#arcade[data-era="32bit"] .difficulty-card,
+#arcade[data-era="32bit"] .winner-panel {
+  border: 4px solid #556985;
+  border-radius: 0;
+  background: #0a1123;
+  backdrop-filter: none;
+  box-shadow: inset 0 0 0 4px #17233b, 6px 6px 0 #000;
+}
+#arcade[data-era="32bit"] .fighter-card[data-fighter="matar"] { background: #151121; }
+#arcade[data-era="32bit"] .fighter-card[data-fighter="gauthier"] { background: #0a1726; }
+#arcade[data-era="32bit"] .fighter-card::before {
+  background: repeating-linear-gradient(90deg, transparent 0 12px, rgb(255 255 255 / 4%) 12px 16px);
+  mix-blend-mode: normal;
+}
+#arcade[data-era="32bit"] .fighter-card::after,
+#arcade[data-era="32bit"] .difficulty-card::after { height: 8px; }
+#arcade[data-era="32bit"] .fighter-card img { opacity: 1; transition: none; }
+#arcade[data-era="32bit"] .fighter-card:hover img,
+#arcade[data-era="32bit"] .fighter-card:focus-visible img,
+#arcade[data-era="32bit"] .fighter-card.is-selected img { transform: none; filter: drop-shadow(6px 6px 0 #01030a); }
+#arcade[data-era="32bit"] .fighter-card.is-selected,
+#arcade[data-era="32bit"] .fighter-card[data-fighter="gauthier"].is-selected,
+#arcade[data-era="32bit"] .difficulty-card.is-selected {
+  border-color: var(--yellow);
+  background: #18223b;
+  box-shadow: inset 0 0 0 4px #29334d, 6px 6px 0 #000;
+  transform: none;
+}
+#arcade[data-era="32bit"] .fighter-card[data-fighter="gauthier"].is-selected { border-color: var(--cyan); }
+#arcade[data-era="32bit"] .fighter-card:hover,
+#arcade[data-era="32bit"] .fighter-card:focus-visible,
+#arcade[data-era="32bit"] .difficulty-card:hover,
+#arcade[data-era="32bit"] .difficulty-card:focus-visible { outline: 3px solid var(--white); outline-offset: 3px; }
+
+.pick-tag { font-size: clamp(.62rem, .95vw, .84rem); box-shadow: 3px 3px 0 #000; }
+.card-index { font-family: "Skumic Arcade", monospace; font-size: clamp(.55rem, .75vw, .7rem); }
+.fighter-info { text-shadow: 2px 2px 0 #000; }
+.fighter-info small { font-size: clamp(.55rem, .86vw, .8rem); letter-spacing: .04em; }
+.fighter-info strong {
+  font: 700 clamp(1.55rem, 3.5vw, 3.3rem)/.9 "Skumic Pixel", monospace;
+  font-style: normal;
+  letter-spacing: 0;
+}
+.fighter-info em { font-size: clamp(.7rem, 1.05vw, 1rem); letter-spacing: .06em; }
+.fighter-moves { font-size: clamp(.55rem, .82vw, .77rem) !important; }
+.fighter-stats > span { font-size: .62rem !important; }
+.fighter-stats > span > i { height: 6px; background: #070c19; }
+.fighter-stats > span > i > i { background: var(--yellow); }
+.select-vs { font-family: "Skumic Arcade", monospace; font-style: normal; transform: none; animation: none; text-shadow: 4px 4px 0 #000; }
+.select-vs small { font-family: "Skumic Pixel", monospace; font-size: clamp(.55rem, .65vw, .68rem); }
+.selected-mark { font-size: clamp(.62rem, .92vw, .85rem); text-shadow: 2px 2px 0 #000; }
+.select-footer { border-top: 4px solid #3f5272; }
+.select-identity small,
+.select-identity span,
+.equal-stats span,
+.select-footer > p { font-size: clamp(.55rem, .85vw, .78rem); }
+.select-identity strong { font-family: "Skumic Arcade", monospace; font-size: clamp(.7rem, 1vw, 1rem); font-style: normal; line-height: 1.5; }
+.equal-stats span { border: 2px solid #556985; background: #0b1428; }
+
+.difficulty-header > span { font-size: clamp(.65rem, .95vw, .85rem); }
+#arcade[data-era="32bit"] .difficulty-card strong {
+  font: 400 clamp(1rem, 2.1vw, 2rem)/1.35 "Skumic Arcade", monospace;
+  font-style: normal;
+  text-shadow: 4px 4px 0 #000;
+}
+.difficulty-card em { font-size: clamp(.7rem, 1.1vw, 1rem); letter-spacing: .06em; }
+.difficulty-card > span:not(.difficulty-number) { font-size: clamp(.68rem, .95vw, .9rem); }
+.difficulty-card i { font-size: clamp(1rem, 1.5vw, 1.35rem); }
+.difficulty-number { font-family: "Skumic Arcade", monospace; font-size: clamp(.55rem, .75vw, .7rem); }
+.difficulty-footer p { font-size: clamp(.6rem, .9vw, .82rem); }
+
+#arcade[data-era="32bit"] .winner-panel { border-color: var(--yellow); background: #0b1225; }
+#arcade[data-era="32bit"] .winner-panel > img { background: #17233d; }
+.winner-copy h2 {
+  font: 700 clamp(2rem, 4vw, 4rem)/.95 "Skumic Pixel", monospace;
+  font-style: normal;
+  letter-spacing: 0;
+  text-shadow: 4px 4px 0 #000;
+}
+.winner-copy > p { font-family: "Skumic Arcade", monospace; font-size: clamp(.8rem, 1.5vw, 1.3rem); }
+
+.sound-button {
+  width: clamp(2rem, 3vw, 2.5rem);
+  border: 3px solid #7889a8;
+  border-radius: 0;
+  background: #101b31;
+  box-shadow: 3px 3px 0 #000;
+  font-size: 1.2rem;
+}
+.sound-button:focus-visible { outline: 3px solid var(--yellow); outline-offset: 3px; }
+.control-deck {
+  border-color: #7284a0;
+  background: #0b1327;
+  box-shadow: inset 0 4px 0 #263657;
+}
+.keyboard-strip,
+.deck-strip { font-size: clamp(.68rem, .9vw, .86rem); letter-spacing: .03em; }
+.keyboard-strip b { color: var(--yellow); }
+
+@media (pointer: coarse), (hover: none) {
+  .control-deck { background: #0b1327; }
+  .control-deck::before {
+    border: 3px solid #293b5f;
+    border-radius: 0;
+    background: #091124;
+    box-shadow: inset 0 0 0 4px #111e39;
+    font-size: clamp(.65rem, 2.1vw, .85rem);
+  }
+  .touch-movement button,
+  .touch-actions button {
+    border: 3px solid #7789a8;
+    border-radius: 0;
+    background: #263453;
+    box-shadow: inset 3px 3px 0 #566b91, inset -3px -3px 0 #101a2e, 4px 4px 0 #000;
+    font-size: clamp(1rem, 5vw, 1.5rem);
+  }
+  .touch-actions button { border-radius: 0; }
+  .touch-actions small { font-size: clamp(.6rem, 1.8vw, .78rem); }
+  .touch-movement button.is-held,
+  .touch-actions button.is-held { transform: translate(3px, 3px); background: #536787; box-shadow: inset 2px 2px 0 #9aabc4, 1px 1px 0 #000; }
+}
+
+@media (max-width: 760px), (max-height: 520px) {
+  .title-core { padding: .65rem; }
+  h1 span { font-size: clamp(1.25rem, 3.6vw, 2rem); }
+  h1 strong { font-size: clamp(.58rem, 1.6vw, .85rem); }
+  .select-header h2,
+  .difficulty-header h2 { font-size: clamp(.78rem, 2.4vw, 1.35rem); }
+  .fighter-info strong { font-size: clamp(1.15rem, 3vw, 1.6rem); }
+  .fighter-info small,
+  .fighter-moves { font-size: .6rem !important; }
+  .fighter-info em { font-size: .65rem; }
+  .select-header-row,
+  .select-header small,
+  .difficulty-header small { font-size: .6rem; }
+  .select-vs { font-size: .9rem; }
+  .select-vs small { font-size: .48rem; }
+  .select-identity strong { font-size: .65rem; }
+  .equal-stats span { font-size: .52rem; }
+  .difficulty-card strong { font-size: clamp(.8rem, 2.2vw, 1.25rem) !important; }
+  .difficulty-card em,
+  .difficulty-card > span:not(.difficulty-number) { font-size: .65rem; }
+  .winner-copy h2 { font-size: clamp(1.5rem, 3.5vw, 2.3rem); }
+  .keyboard-strip { font-size: .65rem; }
+}
+
+@media (pointer: coarse) and (orientation: portrait) {
+  #arcade[data-era="32bit"] #game-frame { border: 0; box-shadow: none; }
+  .title-core { width: 86%; padding: 1rem .5rem; }
+  h1 span { font-size: clamp(1.55rem, 8vw, 2.2rem); }
+  h1 strong { font-size: clamp(.7rem, 3.1vw, 1.05rem); }
+  .title-fighter-left,
+  .title-fighter-right { transform: none; }
+  .select-header h2 { font-size: clamp(.95rem, 3.4vw, 1.35rem); }
+  .difficulty-header h2 { font-size: clamp(.85rem, 3.2vw, 1.2rem); }
+  .fighter-info strong { font-size: clamp(1.25rem, 5.8vw, 2rem); }
+  .fighter-info small,
+  .fighter-info em,
+  .fighter-moves { font-size: clamp(.64rem, 2.2vw, .82rem) !important; }
+  .select-vs { font-size: 1rem; }
+  .select-vs small { font-size: .62rem; }
+  .selected-mark { font-size: .68rem; }
+  .pick-tag { font-size: .72rem; }
+  .select-identity strong { font-size: .75rem; }
+  .equal-stats span { font-size: .68rem; }
+  .difficulty-card strong { font-size: clamp(.9rem, 3.3vw, 1.25rem) !important; }
+  .difficulty-card em,
+  .difficulty-card > span:not(.difficulty-number) { font-size: .78rem; }
+  .winner-copy h2 { font-size: clamp(1.7rem, 6vw, 2.4rem); }
+  .winner-copy > p { font-size: .8rem; }
+}
+
+@media (pointer: coarse) and (orientation: landscape) {
+  .control-deck { background: #081020d9; }
+}
+
+@keyframes screenInPixels {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}

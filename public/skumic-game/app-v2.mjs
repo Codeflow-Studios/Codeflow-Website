@@ -1,5 +1,5 @@
 import { FIGHTERS } from "./roster-v2.mjs?v=7";
-import { CPU_DIFFICULTIES, FighterGame } from "./engine-v2.mjs?v=7";
+import { CPU_DIFFICULTIES, FighterGame } from "./engine-v2.mjs?v=8";
 
 const $ = (selector) => document.querySelector(selector);
 const $$ = (selector) => [...document.querySelectorAll(selector)];
@@ -159,6 +159,7 @@ const screens = {
 };
 const cards = $$(".fighter-card");
 const difficultyCards = $$(".difficulty-card");
+const fineHover = window.matchMedia("(hover: hover) and (pointer: fine)");
 const controls = new Controls();
 const audio = new ArcadeAudio();
 let selectedId = "matar";
@@ -255,7 +256,14 @@ const engine = new FighterGame($("#game"), (type, detail) => {
 
 engine.setInputProvider(() => controls.sample());
 engine.startLoop();
-engine.load().catch((error) => {
+const pixelFontsReady = document.fonts
+  ? Promise.all([
+      document.fonts.load('16px "Skumic Pixel"'),
+      document.fonts.load('16px "Skumic Arcade"'),
+    ]).catch(() => {})
+  : Promise.resolve();
+
+pixelFontsReady.then(() => engine.load()).catch((error) => {
   screens.loading.innerHTML = `<div class="bolt">!</div><p>GAME LOAD FAILED</p><small>${error.message}</small>`;
   announce(error.message);
 });
@@ -267,14 +275,18 @@ $("#start").addEventListener("click", () => {
 
 cards.forEach((card) => {
   card.addEventListener("click", () => selectFighter(card.dataset.fighter, true));
-  card.addEventListener("mouseenter", () => selectFighter(card.dataset.fighter));
+  card.addEventListener("mouseenter", () => {
+    if (fineHover.matches) selectFighter(card.dataset.fighter);
+  });
 });
 
 $("#confirm-fighter").addEventListener("click", openDifficulty);
 
 difficultyCards.forEach((card) => {
   card.addEventListener("click", () => selectDifficulty(card.dataset.difficulty, true));
-  card.addEventListener("mouseenter", () => selectDifficulty(card.dataset.difficulty));
+  card.addEventListener("mouseenter", () => {
+    if (fineHover.matches) selectDifficulty(card.dataset.difficulty);
+  });
 });
 
 $("#difficulty-back").addEventListener("click", openSelect);
@@ -339,7 +351,7 @@ document.addEventListener("visibilitychange", () => {
 });
 
 window.skumicGame = Object.freeze({
-  version: "3.0-32bit",
+  version: "3.1-pixel-art",
   getState: () => engine.getState(),
   startMatch: (fighterId = "matar", difficulty = "easy") => beginMatch(FIGHTERS[fighterId] ? fighterId : "matar", CPU_DIFFICULTIES[difficulty] ? difficulty : "easy"),
   selectFighter: (fighterId = "matar") => selectFighter(FIGHTERS[fighterId] ? fighterId : "matar"),

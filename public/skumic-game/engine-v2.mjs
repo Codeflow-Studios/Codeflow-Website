@@ -308,8 +308,7 @@ export class FighterGame {
     this.canvas.width = W * RENDER_SCALE;
     this.canvas.height = H * RENDER_SCALE;
     this.ctx = canvas.getContext("2d");
-    this.ctx.imageSmoothingEnabled = true;
-    this.ctx.imageSmoothingQuality = "high";
+    this.ctx.imageSmoothingEnabled = false;
     this.emit = emit;
     this.state = "boot";
     this.inputProvider = emptyInput;
@@ -642,8 +641,7 @@ export class FighterGame {
   render() {
     const ctx = this.ctx;
     ctx.setTransform(RENDER_SCALE, 0, 0, RENDER_SCALE, 0, 0);
-    ctx.imageSmoothingEnabled = true;
-    ctx.imageSmoothingQuality = "high";
+    ctx.imageSmoothingEnabled = false;
     ctx.clearRect(0, 0, W, H);
     const shakeX = this.shake > 0.15 ? Math.round((Math.random() - 0.5) * this.shake) : 0;
     const shakeY = this.shake > 0.15 ? Math.round((Math.random() - 0.5) * this.shake * 0.5) : 0;
@@ -668,26 +666,21 @@ export class FighterGame {
       ctx.fillStyle = "#060914";
       ctx.fillRect(0, 0, W, H);
     }
-    const floorShade = ctx.createLinearGradient(0, 164, 0, H);
-    floorShade.addColorStop(0, "rgba(1,3,9,0)");
-    floorShade.addColorStop(1, "rgba(1,2,7,.42)");
-    ctx.fillStyle = floorShade;
-    ctx.fillRect(0, 160, W, 110);
+    ctx.fillStyle = "rgba(1,2,7,.17)";
+    ctx.fillRect(0, 176, W, 48);
+    ctx.fillStyle = "rgba(1,2,7,.4)";
+    ctx.fillRect(0, 224, W, 46);
     ctx.fillStyle = "rgba(1,3,10,.64)";
     ctx.fillRect(0, 0, W, 48);
     ctx.fillStyle = "rgba(255,230,0,.08)";
     ctx.fillRect(362, 15, 68, 103);
     ctx.save();
-    ctx.globalAlpha = 0.15;
-    ctx.strokeStyle = "#b9f3ff";
-    ctx.lineWidth = 1;
+    ctx.globalAlpha = 0.2;
+    ctx.fillStyle = "#b9f3ff";
     for (let index = 0; index < 18; index += 1) {
       const x = (index * 103 + this.visualTime * 63) % (W + 40) - 20;
       const y = (index * 61 + this.visualTime * 137) % 205;
-      ctx.beginPath();
-      ctx.moveTo(Math.floor(x), Math.floor(y));
-      ctx.lineTo(Math.floor(x - 2), Math.floor(y + 7));
-      ctx.stroke();
+      ctx.fillRect(Math.floor(x), Math.floor(y), 2, 6);
     }
     ctx.restore();
   }
@@ -699,9 +692,8 @@ export class FighterGame {
     const flip = fighter.facing !== fighter.config.artFacing;
     ctx.save();
     ctx.fillStyle = "rgba(0,0,0,.52)";
-    ctx.beginPath();
-    ctx.ellipse(Math.round(fighter.x), STAGE.groundY + 2, fighter.crouching ? 27 : 35, 6, 0, 0, Math.PI * 2);
-    ctx.fill();
+    const shadowWidth = fighter.crouching ? 50 : 66;
+    ctx.fillRect(Math.round(fighter.x - shadowWidth / 2), STAGE.groundY + 2, shadowWidth, 6);
     ctx.translate(Math.round(fighter.x), Math.round(fighter.y));
     if (flip) ctx.scale(-1, 1);
     if (fighter.flash > 0) ctx.filter = "brightness(2.8) saturate(.25)";
@@ -754,10 +746,10 @@ export class FighterGame {
     ctx.strokeRect(221, 5, 38, 40);
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
-    ctx.font = "900 21px 'Courier New', monospace";
+    ctx.font = "16px 'Skumic Arcade', monospace";
     ctx.fillStyle = "#ffe600";
     ctx.fillText(String(Math.max(0, Math.ceil(this.roundTimer))).padStart(2, "0"), 240, 25);
-    ctx.font = "bold 6px 'Courier New', monospace";
+    ctx.font = "700 7px 'Skumic Pixel', monospace";
     ctx.fillStyle = "#fff";
     ctx.fillText(`R${this.round} · ${CPU_DIFFICULTIES[this.difficulty].label}`, 240, 41);
 
@@ -798,11 +790,11 @@ export class FighterGame {
     const currentWidth = Math.round(width * current);
     ctx.fillRect(reverse ? x + width - currentWidth : x, y, currentWidth, 11);
     ctx.textBaseline = "alphabetic";
-    ctx.font = "900 8px 'Courier New', monospace";
+    ctx.font = "700 9px 'Skumic Pixel', monospace";
     ctx.fillStyle = "#fff";
     ctx.textAlign = reverse ? "right" : "left";
     ctx.fillText(`${fighter.side === "player" ? "P1" : "CPU"} · ${fighter.config.name}`, reverse ? x + width : x, 10);
-    ctx.font = "bold 6px 'Courier New', monospace";
+    ctx.font = "700 7px 'Skumic Pixel', monospace";
     ctx.fillStyle = "#d7ddeb";
     ctx.fillText(`${fighter.hp} HP`, reverse ? x + width : x, 37);
     for (let index = 0; index < 2; index += 1) {
@@ -820,7 +812,7 @@ export class FighterGame {
     ctx.fillRect(x, y, 62, 6);
     ctx.fillStyle = remaining > 0 ? "#596174" : fighter.config.accent;
     ctx.fillRect(x, y, Math.round(62 * clamp(ratio, 0, 1)), 6);
-    ctx.font = "bold 5px 'Courier New', monospace";
+    ctx.font = "700 6px 'Skumic Pixel', monospace";
     ctx.textAlign = "left";
     ctx.fillStyle = remaining > 0 ? "#d2d7e3" : "#07080d";
     ctx.fillText(`${INPUT_LABELS[key]} ${move.label}`, x + 2, y + 5);
@@ -832,17 +824,16 @@ export class FighterGame {
     ctx.save();
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
-    ctx.font = `900 ${isFight || isKo ? 42 : 28}px 'Courier New', monospace`;
-    ctx.lineWidth = 8;
-    ctx.strokeStyle = "#020309";
-    ctx.strokeText(this.roundMessage, W / 2, 137);
+    ctx.font = `${isFight || isKo ? 30 : 19}px 'Skumic Arcade', monospace`;
+    ctx.fillStyle = "#020309";
+    ctx.fillText(this.roundMessage, W / 2 + 4, 141);
     ctx.fillStyle = isFight ? "#ffe600" : isKo ? "#ff3045" : "#fff";
     ctx.fillText(this.roundMessage, W / 2, 137);
     if (this.state === "round-end" && this.roundMessage !== "DRAW") {
       const winner = this.player.victorious ? this.player : this.cpu;
-      ctx.font = "900 10px 'Courier New', monospace";
-      ctx.lineWidth = 4;
-      ctx.strokeText(`${winner.config.name} WINS`, W / 2, 166);
+      ctx.font = "700 13px 'Skumic Pixel', monospace";
+      ctx.fillStyle = "#020309";
+      ctx.fillText(`${winner.config.name} WINS`, W / 2 + 2, 168);
       ctx.fillStyle = winner.config.color;
       ctx.fillText(`${winner.config.name} WINS`, W / 2, 166);
     }
@@ -855,13 +846,12 @@ export class FighterGame {
     ctx.fillRect(0, 0, W, H);
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
-    ctx.font = "900 31px 'Courier New', monospace";
-    ctx.strokeStyle = "#020309";
-    ctx.lineWidth = 7;
-    ctx.strokeText("PAUSED", W / 2, H / 2 - 6);
+    ctx.font = "25px 'Skumic Arcade', monospace";
+    ctx.fillStyle = "#020309";
+    ctx.fillText("PAUSED", W / 2 + 3, H / 2 - 3);
     ctx.fillStyle = "#ffe600";
     ctx.fillText("PAUSED", W / 2, H / 2 - 6);
-    ctx.font = "bold 8px 'Courier New', monospace";
+    ctx.font = "700 11px 'Skumic Pixel', monospace";
     ctx.fillStyle = "#fff";
     ctx.fillText("PRESS P TO CONTINUE", W / 2, H / 2 + 23);
     ctx.restore();
