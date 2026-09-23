@@ -1,4 +1,4 @@
-import { FIGHTERS, INPUT_LABELS, STAGE, otherFighter } from "./roster-v2.mjs?v=7";
+import { FIGHTERS, INPUT_LABELS, STAGE, STAGES, otherFighter } from "./roster-v2.mjs?v=9";
 
 const W = 480;
 const H = 270;
@@ -33,6 +33,22 @@ function sliceAtlas(image) {
       const ctx = frame.getContext("2d");
       ctx.imageSmoothingEnabled = false;
       ctx.drawImage(image, column * width, row * height, width, height, 0, 0, width, height);
+      const pixels = ctx.getImageData(0, 0, width, height).data;
+      let lastVisibleRow = height - 1;
+      for (let y = height - 1; y >= 0; y -= 1) {
+        let found = false;
+        for (let x = 0; x < width; x += 1) {
+          if (pixels[(y * width + x) * 4 + 3] > 127) {
+            found = true;
+            break;
+          }
+        }
+        if (found) {
+          lastVisibleRow = y;
+          break;
+        }
+      }
+      frame.footOffset = height - 1 - lastVisibleRow;
       frames.push(frame);
     }
   }
@@ -50,6 +66,7 @@ function emptyInput() {
     heavy: false,
     special1: false,
     special2: false,
+    guard: false,
   };
 }
 
@@ -125,7 +142,7 @@ class Fighter {
 
     if (!this.action && this.stun <= 0 && !this.ko) this.facing = opponent.x >= this.x ? 1 : -1;
     const awayHeld = this.facing === 1 ? input.left : input.right;
-    this.guarding = this.canAct && this.grounded && awayHeld;
+    this.guarding = this.canAct && this.grounded && (awayHeld || input.guard);
 
     if (this.ko) {
       this.vx *= Math.pow(0.01, dt);
@@ -156,7 +173,7 @@ class Fighter {
   handleNeutral(dt, input) {
     this.crouching = this.grounded && input.down;
     let direction = 0;
-    if (!this.crouching && !this.guarding) direction = Number(input.right) - Number(input.left);
+    if (!this.crouching) direction = Number(input.right) - Number(input.left);
     const target = direction * this.config.stats.moveSpeed;
     this.vx = approach(this.vx, target, this.config.stats.acceleration * dt);
     if (direction === 0) this.vx *= Math.pow(0.001, dt);
@@ -312,10 +329,11 @@ export class FighterGame {
     this.emit = emit;
     this.state = "boot";
     this.inputProvider = emptyInput;
-    this.assets = { stage: null, portraits: {}, frames: {} };
+    this.assets = { stages: {}, portraits: {}, frames: {} };
     this.player = null;
     this.cpu = null;
     this.difficulty = "easy";
+    this.stageId = "the-stage";
     this.brain = new CPUBrain(this.difficulty);
     this.round = 0;
     this.roundTimer = 60;
@@ -337,14 +355,14 @@ export class FighterGame {
   }
 
   async load() {
-    const [stage, matarPortrait, gauthierPortrait, matarAtlas, gauthierAtlas] = await Promise.all([
-      loadImage(STAGE.image),
+    const [stageImages, matarPortrait, gauthierPortrait, matarAtlas, gauthierAtlas] = await Promise.all([
+      Promise.all(Object.values(STAGES).map(async (stage) => [stage.id, await loadImage(stage.image)])),
       loadImage(FIGHTERS.matar.portrait),
       loadImage(FIGHTERS.gauthier.portrait),
       loadImage(FIGHTERS.matar.atlas),
       loadImage(FIGHTERS.gauthier.atlas),
     ]);
-    this.assets.stage = stage;
+    this.assets.stages = Object.fromEntries(stageImages);
     this.assets.portraits.matar = matarPortrait;
     this.assets.portraits.gauthier = gauthierPortrait;
     this.assets.frames.matar = sliceAtlas(matarAtlas);
@@ -392,13 +410,22 @@ export class FighterGame {
     this.state = "difficulty";
   }
 
+  showStageSelect() {
+    this.state = "stage-select";
+  }
+
+  setStage(stageId = "the-stage") {
+    this.stageId = STAGES[stageId] ? stageId : "the-stage";
+  }
+
   setDifficulty(level = "easy") {
     this.difficulty = CPU_DIFFICULTIES[level] ? level : "easy";
     this.brain.setDifficulty(this.difficulty);
   }
 
-  startMatch(playerId = "matar", difficulty = this.difficulty) {
+  startMatch(playerId = "matar", difficulty = this.difficulty, stageId = this.stageId) {
     this.setDifficulty(difficulty);
+    this.setStage(stageId);
     const chosen = FIGHTERS[playerId] || FIGHTERS.matar;
     this.player = new Fighter(chosen, "player");
     this.cpu = new Fighter(FIGHTERS[otherFighter(chosen.id)], "cpu");
@@ -442,7 +469,7 @@ export class FighterGame {
     this.shake *= Math.pow(0.002, dt);
     this.updateParticles(dt);
 
-    if (["boot", "title", "select", "difficulty", "match-over", "paused"].includes(this.state)) return;
+    if (["boot", "title", "select", "difficulty", "stage-select", "match-over", "paused"].includes(this.state)) return;
     if (this.state === "round-intro") {
       const introInput = this.inputProvider() || emptyInput();
       for (const key of Object.keys(this.pendingPlayerInput)) {
@@ -503,13 +530,13 @@ export class FighterGame {
       owner: fighter,
       move,
       x: fighter.x + fighter.facing * 37,
-      y: fighter.y - 91,
+      y: fighter.y - (move.id === "vocal-wave" ? 112 : 91),
       vx: fighter.facing * move.projectileSpeed,
       w: move.projectileSize.w,
       h: move.projectileSize.h,
       life: 1.4,
     });
-    this.emit("shot", { fighter: fighter.config.id });
+    this.emit("projectile", { fighter: fighter.config.id });
   }
 
   updateProjectiles(dt) {
@@ -661,7 +688,7 @@ export class FighterGame {
   }
 
   drawStage(ctx) {
-    if (this.assets.stage) ctx.drawImage(this.assets.stage, 0, 0, W, H);
+    if (this.assets.stages[this.stageId]) ctx.drawImage(this.assets.stages[this.stageId], 0, 0, W, H);
     else {
       ctx.fillStyle = "#060914";
       ctx.fillRect(0, 0, W, H);
@@ -672,17 +699,17 @@ export class FighterGame {
     ctx.fillRect(0, 224, W, 46);
     ctx.fillStyle = "rgba(1,3,10,.64)";
     ctx.fillRect(0, 0, W, 48);
-    ctx.fillStyle = "rgba(255,230,0,.08)";
-    ctx.fillRect(362, 15, 68, 103);
-    ctx.save();
-    ctx.globalAlpha = 0.2;
-    ctx.fillStyle = "#b9f3ff";
-    for (let index = 0; index < 18; index += 1) {
-      const x = (index * 103 + this.visualTime * 63) % (W + 40) - 20;
-      const y = (index * 61 + this.visualTime * 137) % 205;
-      ctx.fillRect(Math.floor(x), Math.floor(y), 2, 6);
+    if (this.stageId === "the-stage") {
+      ctx.save();
+      ctx.globalAlpha = .25;
+      for (let index = 0; index < 12; index += 1) {
+        const x = (index * 103 + this.visualTime * 14) % (W + 40) - 20;
+        const y = (index * 61 + this.visualTime * 23) % 170;
+        ctx.fillStyle = index % 2 ? "#ff66d6" : "#b9f3ff";
+        ctx.fillRect(Math.floor(x), Math.floor(y), 2, 2);
+      }
+      ctx.restore();
     }
-    ctx.restore();
   }
 
   drawFighter(ctx, fighter) {
@@ -693,11 +720,11 @@ export class FighterGame {
     ctx.save();
     ctx.fillStyle = "rgba(0,0,0,.52)";
     const shadowWidth = fighter.crouching ? 50 : 66;
-    ctx.fillRect(Math.round(fighter.x - shadowWidth / 2), STAGE.groundY + 2, shadowWidth, 6);
+    ctx.fillRect(Math.round(fighter.x - shadowWidth / 2), STAGE.groundY, shadowWidth, 5);
     ctx.translate(Math.round(fighter.x), Math.round(fighter.y));
     if (flip) ctx.scale(-1, 1);
     if (fighter.flash > 0) ctx.filter = "brightness(2.8) saturate(.25)";
-    ctx.drawImage(frame, -64, -170, 128, 170);
+    ctx.drawImage(frame, -64, -170 + (frame.footOffset || 0), 128, 170);
     ctx.filter = "none";
     if (fighter.isCountering()) {
       ctx.strokeStyle = "#ffe600";
@@ -712,12 +739,30 @@ export class FighterGame {
     for (const projectile of this.projectiles) {
       ctx.save();
       ctx.translate(Math.round(projectile.x), Math.round(projectile.y));
-      ctx.fillStyle = "#fff8d0";
-      ctx.fillRect(-projectile.w / 2, -2, projectile.w, 4);
-      ctx.fillStyle = projectile.owner.config.color;
-      ctx.fillRect(-projectile.w / 2 - Math.sign(projectile.vx) * 7, -1, 8, 2);
-      ctx.fillStyle = "#ffe600";
-      ctx.fillRect(Math.sign(projectile.vx) * projectile.w / 2, -4, Math.sign(projectile.vx) * 6, 8);
+      if (projectile.vx < 0) ctx.scale(-1, 1);
+      if (projectile.move.id === "vinyl-throw") {
+        ctx.fillStyle = "#050712";
+        ctx.fillRect(-9, -9, 18, 18);
+        ctx.fillRect(-11, -6, 22, 12);
+        ctx.fillStyle = "#f2e6ad";
+        ctx.fillRect(-7, -7, 14, 2);
+        ctx.fillRect(-7, 5, 14, 2);
+        ctx.fillStyle = "#ffe451";
+        ctx.fillRect(-3, -3, 6, 6);
+        ctx.fillStyle = "#12182c";
+        ctx.fillRect(-1, -1, 2, 2);
+      } else {
+        ctx.fillStyle = "#071422";
+        ctx.fillRect(-18, -8, 26, 16);
+        ctx.fillStyle = "#39d9ed";
+        for (let index = 0; index < 3; index += 1) {
+          const x = -12 + index * 9;
+          ctx.fillRect(x, -5 - index, 3, 10 + index * 2);
+          ctx.fillRect(x + 3, -3 - index, 3, 6 + index * 2);
+        }
+        ctx.fillStyle = "#dcfbff";
+        ctx.fillRect(15, -2, 4, 4);
+      }
       ctx.restore();
     }
   }
@@ -861,10 +906,11 @@ export class FighterGame {
     return {
       state: this.state,
       difficulty: this.difficulty,
+      stage: this.stageId,
       round: this.round,
       timer: Math.ceil(this.roundTimer),
-      player: this.player ? { id: this.player.config.id, hp: this.player.hp, rounds: this.player.roundWins } : null,
-      cpu: this.cpu ? { id: this.cpu.config.id, hp: this.cpu.hp, rounds: this.cpu.roundWins } : null,
+      player: this.player ? { id: this.player.config.id, hp: this.player.hp, rounds: this.player.roundWins, x: this.player.x, guarding: this.player.guarding } : null,
+      cpu: this.cpu ? { id: this.cpu.config.id, hp: this.cpu.hp, rounds: this.cpu.roundWins, x: this.cpu.x, guarding: this.cpu.guarding } : null,
     };
   }
 }
