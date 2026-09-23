@@ -63,7 +63,7 @@ export const FIGHTERS = Object.freeze({
   gauthier: {
     id: "gauthier",
     name: "GAUTHIER",
-    nickname: "BLUE EYES",
+    nickname: "VAN DE ZEE",
     archetype: "BRUISER / COUNTER",
     color: "#00d8ff",
     accent: "#ffe600",

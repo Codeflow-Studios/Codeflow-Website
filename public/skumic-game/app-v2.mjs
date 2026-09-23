@@ -1,4 +1,4 @@
-import { FIGHTERS } from "./roster-v2.mjs?v=7";
+import { FIGHTERS } from "./roster-v2.mjs?v=8";
 import { CPU_DIFFICULTIES, FighterGame } from "./engine-v2.mjs?v=8";
 
 const $ = (selector) => document.querySelector(selector);
@@ -159,7 +159,6 @@ const screens = {
 };
 const cards = $$(".fighter-card");
 const difficultyCards = $$(".difficulty-card");
-const fineHover = window.matchMedia("(hover: hover) and (pointer: fine)");
 const controls = new Controls();
 const audio = new ArcadeAudio();
 let selectedId = "matar";
@@ -184,8 +183,11 @@ function selectFighter(id, focus = false) {
     const selected = card.dataset.fighter === id;
     card.classList.toggle("is-selected", selected);
     card.setAttribute("aria-pressed", String(selected));
+    card.querySelector(".pick-tag").textContent = selected ? "P1 // SELECTED" : "CPU // OPPONENT";
     if (selected && focus) card.focus({ preventScroll: true });
   });
+  $("#select-role-left").textContent = id === "matar" ? "PLAYER 1" : "CPU OPPONENT";
+  $("#select-role-right").textContent = id === "gauthier" ? "PLAYER 1" : "CPU OPPONENT";
   $("#select-screen").dataset.fighter = id;
   $("#selected-fighter-name").textContent = FIGHTERS[id].name;
   $("#selected-fighter-callout").textContent = FIGHTERS[id].nickname;
@@ -236,9 +238,10 @@ function showWinner(detail) {
   $("#winner-portrait").src = winner.portrait;
   $("#winner-portrait").alt = `${winner.name}, winnaar van de match`;
   $("#winner-name").textContent = winner.name;
-  $("#winner-score").textContent = detail.score.replace("-", "–");
+  const winnerScore = detail.playerWon ? detail.score : detail.score.split("-").reverse().join("-");
+  $("#winner-score").textContent = winnerScore.replace("-", "–");
   showScreen("winner");
-  announce(`${winner.name} wint de match met ${detail.score}.`);
+  announce(`${winner.name} wint de match met ${winnerScore}.`);
   $("#rematch").focus({ preventScroll: true });
 }
 
@@ -275,18 +278,12 @@ $("#start").addEventListener("click", () => {
 
 cards.forEach((card) => {
   card.addEventListener("click", () => selectFighter(card.dataset.fighter, true));
-  card.addEventListener("mouseenter", () => {
-    if (fineHover.matches) selectFighter(card.dataset.fighter);
-  });
 });
 
 $("#confirm-fighter").addEventListener("click", openDifficulty);
 
 difficultyCards.forEach((card) => {
   card.addEventListener("click", () => selectDifficulty(card.dataset.difficulty, true));
-  card.addEventListener("mouseenter", () => {
-    if (fineHover.matches) selectDifficulty(card.dataset.difficulty);
-  });
 });
 
 $("#difficulty-back").addEventListener("click", openSelect);
@@ -302,10 +299,14 @@ $("#rematch").addEventListener("click", () => {
 
 $("#reselect").addEventListener("click", openSelect);
 
-$("#mute").addEventListener("click", () => {
-  const muted = audio.toggle();
-  $("#mute").textContent = muted ? "×" : "♪";
-  $("#mute").setAttribute("aria-label", muted ? "Geluid aanzetten" : "Geluid uitzetten");
+[$("#mute"), $("#select-mute")].forEach((button) => {
+  button.addEventListener("click", () => {
+    const muted = audio.toggle();
+    [$("#mute"), $("#select-mute")].forEach((control) => {
+      control.textContent = muted ? "×" : "♪";
+      control.setAttribute("aria-label", muted ? "Geluid aanzetten" : "Geluid uitzetten");
+    });
+  });
 });
 
 window.addEventListener("keydown", (event) => {
@@ -351,7 +352,7 @@ document.addEventListener("visibilitychange", () => {
 });
 
 window.skumicGame = Object.freeze({
-  version: "3.1-pixel-art",
+  version: "3.2-select-ui",
   getState: () => engine.getState(),
   startMatch: (fighterId = "matar", difficulty = "easy") => beginMatch(FIGHTERS[fighterId] ? fighterId : "matar", CPU_DIFFICULTIES[difficulty] ? difficulty : "easy"),
   selectFighter: (fighterId = "matar") => selectFighter(FIGHTERS[fighterId] ? fighterId : "matar"),

@@ -10,7 +10,7 @@
   <link rel="preload" as="font" href="assets/fonts/PixelifySans.ttf" type="font/ttf" crossorigin>
   <link rel="preload" as="font" href="assets/fonts/PressStart2P-Regular.ttf" type="font/ttf" crossorigin>
   <link rel="stylesheet" href="revamp.css?v=9">
-  <link rel="stylesheet" href="pixel-art.css?v=1">
+  <link rel="stylesheet" href="pixel-art.css?v=2">
   <title>Skumic Fighters</title>
 </head>
 <body>
@@ -39,14 +39,14 @@
 
       <section id="select-screen" class="screen select-screen is-hidden" aria-labelledby="select-title">
         <header class="select-header">
-          <div class="select-header-row"><span>PLAYER 1</span><b>ARCADE VERSUS</b><span>CPU OPPONENT</span></div>
+          <div class="select-header-row"><span id="select-role-left">PLAYER 1</span><span id="select-role-right">CPU OPPONENT</span></div>
           <h2 id="select-title">FIGHTER SELECT</h2>
           <small>CHOOSE YOUR SKUMIC WARRIOR</small>
         </header>
 
         <div class="fighter-cards">
-          <button class="fighter-card is-selected" type="button" data-fighter="matar" aria-label="Kies Matar Point Blank">
-            <span class="pick-tag">P1 // LOCK</span>
+          <button class="fighter-card is-selected" type="button" data-fighter="matar" aria-label="Kies Matar Point Blank" aria-pressed="true">
+            <span class="pick-tag">P1 // SELECTED</span>
             <span class="card-index">01</span>
             <img src="assets/matar-portrait-v2.png?v=7" alt="Matar Point Blank met achterwaartse pet en tatoeages">
             <span class="fighter-info">
@@ -55,34 +55,24 @@
               <em>POINT BLANK</em>
               <span class="fighter-moves">PUNCH · KICK · PISTOL-WHIP</span>
               <span class="fighter-moves">QUICK SHOT · GUN DASH</span>
-              <span class="fighter-stats" aria-label="Gelijke stats">
-                <span><b>POWER</b><i><i></i></i><em>100</em></span>
-                <span><b>SPEED</b><i><i></i></i><em>100</em></span>
-                <span><b>RANGE</b><i><i></i></i><em>100</em></span>
-              </span>
             </span>
-            <span class="selected-mark">SELECTED</span>
+            <span class="selected-mark">▶ PLAYER 1</span>
           </button>
 
-          <div class="select-vs" aria-hidden="true"><span>VS</span><small>SKUMIC STREET<br> NIGHT</small></div>
+          <div class="select-vs" aria-hidden="true"><span>VS</span></div>
 
-          <button class="fighter-card" type="button" data-fighter="gauthier" aria-label="Kies Gauthier Blue Eyes">
+          <button class="fighter-card" type="button" data-fighter="gauthier" aria-label="Kies Gauthier Van de Zee" aria-pressed="false">
             <span class="pick-tag">CPU // OPPONENT</span>
             <span class="card-index">02</span>
             <img src="assets/gauthier-portrait-v2.png?v=7" alt="Gauthier met donkere haren en blauwe ogen">
             <span class="fighter-info">
               <small>BRUISER / COUNTER</small>
               <strong>GAUTHIER</strong>
-              <em>BLUE EYES</em>
+              <em>VAN DE ZEE</em>
               <span class="fighter-moves">PUNCH · KICK · HEAVY</span>
               <span class="fighter-moves">SHOULDER RUSH · COUNTER</span>
-              <span class="fighter-stats" aria-label="Gelijke stats">
-                <span><b>POWER</b><i><i></i></i><em>100</em></span>
-                <span><b>SPEED</b><i><i></i></i><em>100</em></span>
-                <span><b>RANGE</b><i><i></i></i><em>100</em></span>
-              </span>
             </span>
-            <span class="selected-mark">SELECTED</span>
+            <span class="selected-mark">▶ PLAYER 1</span>
           </button>
         </div>
 
@@ -92,11 +82,11 @@
             <strong id="selected-fighter-name">MATAR</strong>
             <span id="selected-fighter-callout">POINT BLANK</span>
           </div>
-          <div class="equal-stats" aria-label="Beide fighters hebben gelijke statistieken">
-            <span>1000 HP</span><span>SAME SPEED</span><span>SAME JUMP</span><span>SAME DAMAGE</span>
+          <div class="select-actions">
+            <button id="confirm-fighter" class="pixel-button primary-button" type="button">NEXT</button>
+            <button id="select-mute" class="sound-button" type="button" aria-label="Geluid uitzetten" title="Geluid">♪</button>
           </div>
-          <button id="confirm-fighter" class="pixel-button primary-button" type="button">NEXT</button>
-          <p>← → SELECT · ENTER NEXT</p>
+          <p>CLICK TO SELECT · ENTER NEXT</p>
         </footer>
       </section>
 
@@ -140,9 +130,8 @@
 
       <section id="winner-screen" class="screen winner-screen is-hidden" aria-live="assertive">
         <div class="winner-panel">
-          <span class="winner-kicker">MATCH WINNER</span>
-          <img id="winner-portrait" src="assets/matar-portrait-v2.png?v=7" alt="">
           <div class="winner-copy">
+            <span class="winner-kicker">MATCH WINNER</span>
             <h2 id="winner-name">MATAR</h2>
             <p id="winner-score">2–0</p>
             <div class="winner-actions">
@@ -150,6 +139,7 @@
               <button id="reselect" class="pixel-button secondary-button" type="button">SELECT</button>
             </div>
           </div>
+          <img id="winner-portrait" src="assets/matar-portrait-v2.png?v=7" alt="">
         </div>
         <p class="press-key">ENTER TO REMATCH</p>
       </section>
@@ -183,6 +173,6 @@
       </div>
     </section>
   </main>
-  <script type="module" src="app-v2.mjs?v=9"></script>
+  <script type="module" src="app-v2.mjs?v=10"></script>
 </body>
 </html>
