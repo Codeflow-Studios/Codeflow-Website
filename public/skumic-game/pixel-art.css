@@ -522,3 +522,188 @@ h1 strong {
   #winner-screen .winner-actions { gap: .4rem; }
   #winner-screen .winner-actions .pixel-button { min-width: 5.5rem; }
 }
+
+/* Keep the supplied studio and artist marks intact on the title screen. */
+.title-core { width: min(96%, 440px); }
+.studio-brand {
+  display: grid;
+  justify-items: center;
+  gap: .1rem;
+}
+.studio-brand img {
+  display: block;
+  width: clamp(128px, 12vw, 180px);
+  height: clamp(84px, 7.8vw, 118px);
+  object-fit: cover;
+  object-position: center;
+  image-rendering: auto;
+}
+.studio-brand .micro-label {
+  font-size: clamp(.55rem, .75vw, .8rem);
+  letter-spacing: .22em;
+}
+.game-brand {
+  width: 100%;
+  margin: 0;
+  display: grid;
+  justify-items: center;
+  line-height: 1;
+}
+.game-brand img {
+  display: block;
+  width: min(100%, 410px);
+  height: auto;
+  image-rendering: auto;
+  filter: drop-shadow(4px 4px 0 #000);
+}
+.game-brand strong { margin-top: -.4rem; }
+
+@media (max-width: 760px), (max-height: 520px) {
+  .studio-brand img { width: 128px; height: 84px; }
+  .game-brand img { width: min(100%, 340px); }
+}
+
+@media (pointer: coarse) and (orientation: portrait) {
+  .title-core { width: 86%; }
+  .studio-brand img { width: 138px; height: 90px; }
+  .game-brand img { width: min(100%, 320px); }
+  .game-brand strong { margin-top: -.3rem; }
+}
+
+.fighter-role {
+  display: block;
+  width: fit-content;
+  padding: .25rem .4rem;
+  border: 1px solid currentColor;
+  color: var(--white);
+  background: #050914c9;
+  font-family: "Skumic Arcade", monospace;
+  font-size: clamp(.48rem, .7vw, .7rem);
+  font-weight: 400;
+  letter-spacing: .06em;
+  line-height: 1.3;
+}
+
+.stage-screen {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  justify-items: center;
+  gap: clamp(.7rem, 2dvh, 1.4rem);
+  padding: clamp(.75rem, 2.5vw, 2rem);
+  background: linear-gradient(#030715e8, #030715f2), url("assets/skumic-street-v2.png?v=7") center / cover;
+  text-align: center;
+  text-shadow: 2px 2px 0 #000;
+}
+.stage-header > span {
+  color: var(--yellow);
+  font-size: clamp(.58rem, .85vw, .82rem);
+  letter-spacing: .14em;
+}
+.stage-header h2 {
+  margin: .4rem 0 0;
+  font-size: clamp(1.3rem, 3vw, 3rem);
+  line-height: 1;
+}
+.stage-cards {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-self: center;
+  gap: clamp(.8rem, 2vw, 1.7rem);
+  width: min(100%, 980px);
+  min-height: 0;
+}
+.stage-card {
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto auto;
+  gap: .45rem;
+  position: relative;
+  min-width: 0;
+  padding: .5rem .5rem 1rem;
+  border: 3px solid #5d7193;
+  background: #101c32;
+  color: var(--white);
+  cursor: pointer;
+  box-shadow: inset 0 0 0 3px #050913, 6px 6px 0 #000;
+}
+.stage-card img {
+  display: block;
+  width: 100%;
+  height: clamp(155px, 36dvh, 360px);
+  min-height: 0;
+  object-fit: cover;
+  image-rendering: pixelated;
+  border: 2px solid #253958;
+}
+.stage-card strong { font-size: clamp(.8rem, 1.45vw, 1.35rem); }
+.stage-card > span {
+  color: var(--muted);
+  font-size: clamp(.5rem, .72vw, .72rem);
+  letter-spacing: .06em;
+}
+.stage-card em {
+  display: none;
+  position: absolute;
+  top: .9rem;
+  left: .9rem;
+  padding: .3rem .45rem;
+  background: var(--yellow);
+  color: #101421;
+  font-size: clamp(.5rem, .7vw, .68rem);
+  font-style: normal;
+}
+.stage-card.is-selected {
+  border-color: var(--yellow);
+  box-shadow: inset 0 0 0 3px #050913, 0 0 0 3px var(--yellow), 6px 6px 0 #000;
+}
+.stage-card.is-selected em { display: block; }
+.stage-card:hover:not(.is-selected) { border-color: var(--cyan); }
+.stage-card:focus-visible { outline: 3px solid var(--cyan); outline-offset: 5px; }
+.stage-footer {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: .8rem;
+  width: min(100%, 980px);
+}
+.stage-footer p {
+  margin: 0;
+  color: var(--cyan);
+  font-size: clamp(.5rem, .7vw, .72rem);
+}
+
+@media (pointer: coarse), (hover: none) {
+  .touch-actions [data-control="guard"] {
+    grid-column: 2;
+    grid-row: 2;
+    border-color: var(--white);
+    color: var(--white);
+  }
+  .touch-actions [data-control="special1"],
+  .touch-actions [data-control="special2"] {
+    border-color: var(--cyan);
+    color: var(--cyan);
+  }
+}
+
+@media (max-width: 760px), (max-height: 520px) {
+  .fighter-role { font-size: .52rem; }
+  .stage-screen { gap: .4rem; }
+  .stage-card img { height: clamp(90px, 29dvh, 230px); }
+  .stage-card strong { font-size: clamp(.7rem, 2.2vw, 1rem); }
+  .stage-card > span { font-size: .5rem; }
+  .stage-footer p { display: none; }
+  .stage-footer { grid-template-columns: 1fr 1fr; }
+  .stage-footer .primary-button { justify-self: end; }
+}
+
+@media (pointer: coarse) and (orientation: portrait) {
+  .fighter-role { font-size: clamp(.5rem, 1.8vw, .65rem); }
+  .stage-screen { padding: max(.8rem, env(safe-area-inset-top)) .7rem max(.8rem, env(safe-area-inset-bottom)); }
+  .stage-header h2 { font-size: clamp(1rem, 4.8vw, 1.7rem); }
+  .stage-cards { grid-template-columns: 1fr; grid-template-rows: repeat(2, minmax(0, 1fr)); gap: .65rem; }
+  .stage-card { grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr); grid-template-rows: auto auto; align-items: center; }
+  .stage-card img { grid-row: 1 / 3; height: min(26dvh, 170px); }
+  .stage-card strong { font-size: clamp(.65rem, 3vw, 1rem); }
+  .stage-card > span { font-size: clamp(.42rem, 1.7vw, .6rem); }
+  .stage-card em { top: .55rem; left: .55rem; font-size: .5rem; }
+}

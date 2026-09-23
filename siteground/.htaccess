@@ -1,0 +1,7 @@
+DirectoryIndex index.html index.php
+
+<IfModule mod_rewrite.c>
+RewriteEngine On
+RewriteRule ^api/marketing/index\.php$ - [L]
+RewriteRule ^api/marketing/.*$ api/marketing/index.php [L]
+</IfModule>

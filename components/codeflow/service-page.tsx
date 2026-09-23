@@ -13,6 +13,7 @@ import {
 import { Header, Footer, useLanguage } from "./shared";
 import Packages, { type Service } from "./packages";
 import GameShowcase from "./game-showcase";
+import DesignShowcase from "./design-showcase";
 
 const content = {
   marketing: {
@@ -202,6 +203,7 @@ export default function ServicePage({ service }: { service: Service }) {
           })}
         </section>
         <Packages lang={lang} service={service} standalone />
+        {service === "design" && <DesignShowcase lang={lang} />}
         {service === "software" && <GameShowcase lang={lang} />}
         <section className="service-switch container">
           <p>

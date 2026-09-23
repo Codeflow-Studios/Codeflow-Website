@@ -1,8 +1,11 @@
 export default function SkumicPage() {
+  const gameUrl = process.env.SITEGROUND_STATIC_EXPORT === "1"
+    ? "https://codeflow-studios-production.up.railway.app/skumic-game/"
+    : "/skumic-game/index.html";
   return (
     <main style={{ position: "fixed", inset: 0, width: "100vw", height: "100dvh", background: "#111" }}>
       <iframe
-        src="/skumic-game/index.html"
+        src={gameUrl}
         title="Skumic Fighters 32-bit"
         allow="autoplay; fullscreen"
         allowFullScreen

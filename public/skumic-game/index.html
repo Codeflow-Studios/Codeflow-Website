@@ -4,13 +4,14 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#05060d">
-  <meta name="description" content="Skumic Fighters — een 32-bit arcadegevecht tussen Matar Point Blank en Gauthier op Skumic Street.">
+  <meta name="description" content="Skumic Fighters — een 32-bit arcadegevecht tussen Matar Point Blank en Gauthier, op het podium of in de recordingstudio.">
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='4' fill='%2305060d'/%3E%3Cpath d='M18 2 7 18h8l-2 12 12-17h-8z' fill='%23ffe600'/%3E%3C/svg%3E">
-  <link rel="preload" as="image" href="assets/skumic-street-v2.png?v=7">
+  <link rel="preload" as="image" href="assets/stage-the-stage.png">
+  <link rel="preload" as="image" href="assets/skumic-logo-2025.png">
   <link rel="preload" as="font" href="assets/fonts/PixelifySans.ttf" type="font/ttf" crossorigin>
   <link rel="preload" as="font" href="assets/fonts/PressStart2P-Regular.ttf" type="font/ttf" crossorigin>
   <link rel="stylesheet" href="revamp.css?v=9">
-  <link rel="stylesheet" href="pixel-art.css?v=2">
+  <link rel="stylesheet" href="pixel-art.css?v=4">
   <title>Skumic Fighters</title>
 </head>
 <body>
@@ -28,8 +29,11 @@
       <section id="title-screen" class="screen title-screen is-hidden" aria-label="Titelscherm">
         <img class="title-fighter title-fighter-left" src="assets/matar-portrait-v2.png?v=7" alt="">
         <div class="title-core">
-          <p class="micro-label">CODEFLOW STUDIOS · 32-BIT</p>
-          <h1><span>SKUMIC</span><strong>FIGHTERS</strong></h1>
+          <div class="studio-brand">
+            <img src="assets/codeflow-studios-logo.png" alt="Codeflow Studios">
+            <span class="micro-label">PRESENTS</span>
+          </div>
+          <h1 class="game-brand"><img src="assets/skumic-logo-2025.png" alt="SKUMIC"><strong>FIGHTERS</strong></h1>
           <div class="title-rule" aria-hidden="true"><i></i><b>VS</b><i></i></div>
           <button id="start" class="pixel-button primary-button" type="button">START FIGHT</button>
           <p class="press-key">ENTER</p>
@@ -52,9 +56,10 @@
             <span class="fighter-info">
               <small>PRESSURE / RANGE</small>
               <strong>MATAR</strong>
+              <span class="fighter-role">DJ / PRODUCER</span>
               <em>POINT BLANK</em>
-              <span class="fighter-moves">PUNCH · KICK · PISTOL-WHIP</span>
-              <span class="fighter-moves">QUICK SHOT · GUN DASH</span>
+              <span class="fighter-moves">PUNCH · KICK · PLATTER STRIKE</span>
+              <span class="fighter-moves">VINYL THROW · BEAT DASH</span>
             </span>
             <span class="selected-mark">▶ PLAYER 1</span>
           </button>
@@ -68,9 +73,10 @@
             <span class="fighter-info">
               <small>BRUISER / COUNTER</small>
               <strong>GAUTHIER</strong>
+              <span class="fighter-role">VOCALS</span>
               <em>VAN DE ZEE</em>
               <span class="fighter-moves">PUNCH · KICK · HEAVY</span>
-              <span class="fighter-moves">SHOULDER RUSH · COUNTER</span>
+              <span class="fighter-moves">VOCAL WAVE · COUNTER</span>
             </span>
             <span class="selected-mark">▶ PLAYER 1</span>
           </button>
@@ -92,7 +98,7 @@
 
       <section id="difficulty-screen" class="screen difficulty-screen is-hidden" aria-labelledby="difficulty-title">
         <header class="difficulty-header">
-          <span>STEP 2 / 2</span>
+          <span>STEP 2 / 3</span>
           <h2 id="difficulty-title">CHOOSE DIFFICULTY</h2>
           <small>SAME HP · SAME DAMAGE · SMARTER CPU</small>
         </header>
@@ -123,8 +129,34 @@
 
         <footer class="difficulty-footer">
           <button id="difficulty-back" class="pixel-button secondary-button" type="button">BACK</button>
-          <p>← → SELECT · ENTER START</p>
-          <button id="confirm-difficulty" class="pixel-button primary-button" type="button">START MATCH</button>
+          <p>← → SELECT · ENTER NEXT</p>
+          <button id="confirm-difficulty" class="pixel-button primary-button" type="button">NEXT</button>
+        </footer>
+      </section>
+
+      <section id="stage-screen" class="screen stage-screen is-hidden" aria-labelledby="stage-title">
+        <header class="stage-header">
+          <span>STEP 3 / 3</span>
+          <h2 id="stage-title">CHOOSE LOCATION</h2>
+        </header>
+        <div class="stage-cards">
+          <button class="stage-card is-selected" type="button" data-stage="the-stage" aria-pressed="true">
+            <img src="assets/stage-the-stage.png" alt="Concertpodium met publiek op de achtergrond">
+            <strong>THE STAGE</strong>
+            <span>LIVE CROWD · SPOTLIGHTS</span>
+            <em>SELECTED</em>
+          </button>
+          <button class="stage-card" type="button" data-stage="recording-studio" aria-pressed="false">
+            <img src="assets/stage-recording-studio.png" alt="Recordingstudio met mixtafel en opnamebooth">
+            <strong>RECORDING STUDIO</strong>
+            <span>MIX DESK · VOCAL BOOTH</span>
+            <em>SELECTED</em>
+          </button>
+        </div>
+        <footer class="stage-footer">
+          <button id="stage-back" class="pixel-button secondary-button" type="button">BACK</button>
+          <p>CLICK TO SELECT · ENTER START</p>
+          <button id="confirm-stage" class="pixel-button primary-button" type="button">START MATCH</button>
         </footer>
       </section>
 
@@ -151,7 +183,7 @@
     <section id="control-deck" class="control-deck" aria-label="Gamebediening">
       <div class="deck-strip">
         <strong>SKUMIC FIGHTERS</strong>
-        <span>HOLD AWAY TO BLOCK</span>
+        <span>AWAY: RETREAT + BLOCK</span>
       </div>
       <div class="touch-layout">
         <div class="touch-movement" aria-label="Bewegen">
@@ -164,15 +196,16 @@
           <button type="button" data-control="punch"><b>A</b><small>PUNCH</small></button>
           <button type="button" data-control="kick"><b>S</b><small>KICK</small></button>
           <button type="button" data-control="heavy"><b>D</b><small>HEAVY</small></button>
+          <button type="button" data-control="guard" aria-label="Verdedigen"><b>C</b><small>BLOCK</small></button>
           <button type="button" data-control="special1"><b>F</b><small>SP.1</small></button>
           <button type="button" data-control="special2"><b>G</b><small>SP.2</small></button>
         </div>
       </div>
       <div class="keyboard-strip" aria-hidden="true">
-        <span><b>← →</b> MOVE / BLOCK</span><span><b>↑</b> JUMP</span><span><b>A</b> PUNCH</span><span><b>S</b> KICK</span><span><b>D</b> HEAVY</span><span><b>F / G</b> SPECIALS</span><span><b>P</b> PAUSE</span>
+        <span><b>← →</b> MOVE</span><span><b>↑</b> JUMP</span><span><b>C</b> BLOCK</span><span><b>A</b> PUNCH</span><span><b>S</b> KICK</span><span><b>D</b> HEAVY</span><span><b>F / G</b> SPECIALS</span><span><b>P</b> PAUSE</span>
       </div>
     </section>
   </main>
-  <script type="module" src="app-v2.mjs?v=10"></script>
+  <script type="module" src="app-v2.mjs?v=12"></script>
 </body>
 </html>
