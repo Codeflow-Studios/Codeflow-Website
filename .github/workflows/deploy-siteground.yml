@@ -1,0 +1,42 @@
+name: Deploy website to SiteGround
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: Show files to upload without changing SiteGround
+        type: boolean
+        default: false
+
+concurrency:
+  group: siteground-website
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.19.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build:siteground
+      - name: Upload website through FTPS
+        uses: airvzxf/ftp-deployment-action@v2.11.14
+        with:
+          server: ftp://gnldm1120.siteground.biz:21
+          user: ${{ secrets.SITEGROUND_FTP_USER }}
+          password: ${{ secrets.SITEGROUND_FTP_PASSWORD }}
+          local_dir: ./out/
+          remote_dir: ./
+          delete: 'false'
+          dry_run: ${{ inputs.dry_run || 'false' }}

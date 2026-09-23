@@ -267,7 +267,7 @@ export default function Dashboard() {
   const awaitingApproval = campaign?.campaign.status === 'AwaitingApproval';
   const failed = campaign?.campaign.status === 'Failed';
   const publishingJobs = campaign?.publishingJobs ?? [];
-  const displayJobs = publishingJobs.length > 0
+  const displayJobs: PublishingJob[] = publishingJobs.length > 0
     ? publishingJobs
     : ['instagram', 'facebook', 'linkedin'].map((platform) => ({ id: platform, platform, status: 'Ready' }));
   const allPublished = publishingJobs.length > 0 && publishingJobs.every((job) => job.status === 'Published');
