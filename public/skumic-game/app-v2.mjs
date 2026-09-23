@@ -1,5 +1,5 @@
 import { FIGHTERS, STAGES } from "./roster-v2.mjs?v=9";
-import { CPU_DIFFICULTIES, FighterGame } from "./engine-v2.mjs?v=11";
+import { CPU_DIFFICULTIES, FighterGame } from "./engine-v2.mjs?v=12";
 
 const $ = (selector) => document.querySelector(selector);
 const $$ = (selector) => [...document.querySelectorAll(selector)];
@@ -268,7 +268,7 @@ function beginMatch(id = selectedId, difficulty = selectedDifficulty, stageId = 
 
 function showWinner(detail) {
   const winner = detail.winner;
-  $("#winner-screen").style.backgroundImage = `radial-gradient(circle, rgb(18 25 41 / 72%), rgb(2 3 9 / 94%) 68%), url("${STAGES[selectedStageId].image}")`;
+  $("#winner-screen").style.backgroundImage = "radial-gradient(circle, rgb(18 8 35 / 62%), rgb(5 2 14 / 90%) 72%), url(\"assets/menu-background-skumic.png\")";
   $("#winner-portrait").src = winner.portrait;
   $("#winner-portrait").alt = `${winner.name}, winnaar van de match`;
   $("#winner-name").textContent = winner.name;
@@ -399,7 +399,7 @@ document.addEventListener("visibilitychange", () => {
 });
 
 window.skumicGame = Object.freeze({
-  version: "3.4-vinyl-stages",
+  version: "3.5-menu-visuals",
   getState: () => engine.getState(),
   startMatch: (fighterId = "matar", difficulty = "easy", stageId = "the-stage") => beginMatch(FIGHTERS[fighterId] ? fighterId : "matar", CPU_DIFFICULTIES[difficulty] ? difficulty : "easy", STAGES[stageId] ? stageId : "the-stage"),
   selectFighter: (fighterId = "matar") => selectFighter(FIGHTERS[fighterId] ? fighterId : "matar"),

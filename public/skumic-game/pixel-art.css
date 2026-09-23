@@ -707,3 +707,109 @@ h1 strong {
   .stage-card > span { font-size: clamp(.42rem, 1.7vw, .6rem); }
   .stage-card em { top: .55rem; left: .55rem; font-size: .5rem; }
 }
+
+/* Menu artwork supplied by Skumic: keep the full title image visible, then use
+   a darker crop behind the remaining menu screens for readable controls. */
+.select-screen,
+.difficulty-screen,
+.stage-screen,
+.winner-screen {
+  background-color: #160019;
+  background-image:
+    linear-gradient(180deg, rgb(5 2 15 / 62%), rgb(5 3 14 / 84%)),
+    url("assets/menu-background-skumic.png");
+  background-position: center;
+  background-size: cover;
+  background-repeat: no-repeat;
+}
+
+.title-screen {
+  display: block;
+  background-color: #160019;
+  background-image:
+    url("assets/menu-background-skumic.png"),
+    linear-gradient(180deg, rgb(8 1 16 / 42%), rgb(8 1 16 / 76%)),
+    url("assets/menu-background-skumic.png");
+  background-position: center;
+  background-size: contain, cover, cover;
+  background-repeat: no-repeat;
+}
+
+.title-screen .title-fighter,
+.title-screen .game-brand,
+.title-screen .title-rule {
+  display: none;
+}
+
+.title-screen .title-core {
+  position: absolute;
+  inset: 0;
+  top: 0;
+  left: 0;
+  display: flex;
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  padding: clamp(.75rem, 2.5vw, 2rem);
+  flex-direction: column;
+  align-items: center;
+  align-self: stretch;
+  justify-self: stretch;
+  justify-content: flex-end;
+  transform: none;
+  gap: clamp(.35rem, 1vh, .7rem);
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.title-screen .studio-brand {
+  position: absolute;
+  top: clamp(.7rem, 2.2vw, 1.5rem);
+  left: 50%;
+  padding: .2rem .65rem .35rem;
+  transform: translateX(-50%);
+  border: 1px solid rgb(255 255 255 / 25%);
+  background: rgb(3 5 14 / 78%);
+  box-shadow: 3px 3px 0 rgb(0 0 0 / 62%);
+}
+
+.title-screen .studio-brand img {
+  width: clamp(92px, 8vw, 128px);
+  height: clamp(58px, 5.2vw, 82px);
+}
+
+.title-screen #start {
+  min-width: min(78vw, 260px);
+  box-shadow: 4px 4px 0 #000, 0 0 24px rgb(255 27 170 / 40%);
+}
+
+.title-screen .press-key {
+  padding: .2rem .45rem;
+  background: rgb(3 5 14 / 78%);
+}
+
+/* Smooth the 32-bit render and use an unambiguous UI typeface for C/CPU. */
+#arcade[data-era="32bit"] #game {
+  image-rendering: auto;
+}
+
+.keyboard-strip b,
+.touch-actions b {
+  font-family: "Arial Black", "Segoe UI", Arial, sans-serif;
+  font-weight: 900;
+}
+
+@media (max-width: 760px), (max-height: 520px) {
+  .title-screen .title-core { padding: .55rem; }
+  .title-screen .studio-brand {
+    top: .45rem;
+    padding: .05rem .45rem .2rem;
+  }
+  .title-screen .studio-brand img {
+    width: 82px;
+    height: 50px;
+  }
+  .title-screen .studio-brand .micro-label { font-size: .48rem; }
+  .title-screen #start { min-width: min(70vw, 220px); }
+}

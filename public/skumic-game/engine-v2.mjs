@@ -718,9 +718,18 @@ export class FighterGame {
     const frame = frames[fighter.frameIndex(this.visualTime)] || frames[0];
     const flip = fighter.facing !== fighter.config.artFacing;
     ctx.save();
-    ctx.fillStyle = "rgba(0,0,0,.52)";
     const shadowWidth = fighter.crouching ? 50 : 66;
-    ctx.fillRect(Math.round(fighter.x - shadowWidth / 2), STAGE.groundY, shadowWidth, 5);
+    ctx.fillStyle = "rgba(0,0,0,.22)";
+    ctx.beginPath();
+    ctx.ellipse(Math.round(fighter.x), STAGE.groundY + 2, shadowWidth / 2, 4, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = "rgba(0,0,0,.16)";
+    ctx.beginPath();
+    ctx.ellipse(Math.round(fighter.x), STAGE.groundY + 2, shadowWidth * .34, 2.25, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+
+    ctx.save();
     ctx.translate(Math.round(fighter.x), Math.round(fighter.y));
     if (flip) ctx.scale(-1, 1);
     if (fighter.flash > 0) ctx.filter = "brightness(2.8) saturate(.25)";
@@ -786,20 +795,20 @@ export class FighterGame {
 
     ctx.fillStyle = "#04050a";
     ctx.fillRect(220, 4, 40, 42);
-    ctx.strokeStyle = "#ffe600";
-    ctx.lineWidth = 2;
-    ctx.strokeRect(221, 5, 38, 40);
+    ctx.strokeStyle = "#59657b";
+    ctx.lineWidth = 1;
+    ctx.strokeRect(220.5, 4.5, 39, 41);
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
     ctx.font = "16px 'Skumic Arcade', monospace";
     ctx.fillStyle = "#ffe600";
     ctx.fillText(String(Math.max(0, Math.ceil(this.roundTimer))).padStart(2, "0"), 240, 25);
-    ctx.font = "700 7px 'Skumic Pixel', monospace";
+    ctx.font = "700 7px Arial, sans-serif";
     ctx.fillStyle = "#fff";
     ctx.fillText(`R${this.round} · ${CPU_DIFFICULTIES[this.difficulty].label}`, 240, 41);
 
     this.drawSpecial(ctx, this.player, "special1", 43, 41);
-    this.drawSpecial(ctx, this.player, "special2", 112, 41);
+    this.drawSpecial(ctx, this.player, "special2", 127, 41);
   }
 
   drawPortrait(ctx, fighter, x, y, mirrored) {
@@ -811,11 +820,15 @@ export class FighterGame {
     ctx.lineWidth = 2;
     ctx.strokeRect(x + 1, y + 1, 32, 32);
     if (image) {
+      const smoothing = ctx.imageSmoothingEnabled;
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = "high";
       if (mirrored) {
         ctx.translate(x + 34, 0);
         ctx.scale(-1, 1);
         ctx.drawImage(image, 0, y, 34, 34);
       } else ctx.drawImage(image, x, y, 34, 34);
+      ctx.imageSmoothingEnabled = smoothing;
     }
     ctx.restore();
   }
@@ -835,11 +848,11 @@ export class FighterGame {
     const currentWidth = Math.round(width * current);
     ctx.fillRect(reverse ? x + width - currentWidth : x, y, currentWidth, 11);
     ctx.textBaseline = "alphabetic";
-    ctx.font = "700 9px 'Skumic Pixel', monospace";
+    ctx.font = "700 8px Arial, sans-serif";
     ctx.fillStyle = "#fff";
     ctx.textAlign = reverse ? "right" : "left";
     ctx.fillText(`${fighter.side === "player" ? "P1" : "CPU"} · ${fighter.config.name}`, reverse ? x + width : x, 10);
-    ctx.font = "700 7px 'Skumic Pixel', monospace";
+    ctx.font = "700 7px Arial, sans-serif";
     ctx.fillStyle = "#d7ddeb";
     ctx.fillText(`${fighter.hp} HP`, reverse ? x + width : x, 37);
     for (let index = 0; index < 2; index += 1) {
@@ -853,14 +866,17 @@ export class FighterGame {
     const move = fighter.config.moves[key];
     const remaining = fighter.cooldowns[key] || 0;
     const ratio = remaining > 0 ? 1 - remaining / move.cooldown : 1;
+    const width = 80;
+    const height = 8;
     ctx.fillStyle = "rgba(3,5,12,.86)";
-    ctx.fillRect(x, y, 62, 6);
+    ctx.fillRect(x, y, width, height);
     ctx.fillStyle = remaining > 0 ? "#596174" : fighter.config.accent;
-    ctx.fillRect(x, y, Math.round(62 * clamp(ratio, 0, 1)), 6);
-    ctx.font = "700 6px 'Skumic Pixel', monospace";
+    ctx.fillRect(x, y, Math.round(width * clamp(ratio, 0, 1)), height);
+    ctx.font = "700 6px Arial, sans-serif";
     ctx.textAlign = "left";
+    ctx.textBaseline = "middle";
     ctx.fillStyle = remaining > 0 ? "#d2d7e3" : "#07080d";
-    ctx.fillText(`${INPUT_LABELS[key]} ${move.label}`, x + 2, y + 5);
+    ctx.fillText(`${INPUT_LABELS[key]} ${move.label}`, x + 3, y + height / 2 + .25);
   }
 
   drawAnnouncement(ctx) {
