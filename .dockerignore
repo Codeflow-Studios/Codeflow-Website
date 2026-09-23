@@ -1,0 +1,13 @@
+.git
+.gitignore
+.next
+.openai
+.sites-runtime
+.vinext
+.wrangler
+dist
+node_modules
+outputs
+work
+*.log
+public/skumic-game/.vs
