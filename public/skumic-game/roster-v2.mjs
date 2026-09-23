@@ -44,21 +44,21 @@ export const FIGHTERS = Object.freeze({
     stats: SHARED_STATS,
     moves: {
       ...basics(),
-      heavy: { ...basics().heavy, label: "PISTOL-WHIP" },
+      heavy: { ...basics().heavy, label: "PLATTER STRIKE", frame: 2 },
       special1: {
-        id: "quick-shot", label: "QUICK SHOT", kind: "projectile", frame: 5,
+        id: "vinyl-throw", label: "VINYL THROW", kind: "projectile", frame: 2,
         damage: 90, startup: 0.17, active: 0.04, recovery: 0.30, cooldown: 1.08,
         hitstun: 0.29, knockback: { x: 77, y: -18 }, hitstop: 0.05,
-        projectileSpeed: 330, projectileSize: { w: 23, h: 6 }, spark: "#ffe600",
+        projectileSpeed: 330, projectileSize: { w: 22, h: 18 }, spark: "#ffe600",
       },
       special2: {
-        id: "gun-dash", label: "GUN DASH", kind: "dash", frame: 2,
+        id: "beat-dash", label: "BEAT DASH", kind: "dash", frame: 2,
         damage: 100, startup: 0.10, active: 0.19, recovery: 0.30, cooldown: 1.16,
         hitbox: { x: 12, y: -109, w: 63, h: 80 }, hitstun: 0.34,
         knockback: { x: 91, y: -36 }, hitstop: 0.065, dashSpeed: 252, spark: "#00ddff",
       },
     },
-    moveList: ["PUNCH", "KICK", "PISTOL-WHIP", "QUICK SHOT", "GUN DASH"],
+    moveList: ["PUNCH", "KICK", "PLATTER STRIKE", "VINYL THROW", "BEAT DASH"],
   },
   gauthier: {
     id: "gauthier",
@@ -74,10 +74,10 @@ export const FIGHTERS = Object.freeze({
     moves: {
       ...basics(),
       special1: {
-        id: "shoulder-rush", label: "SHOULDER RUSH", kind: "dash", frame: 5,
+        id: "vocal-wave", label: "VOCAL WAVE", kind: "projectile", frame: 2,
         damage: 100, startup: 0.13, active: 0.20, recovery: 0.31, cooldown: 1.16,
-        hitbox: { x: 9, y: -112, w: 66, h: 83 }, hitstun: 0.35,
-        knockback: { x: 94, y: -39 }, hitstop: 0.067, dashSpeed: 246, spark: "#00d8ff",
+        hitstun: 0.35, knockback: { x: 94, y: -39 }, hitstop: 0.067,
+        projectileSpeed: 295, projectileSize: { w: 34, h: 20 }, spark: "#00d8ff",
       },
       special2: {
         id: "counter", label: "COUNTER", kind: "counter", frame: 4,
@@ -85,14 +85,26 @@ export const FIGHTERS = Object.freeze({
         hitstun: 0.34, knockback: { x: 84, y: -42 }, hitstop: 0.08, spark: "#ffe600",
       },
     },
-    moveList: ["PUNCH", "KICK", "HEAVY", "SHOULDER RUSH", "COUNTER"],
+    moveList: ["PUNCH", "KICK", "HEAVY", "VOCAL WAVE", "COUNTER"],
   },
 });
 
+export const STAGES = Object.freeze({
+  "the-stage": Object.freeze({
+    id: "the-stage",
+    name: "THE STAGE",
+    description: "LIVE CROWD · SPOTLIGHTS",
+    image: "assets/stage-the-stage.png",
+  }),
+  "recording-studio": Object.freeze({
+    id: "recording-studio",
+    name: "RECORDING STUDIO",
+    description: "MIX DESK · VOCAL BOOTH",
+    image: "assets/stage-recording-studio.png",
+  }),
+});
+
 export const STAGE = Object.freeze({
-  id: "skumic-street",
-  name: "SKUMIC STREET",
-  image: "assets/skumic-street-v2.png?v=7",
   groundY: 246,
   bounds: { left: 30, right: 450 },
 });
@@ -103,6 +115,7 @@ export const INPUT_LABELS = Object.freeze({
   heavy: "D",
   special1: "F",
   special2: "G",
+  guard: "C",
 });
 
 export const otherFighter = (id) => (id === "matar" ? "gauthier" : "matar");

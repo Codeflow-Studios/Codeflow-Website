@@ -1,5 +1,5 @@
-import { FIGHTERS } from "./roster-v2.mjs?v=8";
-import { CPU_DIFFICULTIES, FighterGame } from "./engine-v2.mjs?v=8";
+import { FIGHTERS, STAGES } from "./roster-v2.mjs?v=9";
+import { CPU_DIFFICULTIES, FighterGame } from "./engine-v2.mjs?v=11";
 
 const $ = (selector) => document.querySelector(selector);
 const $$ = (selector) => [...document.querySelectorAll(selector)];
@@ -18,6 +18,9 @@ class Controls {
       ["KeyD", "heavy"],
       ["KeyF", "special1"],
       ["KeyG", "special2"],
+      ["KeyC", "guard"],
+      ["ShiftLeft", "guard"],
+      ["ShiftRight", "guard"],
       ["KeyW", "jump"],
       ["KeyJ", "punch"],
       ["KeyK", "kick"],
@@ -30,6 +33,7 @@ class Controls {
       ["d", "heavy"],
       ["f", "special1"],
       ["g", "special2"],
+      ["c", "guard"],
     ]);
     this.pulsed = new Set(["jump", "punch", "kick", "heavy", "special1", "special2"]);
     this.bindKeyboard();
@@ -89,6 +93,7 @@ class Controls {
       heavy: this.pressed.has("heavy"),
       special1: this.pressed.has("special1"),
       special2: this.pressed.has("special2"),
+      guard: this.held.has("guard"),
     };
     for (const control of this.pulsed) this.pressed.delete(control);
     return input;
@@ -130,7 +135,10 @@ class ArcadeAudio {
 
   event(type, detail = {}) {
     if (type === "fight") this.tone(180, 0.18, "square", 0.04, 260);
-    if (type === "shot") this.tone(110, 0.055, "sawtooth", 0.035, -55);
+    if (type === "projectile") {
+      const vinyl = detail.fighter === "matar";
+      this.tone(vinyl ? 294 : 440, 0.13, "square", 0.022, vinyl ? -66 : 130);
+    }
     if (type === "hit") {
       if (detail.blocked) this.tone(420, 0.045, "square", 0.018, -90);
       else this.tone(detail.counter ? 82 : 115, detail.counter ? 0.14 : 0.075, "sawtooth", 0.04, -48);
@@ -155,14 +163,17 @@ const screens = {
   title: $("#title-screen"),
   select: $("#select-screen"),
   difficulty: $("#difficulty-screen"),
+  stage: $("#stage-screen"),
   winner: $("#winner-screen"),
 };
 const cards = $$(".fighter-card");
 const difficultyCards = $$(".difficulty-card");
+const stageCards = $$(".stage-card");
 const controls = new Controls();
 const audio = new ArcadeAudio();
 let selectedId = "matar";
 let selectedDifficulty = "easy";
+let selectedStageId = "the-stage";
 let uiState = "loading";
 
 function announce(text) {
@@ -206,6 +217,19 @@ function selectDifficulty(level, focus = false) {
   announce(`Moeilijkheid ${CPU_DIFFICULTIES[level].label}.`);
 }
 
+function selectStage(id, focus = false) {
+  if (!STAGES[id]) return;
+  selectedStageId = id;
+  stageCards.forEach((card) => {
+    const selected = card.dataset.stage === id;
+    card.classList.toggle("is-selected", selected);
+    card.setAttribute("aria-pressed", String(selected));
+    if (selected && focus) card.focus({ preventScroll: true });
+  });
+  engine.setStage(id);
+  announce(`Locatie ${STAGES[id].name} geselecteerd.`);
+}
+
 function openSelect() {
   controls.clear();
   engine.showSelect();
@@ -222,19 +246,29 @@ function openDifficulty() {
   $("#confirm-difficulty").focus({ preventScroll: true });
 }
 
-function beginMatch(id = selectedId, difficulty = selectedDifficulty) {
+function openStageSelect() {
+  controls.clear();
+  engine.showStageSelect();
+  showScreen("stage");
+  selectStage(selectedStageId);
+  $("#confirm-stage").focus({ preventScroll: true });
+}
+
+function beginMatch(id = selectedId, difficulty = selectedDifficulty, stageId = selectedStageId) {
   selectedId = id;
   selectedDifficulty = CPU_DIFFICULTIES[difficulty] ? difficulty : "easy";
+  selectedStageId = STAGES[stageId] ? stageId : "the-stage";
   audio.ensure();
   controls.clear();
   showScreen("fight");
-  engine.startMatch(id, selectedDifficulty);
+  engine.startMatch(id, selectedDifficulty, selectedStageId);
   $("#game").focus({ preventScroll: true });
-  announce(`${FIGHTERS[id].name} tegen ${FIGHTERS[id === "matar" ? "gauthier" : "matar"].name}. ${CPU_DIFFICULTIES[selectedDifficulty].label}. Round 1.`);
+  announce(`${FIGHTERS[id].name} tegen ${FIGHTERS[id === "matar" ? "gauthier" : "matar"].name} in ${STAGES[selectedStageId].name}. ${CPU_DIFFICULTIES[selectedDifficulty].label}. Round 1.`);
 }
 
 function showWinner(detail) {
   const winner = detail.winner;
+  $("#winner-screen").style.backgroundImage = `radial-gradient(circle, rgb(18 25 41 / 72%), rgb(2 3 9 / 94%) 68%), url("${STAGES[selectedStageId].image}")`;
   $("#winner-portrait").src = winner.portrait;
   $("#winner-portrait").alt = `${winner.name}, winnaar van de match`;
   $("#winner-name").textContent = winner.name;
@@ -287,7 +321,12 @@ difficultyCards.forEach((card) => {
 });
 
 $("#difficulty-back").addEventListener("click", openSelect);
-$("#confirm-difficulty").addEventListener("click", () => beginMatch());
+$("#confirm-difficulty").addEventListener("click", openStageSelect);
+stageCards.forEach((card) => {
+  card.addEventListener("click", () => selectStage(card.dataset.stage, true));
+});
+$("#stage-back").addEventListener("click", openDifficulty);
+$("#confirm-stage").addEventListener("click", () => beginMatch());
 
 $("#rematch").addEventListener("click", () => {
   audio.ensure();
@@ -319,6 +358,9 @@ window.addEventListener("keydown", (event) => {
       openDifficulty();
     } else if (uiState === "difficulty") {
       event.preventDefault();
+      openStageSelect();
+    } else if (uiState === "stage") {
+      event.preventDefault();
       beginMatch();
     } else if (uiState === "winner") {
       event.preventDefault();
@@ -336,11 +378,16 @@ window.addEventListener("keydown", (event) => {
     const direction = event.code === "ArrowRight" ? 1 : -1;
     selectDifficulty(levels[(current + direction + levels.length) % levels.length], true);
   }
+  if (uiState === "stage" && (event.code === "ArrowLeft" || event.code === "ArrowRight")) {
+    event.preventDefault();
+    selectStage(selectedStageId === "the-stage" ? "recording-studio" : "the-stage", true);
+  }
   if (event.code === "Escape" && uiState === "select") {
     engine.showTitle();
     showScreen("title");
   }
   if (event.code === "Escape" && uiState === "difficulty") openSelect();
+  if (event.code === "Escape" && uiState === "stage") openDifficulty();
   if (event.code === "KeyP" && uiState === "fight") {
     event.preventDefault();
     engine.togglePause();
@@ -352,11 +399,12 @@ document.addEventListener("visibilitychange", () => {
 });
 
 window.skumicGame = Object.freeze({
-  version: "3.2-select-ui",
+  version: "3.4-vinyl-stages",
   getState: () => engine.getState(),
-  startMatch: (fighterId = "matar", difficulty = "easy") => beginMatch(FIGHTERS[fighterId] ? fighterId : "matar", CPU_DIFFICULTIES[difficulty] ? difficulty : "easy"),
+  startMatch: (fighterId = "matar", difficulty = "easy", stageId = "the-stage") => beginMatch(FIGHTERS[fighterId] ? fighterId : "matar", CPU_DIFFICULTIES[difficulty] ? difficulty : "easy", STAGES[stageId] ? stageId : "the-stage"),
   selectFighter: (fighterId = "matar") => selectFighter(FIGHTERS[fighterId] ? fighterId : "matar"),
   selectDifficulty: (difficulty = "easy") => selectDifficulty(CPU_DIFFICULTIES[difficulty] ? difficulty : "easy"),
+  selectStage: (stageId = "the-stage") => selectStage(STAGES[stageId] ? stageId : "the-stage"),
   rematch: () => $("#rematch").click(),
 });
 
@@ -376,12 +424,13 @@ function registerWebMcpTools() {
   register({
     name: "start_fight",
     title: "Start a fight",
-    description: "Start the best-of-three match with Matar or Gauthier and choose easy, normal, or hard CPU behavior.",
+    description: "Start the best-of-three match with Matar or Gauthier, a CPU difficulty, and a location.",
     inputSchema: {
       type: "object",
       properties: {
         fighterId: { type: "string", enum: ["matar", "gauthier"] },
         difficulty: { type: "string", enum: ["easy", "normal", "hard"], default: "easy" },
+        stageId: { type: "string", enum: ["the-stage", "recording-studio"], default: "the-stage" },
       },
       required: ["fighterId"],
       additionalProperties: false,
@@ -389,7 +438,7 @@ function registerWebMcpTools() {
     annotations: { readOnlyHint: false, untrustedContentHint: false },
     async execute(input) {
       if (!FIGHTERS[input?.fighterId]) throw new TypeError("fighterId must be matar or gauthier");
-      beginMatch(input.fighterId, input.difficulty || "easy");
+      beginMatch(input.fighterId, input.difficulty || "easy", input.stageId || "the-stage");
       await new Promise((resolve) => requestAnimationFrame(resolve));
       return { screen: uiState, ...engine.getState() };
     },
