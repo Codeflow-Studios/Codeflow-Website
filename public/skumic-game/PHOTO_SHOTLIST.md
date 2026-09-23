@@ -1,6 +1,13 @@
 # Fotoshoot voor speelbare Skumic-personages
 
-Voor Matar en Gauthier: fotografeer steeds het **hele lichaam, inclusief handen en schoenen**. Zet de camera op statief, houd afstand, brandpuntsafstand, kleding en belichting identiek, en gebruik een effen achtergrond. Maak scherpe foto's zonder bewegingsonscherpte, liefst in hoge resolutie. Kijk en beweeg vooral in profiel / driekwart naar rechts; een tweede reeks naar links is welkom zodat asymmetrische details niet gespiegeld hoeven te worden.
+Voor Matar en Gauthier: fotografeer steeds het **hele lichaam, inclusief handen en schoenen**. Zet de camera op statief, houd afstand, brandpuntsafstand, kleding en belichting identiek, en gebruik een effen achtergrond. Maak scherpe foto's zonder bewegingsonscherpte, liefst in hoge resolutie.
+
+Alle gameplayfoto's worden in een **strikt 90° zijaanzicht naar rechts** genomen. Hoofd, schouders, borst, heupen en voeten blijven in profiel; draai niet naar de camera. Eén richting volstaat, want de game spiegelt de sprites automatisch naar links.
+
+## Side-view voorbeelden
+
+- [Matar poseblad](photo-references/matar-side-view-v2.png)
+- [Gauthier poseblad](photo-references/gauthier-side-view-v2.png)
 
 ## Beiden
 
