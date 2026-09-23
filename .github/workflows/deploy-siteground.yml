@@ -31,12 +31,13 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm build:siteground
       - name: Upload website through FTPS
-        uses: airvzxf/ftp-deployment-action@v2.11.14
+        uses: airvzxf/ftp-deployment-action@v2.11.13
         with:
           server: ftp://gnldm1120.siteground.biz:21
           user: ${{ secrets.SITEGROUND_FTP_USER }}
           password: ${{ secrets.SITEGROUND_FTP_PASSWORD }}
           local_dir: ./out/
           remote_dir: ./
+          max_retries: '1'
           delete: 'false'
           dry_run: ${{ inputs.dry_run || 'false' }}
