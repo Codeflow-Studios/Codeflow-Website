@@ -43,7 +43,7 @@ This version is a website and working onboarding preview. It does not create an 
 ## Assets
 
 - `public/codeflow-logo.png`: original logo supplied by the owner.
-- `public/brand-flow.webp`: generated chrome ribbon with orange, red and pink accents, created for this website.
+- `public/brand-flow.png`: supplied Codeflow symbol artwork with black, white and orange flowing forms.
 
 ## Source control
 
