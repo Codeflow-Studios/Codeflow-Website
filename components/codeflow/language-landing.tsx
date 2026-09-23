@@ -1,7 +1,14 @@
+'use client';
+
 /* eslint-disable @next/next/no-html-link-for-pages */
 import Image from 'next/image';
+import { useState } from 'react';
+
+type LandingLanguage = 'nl' | 'en';
 
 export default function LanguageLanding() {
+  const [previewLanguage, setPreviewLanguage] = useState<LandingLanguage>('nl');
+
   return (
     <main className="language-entry">
       <div className="language-entry-brand">
@@ -17,17 +24,34 @@ export default function LanguageLanding() {
 
       <section className="language-entry-content" aria-labelledby="language-entry-title">
         <p className="language-entry-label">Creative technology studio</p>
-        <h1 id="language-entry-title">
-          We help businesses grow with{' '}
-          <em>marketing, brand design &amp; custom software.</em>
+        <h1 id="language-entry-title" lang={previewLanguage}>
+          {previewLanguage === 'en' ? (
+            <>We help businesses grow with <em>marketing, brand design &amp; custom software.</em></>
+          ) : (
+            <>Wij helpen bedrijven groeien met <em>marketing, merkdesign &amp; software op maat.</em></>
+          )}
         </h1>
 
-        <nav className="language-entry-options" aria-label="Kies je taal / Choose your language">
-          <a href="/?lang=nl" hrefLang="nl">
+        <nav
+          className="language-entry-options"
+          aria-label="Kies je taal / Choose your language"
+          onMouseLeave={() => setPreviewLanguage('nl')}
+        >
+          <a
+            href="/?lang=nl"
+            hrefLang="nl"
+            onMouseEnter={() => setPreviewLanguage('nl')}
+            onFocus={() => setPreviewLanguage('nl')}
+          >
             <span>Nederlands</span>
             <span aria-hidden="true">→</span>
           </a>
-          <a href="/?lang=en" hrefLang="en">
+          <a
+            href="/?lang=en"
+            hrefLang="en"
+            onMouseEnter={() => setPreviewLanguage('en')}
+            onFocus={() => setPreviewLanguage('en')}
+          >
             <span>English</span>
             <span aria-hidden="true">→</span>
           </a>
