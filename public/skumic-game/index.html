@@ -1,48 +1,178 @@
 <!doctype html>
 <html lang="nl">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#ee3c3d">
-  <title>Skumic Run — Oostende op de beat</title>
-  <meta name="description" content="Ren door Oostende, verzamel speakers en pak de beatboost. Speel Skumic Run in je browser.">
-  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%23ee3c3d'/%3E%3Cpath d='M22 7H10v9h12v9H10' fill='none' stroke='%23faff56' stroke-width='5'/%3E%3C/svg%3E">
-  <link rel="stylesheet" href="./styles.css">
-  <script type="module" src="./game.js"></script>
+  <meta name="theme-color" content="#05060d">
+  <meta name="description" content="Skumic Fighters — een 32-bit arcadegevecht tussen Matar Point Blank en Gauthier op Skumic Street.">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='4' fill='%2305060d'/%3E%3Cpath d='M18 2 7 18h8l-2 12 12-17h-8z' fill='%23ffe600'/%3E%3C/svg%3E">
+  <link rel="preload" as="image" href="assets/skumic-street-v2.png?v=7">
+  <link rel="preload" as="font" href="assets/fonts/PixelifySans.ttf" type="font/ttf" crossorigin>
+  <link rel="preload" as="font" href="assets/fonts/PressStart2P-Regular.ttf" type="font/ttf" crossorigin>
+  <link rel="stylesheet" href="revamp.css?v=9">
+  <link rel="stylesheet" href="pixel-art.css?v=2">
+  <title>Skumic Fighters</title>
 </head>
 <body>
-  <div class="site-shell">
-    <header class="site-header">
-      <a class="brand" href="./" aria-label="Skumic Run startscherm">SKUMIC<span class="brand-run">RUN</span><span class="brand-mark" aria-hidden="true">↗</span></a>
-      <div class="header-note"><span class="live-dot"></span> OOSTENDE OP DE BEAT</div>
-      <a class="listen-link" href="https://open.spotify.com/artist/3iG6zyXOqRQOiRfTKPvDJq" target="_blank" rel="noopener noreferrer">LUISTER SKUMIC <span aria-hidden="true">↗</span></a>
-    </header>
-    <main>
-      <div class="game-topline"><span>DE ZEEDIJK IS VAN JOU.</span><span id="level-number">01 / OOSTENDE</span></div>
-      <section class="game-frame" id="game-frame" aria-label="Skumic Run spel">
-        <canvas id="game" aria-label="Drie rijstroken op de Oostendse zeedijk. Ontwijk obstakels en verzamel speakers." tabindex="0"></canvas>
-        <div class="vignette" aria-hidden="true"></div>
-        <div class="run-progress" aria-hidden="true"><div id="run-progress"></div><i></i><i></i><i></i></div>
-        <div class="hud" id="hud">
-          <div class="score-block"><span class="hud-label">SCORE</span><strong id="score">00000</strong><span class="best-label">BEST <b id="best">00000</b></span></div>
-          <div class="run-stats"><div class="time-stat"><span class="hud-label">TIJD</span><strong id="time">45<span>s</span></strong></div><div class="lives" id="lives" aria-label="3 levens">♥ ♥ ♥</div><div class="combo-stat"><span class="hud-label">FLOW</span><strong id="combo">0</strong></div></div>
-          <div class="game-tools"><button id="pause" class="icon-button" aria-label="Pauzeer spel" title="Pauze (P)" hidden>Ⅱ</button><button id="sound" class="icon-button sound-button" aria-label="Geluid aanzetten" title="Geluid aanzetten"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M11 5 6 9H3v6h3l5 4z"/><path class="sound-waves" d="M15 8c3 2 3 6 0 8m3-11c5 4 5 10 0 14"/><path class="sound-off" d="m15 9 6 6m0-6-6 6"/></svg></button></div>
-        </div>
-        <div class="game-feedback" id="feedback" aria-live="polite"></div>
-        <div class="start-screen overlay" id="start-screen">
-          <div class="start-copy"><span class="eyebrow">VAN DE DIJK NAAR DE DROP</span><h1>SKUMIC<br><span>RUN.</span></h1><p>Ontwijk. Verzamel. Voel de drop.</p><div class="level-picker" role="group" aria-label="Kies je level"><button class="level-choice selected" id="level-1" type="button" aria-pressed="true"><b>01</b><span>ÇA VA PÉTER<small>WARM-UP</small></span></button><button class="level-choice" id="level-2" type="button" aria-pressed="false"><b>02</b><span>PROJECT RAVY 2.0<small>TEMPO OMHOOG</small></span></button><button class="level-choice" id="level-3" type="button" aria-pressed="false"><b>03</b><span>PUBER<small>HARD</small></span></button><button class="level-choice" id="level-4" type="button" aria-pressed="false"><b>04</b><span>MANOSFEER<small>VOL GAS</small></span></button></div><div class="character-picker" role="group" aria-label="Kies je personage"><button class="character-choice selected" id="character-1" type="button" aria-pressed="true">01 · POINT BLANK</button><button class="character-choice" id="character-2" type="button" aria-pressed="false">02 · GAUTHIER</button></div><button class="primary-button" id="start">START LEVEL <span aria-hidden="true">↗</span></button><div class="start-caption" id="start-caption">01 · WARM-UP · 45 SECONDEN</div></div>
-          <div class="character-card" aria-hidden="true"><img id="character-portrait" src="./assets/character-portrait.png" alt=""><span id="player-label">POINT BLANK</span></div>
-          <div class="start-sticker" aria-hidden="true"><span>OOSTENDE</span><b>VOL<br>GAS.</b><span>BEAT AAN</span></div>
-        </div>
-        <div class="pause-screen overlay" id="pause-screen" hidden><div class="pause-card"><span class="eyebrow">EVEN OP ADEM</span><h2>PAUZE.</h2><p>De beat wacht op jou.</p><button class="primary-button" id="resume">VERDER SPELEN <span aria-hidden="true">↗</span></button></div></div>
-        <div class="result-screen overlay" id="result-screen" hidden><div class="result-card"><span class="eyebrow" id="result-eyebrow">RUN VOLTOOID</span><h2 id="result-title">DIJK VAN<br>EEN RUN.</h2><div class="result-score" id="result-score">0</div><span class="result-score-label">PUNTEN</span><div class="result-stats"><div><b id="result-speakers">0</b><span>SPEAKERS</span></div><div><b id="result-beats">0</b><span>BEAT HITS</span></div><div><b id="result-flow">0</b><span>MAX FLOW</span></div><div><b id="result-best">0</b><span>JOUW BEST</span></div></div><button class="primary-button" id="next-level">VOLGEND LEVEL <span aria-hidden="true">↗</span></button><button class="share-button" id="restart">SPEEL OPNIEUW <span aria-hidden="true">↗</span></button><button class="share-button" id="level-menu">KIES EEN LEVEL <span aria-hidden="true">↗</span></button><button class="share-button" id="share">DEEL JE SCORE <span aria-hidden="true">↗</span></button><p class="share-status" id="share-status" role="status"></p><a class="result-listen" href="https://open.spotify.com/artist/3iG6zyXOqRQOiRfTKPvDJq" target="_blank" rel="noopener noreferrer">Meer energie? Luister Skumic op Spotify ↗</a><p class="result-demo" id="result-demo">Soundtrack: Ça Va Péter — Skumic.</p></div></div>
-        <div class="beat-panel" id="beat-panel"><div class="beat-heading"><span id="beat-label">VIND JE RITME</span><span id="boost-label">DROP IN 11s</span></div><div class="beat-meter" id="beat-meter" aria-label="Ritme-indicator"><div id="beat-progress"></div><div class="beat-target"></div><div class="beat-cursor" id="beat-cursor"></div></div><div class="beat-caption"><span id="beat-tip">SPRING OP DE BEAT → EXTRA PUNTEN</span><span id="multiplier">×1</span></div></div>
-        <div class="touch-controls" id="touch-controls"><button id="left" aria-label="Naar links">←</button><button id="jump" aria-label="Spring op de beat"><span>↑</span> SPRING</button><button id="right" aria-label="Naar rechts">→</button></div>
+  <main id="arcade" data-screen="loading" data-era="32bit" aria-label="Skumic Fighters arcadegame">
+    <section id="game-frame" aria-label="Gamebeeld">
+      <canvas id="game" width="960" height="540" tabindex="0" aria-label="Skumic Fighters gevecht"></canvas>
+      <div class="vignette" aria-hidden="true"></div>
+      <div class="scanlines" aria-hidden="true"></div>
+
+      <section id="loading-screen" class="screen loading-screen" aria-live="polite">
+        <div class="bolt" aria-hidden="true">ϟ</div>
+        <p>ARCADE BOARD STARTING…</p>
       </section>
-      <div class="below-game"><div class="controls-guide"><span class="guide-heading">ZO SPEEL JE</span><span><kbd>←</kbd><kbd>→</kbd> Ontwijk</span><span><kbd>SPATIE</kbd> Spring op de beat</span><span class="mobile-guide">Veeg of gebruik de knoppen</span></div><div class="demo-note"><span class="equalizer" aria-hidden="true"><i></i><i></i><i></i><i></i></span> <span id="selected-track">ÇA VA PÉTER · SKUMIC</span></div></div>
-      <div class="tips-row"><p><b>01</b> Pak speakers en ontwijk.</p><p><b>02</b> Beat hits bouwen je FLOW.</p><p><b>03</b> Bij de drop: boost + dubbele punten.</p></div>
-    </main>
-    <footer><span>SKUMIC RUN <span class="footer-cross">×</span> OOSTENDE</span><a class="made-by" href="https://www.codeflowstudios.dev" target="_top">MADE BY CODEFLOW STUDIOS ↗</a><a href="https://www.skumic.be/branding" target="_blank" rel="noopener noreferrer">SKUMIC ↗</a></footer>
-  </div>
+
+      <section id="title-screen" class="screen title-screen is-hidden" aria-label="Titelscherm">
+        <img class="title-fighter title-fighter-left" src="assets/matar-portrait-v2.png?v=7" alt="">
+        <div class="title-core">
+          <p class="micro-label">CODEFLOW STUDIOS · 32-BIT</p>
+          <h1><span>SKUMIC</span><strong>FIGHTERS</strong></h1>
+          <div class="title-rule" aria-hidden="true"><i></i><b>VS</b><i></i></div>
+          <button id="start" class="pixel-button primary-button" type="button">START FIGHT</button>
+          <p class="press-key">ENTER</p>
+        </div>
+        <img class="title-fighter title-fighter-right" src="assets/gauthier-portrait-v2.png?v=7" alt="">
+      </section>
+
+      <section id="select-screen" class="screen select-screen is-hidden" aria-labelledby="select-title">
+        <header class="select-header">
+          <div class="select-header-row"><span id="select-role-left">PLAYER 1</span><span id="select-role-right">CPU OPPONENT</span></div>
+          <h2 id="select-title">FIGHTER SELECT</h2>
+          <small>CHOOSE YOUR SKUMIC WARRIOR</small>
+        </header>
+
+        <div class="fighter-cards">
+          <button class="fighter-card is-selected" type="button" data-fighter="matar" aria-label="Kies Matar Point Blank" aria-pressed="true">
+            <span class="pick-tag">P1 // SELECTED</span>
+            <span class="card-index">01</span>
+            <img src="assets/matar-portrait-v2.png?v=7" alt="Matar Point Blank met achterwaartse pet en tatoeages">
+            <span class="fighter-info">
+              <small>PRESSURE / RANGE</small>
+              <strong>MATAR</strong>
+              <em>POINT BLANK</em>
+              <span class="fighter-moves">PUNCH · KICK · PISTOL-WHIP</span>
+              <span class="fighter-moves">QUICK SHOT · GUN DASH</span>
+            </span>
+            <span class="selected-mark">▶ PLAYER 1</span>
+          </button>
+
+          <div class="select-vs" aria-hidden="true"><span>VS</span></div>
+
+          <button class="fighter-card" type="button" data-fighter="gauthier" aria-label="Kies Gauthier Van de Zee" aria-pressed="false">
+            <span class="pick-tag">CPU // OPPONENT</span>
+            <span class="card-index">02</span>
+            <img src="assets/gauthier-portrait-v2.png?v=7" alt="Gauthier met donkere haren en blauwe ogen">
+            <span class="fighter-info">
+              <small>BRUISER / COUNTER</small>
+              <strong>GAUTHIER</strong>
+              <em>VAN DE ZEE</em>
+              <span class="fighter-moves">PUNCH · KICK · HEAVY</span>
+              <span class="fighter-moves">SHOULDER RUSH · COUNTER</span>
+            </span>
+            <span class="selected-mark">▶ PLAYER 1</span>
+          </button>
+        </div>
+
+        <footer class="select-footer">
+          <div class="select-identity">
+            <small>PLAYER 1 LOCK-ON</small>
+            <strong id="selected-fighter-name">MATAR</strong>
+            <span id="selected-fighter-callout">POINT BLANK</span>
+          </div>
+          <div class="select-actions">
+            <button id="confirm-fighter" class="pixel-button primary-button" type="button">NEXT</button>
+            <button id="select-mute" class="sound-button" type="button" aria-label="Geluid uitzetten" title="Geluid">♪</button>
+          </div>
+          <p>CLICK TO SELECT · ENTER NEXT</p>
+        </footer>
+      </section>
+
+      <section id="difficulty-screen" class="screen difficulty-screen is-hidden" aria-labelledby="difficulty-title">
+        <header class="difficulty-header">
+          <span>STEP 2 / 2</span>
+          <h2 id="difficulty-title">CHOOSE DIFFICULTY</h2>
+          <small>SAME HP · SAME DAMAGE · SMARTER CPU</small>
+        </header>
+
+        <div class="difficulty-grid" role="group" aria-label="Moeilijkheidsgraad">
+          <button class="difficulty-card is-selected" type="button" data-difficulty="easy" aria-pressed="true">
+            <span class="difficulty-number">01</span>
+            <strong>EASY</strong>
+            <em>STREET ROOKIE</em>
+            <span>MORE TIME TO REACT</span>
+            <i>★☆☆</i>
+          </button>
+          <button class="difficulty-card" type="button" data-difficulty="normal" aria-pressed="false">
+            <span class="difficulty-number">02</span>
+            <strong>NORMAL</strong>
+            <em>ARCADE RULES</em>
+            <span>BALANCED PRESSURE</span>
+            <i>★★☆</i>
+          </button>
+          <button class="difficulty-card" type="button" data-difficulty="hard" aria-pressed="false">
+            <span class="difficulty-number">03</span>
+            <strong>HARD</strong>
+            <em>SKUMIC LEGEND</em>
+            <span>FAST READS & COUNTERS</span>
+            <i>★★★</i>
+          </button>
+        </div>
+
+        <footer class="difficulty-footer">
+          <button id="difficulty-back" class="pixel-button secondary-button" type="button">BACK</button>
+          <p>← → SELECT · ENTER START</p>
+          <button id="confirm-difficulty" class="pixel-button primary-button" type="button">START MATCH</button>
+        </footer>
+      </section>
+
+      <section id="winner-screen" class="screen winner-screen is-hidden" aria-live="assertive">
+        <div class="winner-panel">
+          <div class="winner-copy">
+            <span class="winner-kicker">MATCH WINNER</span>
+            <h2 id="winner-name">MATAR</h2>
+            <p id="winner-score">2–0</p>
+            <div class="winner-actions">
+              <button id="rematch" class="pixel-button primary-button" type="button">REMATCH</button>
+              <button id="reselect" class="pixel-button secondary-button" type="button">SELECT</button>
+            </div>
+          </div>
+          <img id="winner-portrait" src="assets/matar-portrait-v2.png?v=7" alt="">
+        </div>
+        <p class="press-key">ENTER TO REMATCH</p>
+      </section>
+
+      <button id="mute" class="sound-button" type="button" aria-label="Geluid uitzetten" title="Geluid">♪</button>
+      <div id="announcer" class="sr-only" aria-live="assertive"></div>
+    </section>
+
+    <section id="control-deck" class="control-deck" aria-label="Gamebediening">
+      <div class="deck-strip">
+        <strong>SKUMIC FIGHTERS</strong>
+        <span>HOLD AWAY TO BLOCK</span>
+      </div>
+      <div class="touch-layout">
+        <div class="touch-movement" aria-label="Bewegen">
+          <button type="button" data-control="left" aria-label="Links">◀</button>
+          <button type="button" data-control="down" aria-label="Bukken">▼</button>
+          <button type="button" data-control="right" aria-label="Rechts">▶</button>
+          <button type="button" data-control="jump" aria-label="Springen">▲</button>
+        </div>
+        <div class="touch-actions" aria-label="Aanvallen">
+          <button type="button" data-control="punch"><b>A</b><small>PUNCH</small></button>
+          <button type="button" data-control="kick"><b>S</b><small>KICK</small></button>
+          <button type="button" data-control="heavy"><b>D</b><small>HEAVY</small></button>
+          <button type="button" data-control="special1"><b>F</b><small>SP.1</small></button>
+          <button type="button" data-control="special2"><b>G</b><small>SP.2</small></button>
+        </div>
+      </div>
+      <div class="keyboard-strip" aria-hidden="true">
+        <span><b>← →</b> MOVE / BLOCK</span><span><b>↑</b> JUMP</span><span><b>A</b> PUNCH</span><span><b>S</b> KICK</span><span><b>D</b> HEAVY</span><span><b>F / G</b> SPECIALS</span><span><b>P</b> PAUSE</span>
+      </div>
+    </section>
+  </main>
+  <script type="module" src="app-v2.mjs?v=10"></script>
 </body>
 </html>

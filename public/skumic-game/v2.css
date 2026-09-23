@@ -1,0 +1,225 @@
+/* Skumic v2: the same microsite, with a readable beat-first game interface. */
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap;border:0}
+.selected-level-details{display:flex;justify-content:space-between;align-items:center;gap:12px;margin:-4px 0 15px;font:700 10px/1.4 Arial,sans-serif;letter-spacing:.65px;color:rgba(255,247,229,.78)}
+.selected-level-details b{font-variant-numeric:tabular-nums;color:var(--cream);margin-left:5px}
+.character-card{overflow:visible;background:transparent;border:0;box-shadow:none;filter:drop-shadow(0 11px 8px rgba(7,12,17,.35))}
+.character-card::after{display:none;content:none;background:none}
+.character-picker{padding:0;border:0;box-shadow:none;background:none}
+.character-choice{min-height:44px;border:0;box-shadow:none}
+.level-choice{min-width:44px;min-height:44px;transition:background .12s ease}
+.level-choice:disabled{cursor:not-allowed;opacity:.55;filter:grayscale(1)}
+.level-choice:disabled::after{display:block;content:'LOCKED';position:static;font-size:8px}
+.start-copy .primary-button{min-height:50px}
+.icon-button{width:44px;height:44px;flex:0 0 44px}
+#exit-theater{display:none}
+body.theater #exit-theater{display:grid}
+
+/* Score and beat streak form one compact anchor; controls remain reachable. */
+.hud{display:grid;grid-template-columns:auto auto 1fr;grid-template-areas:'score stats tools' 'combo stats tools';column-gap:24px;row-gap:5px;align-items:start;top:max(18px,env(safe-area-inset-top));left:max(24px,env(safe-area-inset-left));right:max(20px,env(safe-area-inset-right));text-shadow:0 2px 8px #000}
+.score-block{grid-area:score}
+.score-block .hud-label{font-size:10px;letter-spacing:1.4px;margin-bottom:3px}
+.score-line{display:flex;align-items:center;gap:9px}
+.score-block strong{font:900 40px/.95 Barlow,Impact,sans-serif;letter-spacing:.5px}
+#multiplier{font:800 15px/1 Barlow,Impact,sans-serif;letter-spacing:.4px;color:var(--yellow);padding:4px 5px;border:1px solid rgba(239,254,89,.45);text-shadow:none}
+.game-frame .combo-stat{grid-area:combo;display:flex!important;position:static;align-items:baseline;gap:3px;padding:0;color:var(--yellow);font:800 16px/1.1 Barlow,Impact,sans-serif;letter-spacing:1px}
+.game-frame .combo-stat strong{display:inline;font:900 20px/1 Barlow,Impact,sans-serif;color:inherit}
+.combo-stat.hot strong{animation:beat-acknowledge .18s ease-out}
+@keyframes beat-acknowledge{from{opacity:.65}to{opacity:1}}
+.run-stats{grid-area:stats;gap:16px;align-items:center;padding-top:20px}
+.time-stat{gap:5px}
+.time-stat .hud-label{font-size:9px;letter-spacing:.6px}
+.time-stat strong{font-size:27px;min-width:40px}
+.lives{position:static;padding:0;font-size:14px;letter-spacing:3px}
+.game-tools{grid-area:tools;justify-self:end;gap:6px;align-self:start}
+.game-frame:not(.started) .combo-stat{visibility:hidden}
+.game-frame:not(.started) .hud{pointer-events:none}
+.game-frame .best-label,.game-frame .mission-hud{display:none!important}
+.run-progress{height:3px;background:rgba(0,0,0,.25)}
+.run-progress>div{box-shadow:none;transition:none;background:rgba(239,254,89,.7)}
+.run-progress i{display:none}
+.vignette{background:linear-gradient(180deg,rgba(5,8,12,.55),transparent 26%,transparent 67%,rgba(5,8,12,.48))}
+
+/* The Canvas camera can move subtly; HUD and interface layers remain stable. */
+.game-frame.boosting,.game-frame.ravy{box-shadow:inset 0 0 0 2px rgba(239,254,89,.48);border-color:var(--ink)}
+.game-frame.building .drop-meter{border-color:var(--yellow)}
+.game-frame.ravy #multiplier{background:var(--yellow);color:var(--ink);border-color:var(--yellow)}
+.game-frame[data-judgement='perfect'] .game-feedback{color:var(--yellow)}
+.game-frame[data-judgement='good'] .game-feedback{color:var(--cream)}
+.game-frame[data-judgement='normal'] .game-feedback{color:#eee4d4}
+.game-frame[data-judgement='hit'] .game-feedback{color:#ffad73}
+.game-frame[data-judgement='drop'] .game-feedback{color:var(--yellow)}
+.game-feedback{top:24%;width:calc(100% - 36px);font:900 clamp(25px,3vw,38px)/1.1 Barlow,Impact,sans-serif;letter-spacing:.4px;text-shadow:0 2px 4px #000,0 0 14px #000;transition:opacity .12s ease}
+.score-popup{font-size:17px}
+
+.beat-panel,.game-frame.started .beat-panel{bottom:max(24px,env(safe-area-inset-bottom));left:max(24px,env(safe-area-inset-left));right:auto;transform:none;width:min(290px,36%);text-shadow:0 1px 5px #000}
+.beat-heading{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:7px;font-size:10px;letter-spacing:.7px}
+.beat-heading>span:first-child{display:block;color:var(--cream)}
+.beat-heading>span:last-child{font-size:10px;opacity:1;color:var(--yellow);font-variant-numeric:tabular-nums;white-space:nowrap}
+.drop-meter{height:7px;overflow:hidden;border:1px solid rgba(255,247,229,.35);background:rgba(6,11,17,.72);margin-bottom:9px}
+#drop-progress{width:0;height:100%;background:var(--yellow)}
+.beat-meter{height:4px;border:0;background:rgba(255,247,229,.25)}
+#beat-progress{background:rgba(255,247,229,.22)}
+.beat-target{left:auto;right:0;width:var(--beat-window,23%);inset-block:-3px;background:rgba(239,254,89,.15);border-color:rgba(239,254,89,.8)}
+.beat-meter::after{content:'';position:absolute;left:0;width:var(--beat-window,23%);inset-block:-3px;border:1px solid rgba(239,254,89,.8);background:rgba(239,254,89,.15)}
+.beat-cursor{top:-3px;height:10px;background:var(--cream);width:2px;box-shadow:none}
+.beat-caption{justify-content:flex-start;margin-top:7px;font-size:9px;letter-spacing:.55px;min-height:0}
+.beat-caption>span:first-child{display:block;font:700 9px/1.3 Arial,sans-serif;color:rgba(255,247,229,.8)}
+.game-frame.boosting .beat-meter{background:rgba(255,247,229,.25)}
+.game-frame.boosting #beat-progress{background:rgba(239,254,89,.35)}
+.ravy-status{margin-top:12px;padding-top:9px;border-top:1px solid rgba(239,254,89,.6);color:var(--yellow)}
+.ravy-heading{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.ravy-heading strong{font:900 21px/1 Barlow,Impact,sans-serif;letter-spacing:.4px}
+.ravy-heading>span{font:700 10px/1 Arial,sans-serif;letter-spacing:.7px;font-variant-numeric:tabular-nums}
+.ravy-heading b{font-size:14px}
+.ravy-benefits{display:block;margin-top:5px;font:700 9px/1.3 Arial,sans-serif;letter-spacing:.7px;color:var(--cream)}
+.ravy-meter{height:4px;margin-top:7px;background:rgba(255,247,229,.2)}
+#ravy-progress{height:100%;width:100%;background:var(--yellow)}
+
+/* The intro only occupies its text: the lane and hazards stay visible. */
+.game-frame .level-intro{inset:auto 16px auto;top:24%;place-content:center;background:none;clip-path:none;animation:none!important;gap:5px;text-shadow:0 2px 8px #000}
+.game-frame .level-intro:not([hidden]){display:grid!important}
+.game-frame .level-intro span,.game-frame .level-intro em,.game-frame .level-intro strong{animation:none!important;transform:none;opacity:1}
+.game-frame .level-intro span{font:800 11px/1.2 Arial,sans-serif;letter-spacing:1.5px}
+.game-frame .level-intro strong{font:900 clamp(26px,3.8vw,46px)/1 Barlow,Impact,sans-serif;letter-spacing:-.5px;margin:2px 0 4px;text-shadow:0 2px 8px #000}
+.game-frame .level-intro em{font:700 10px/1.3 Arial,sans-serif;letter-spacing:1px}
+#countdown{font:900 clamp(60px,8vw,100px)/1 Barlow,Impact,sans-serif;color:var(--yellow);font-variant-numeric:tabular-nums}
+.tutorial{position:absolute;top:31%;left:50%;transform:translateX(-50%);width:max-content;max-width:calc(100% - 32px);z-index:6;padding:12px 17px;background:rgba(8,12,16,.78);color:var(--cream);font:800 13px/1.8 Barlow,Impact,sans-serif;letter-spacing:.9px;text-align:center;white-space:pre-line;pointer-events:none}
+body[data-mode='countdown'] .beat-panel{visibility:hidden}
+body[data-mode='paused'] .beat-panel,body[data-mode='finished'] .beat-panel{visibility:hidden}
+body[data-mode='paused'] .touch-controls,body[data-mode='finished'] .touch-controls,body[data-mode='countdown'] .touch-controls{visibility:hidden}
+.game-frame.hit::before{content:'';position:absolute;inset:0;z-index:2;pointer-events:none;box-shadow:inset 0 0 0 3px #ff794d}
+
+/* Theater is a viewport layout, never browser fullscreen. */
+body.theater{overflow:hidden;overscroll-behavior:none;background:#080808;touch-action:none;user-select:none;-webkit-user-select:none;min-height:0}
+body.theater .site-shell{max-width:none;width:100%;min-height:0;height:100svh;height:100dvh;padding:0;margin:0}
+body.theater .site-header,body.theater .game-topline,body.theater .below-game,body.theater .tips-row,body.theater footer{display:none}
+body.theater main{width:100%;height:100%}
+body.theater .game-frame{width:100%;height:100%;min-height:0;max-height:none;border:0;box-shadow:none}
+body.theater .game-frame.ravy::after{content:'';position:absolute;inset:0;z-index:2;border:2px solid rgba(239,254,89,.4);pointer-events:none}
+.touch-controls{bottom:max(14px,env(safe-area-inset-bottom));left:max(14px,env(safe-area-inset-left));right:max(14px,env(safe-area-inset-right));gap:12px}
+.touch-controls button{height:48px;min-width:52px;background:rgba(10,15,20,.78);border-radius:0;font-size:25px}
+.touch-controls #jump{min-width:112px;justify-content:center;font-size:13px}
+.touch-device .game-frame.started .touch-controls{display:flex}
+.pause-screen,.result-screen{overflow-y:auto;overscroll-behavior:contain;touch-action:pan-y;backdrop-filter:blur(4px);background:rgba(8,13,19,.93)}
+.pause-card .share-button{margin-top:12px;min-height:44px}
+.result-screen{padding:24px 18px;align-items:flex-start}
+.result-card{width:min(400px,100%);margin:auto}
+.result-card h2{font-size:38px;line-height:.95;padding:0 78px 0 0;text-align:left;margin:0 0 9px}
+.result-card>.eyebrow{text-align:left;font-size:10px;margin-bottom:9px}
+.result-score{font-size:60px;text-align:left;line-height:1}
+.result-score-label{display:block;text-align:left;font-size:10px;letter-spacing:1px}
+.rank-lockup{right:5px;left:auto;top:19px;transform:none}
+.rank-lockup>strong{font-size:54px;line-height:.9;text-shadow:none}
+.rank-lockup>em{max-width:108px;white-space:normal;line-height:1.3;text-align:center;font-size:7px;padding:4px 5px}
+.result-stats{margin:14px 0;padding:10px 0;gap:8px}
+.result-stats>div,.result-stats .deck-result{padding:0;background:none;border:0}
+.result-stats b{font-size:24px;font-variant-numeric:tabular-nums}
+.result-stats span{font-size:8px;letter-spacing:.4px;line-height:1.4}
+.result-card .primary-button{min-height:50px;font-size:23px;box-shadow:none;border:0}
+.result-card .share-button{min-height:44px;margin-top:8px;font-size:16px;letter-spacing:.3px}
+.result-secondary{display:flex;gap:8px}
+.result-secondary>.share-button{flex:1;min-width:0;font-size:12px;align-items:center;gap:8px;border-color:rgba(255,247,229,.22)}
+.result-listen{font-size:12px;margin-top:12px}
+.result-demo{font-size:10px;line-height:1.4}
+.share-status:empty{display:none}
+
+@media(max-width:760px){
+  .hud{grid-template-columns:1fr auto;grid-template-areas:'score tools' 'combo stats';column-gap:10px;row-gap:8px;top:max(14px,env(safe-area-inset-top));left:max(14px,env(safe-area-inset-left));right:max(14px,env(safe-area-inset-right))}
+  .score-block strong{font-size:34px}
+  .score-line{gap:7px}
+  #multiplier{font-size:12px;padding:3px 4px}
+  .game-frame .combo-stat{font-size:14px;align-self:center}
+  .game-frame .combo-stat strong{font-size:19px}
+  .run-stats{padding-top:0;justify-self:end;align-self:center;gap:12px}
+  .time-stat .hud-label{font-size:8px}
+  .time-stat strong{font-size:19px;min-width:31px}
+  .time-stat strong span{font-size:12px}
+  .lives{font-size:12px;letter-spacing:2px}
+  .game-tools{gap:4px}
+  .selected-level-details{font-size:9px;letter-spacing:.3px;margin-bottom:12px}
+  .level-choice{flex-basis:44px;min-width:44px}
+  .level-choice.selected{padding-inline:8px;gap:7px}
+  .level-choice.selected>span{font-size:10px;white-space:normal;line-height:1.2}
+  .character-choice{padding-inline:8px;font-size:10px;letter-spacing:.45px}
+  .start-copy h1{margin-bottom:17px}
+  /* A transform here would anchor the fixed Ravy timer to the bottom panel. */
+  .beat-panel,.game-frame.started .beat-panel{left:max(16px,calc((100% - 250px)/2));right:auto;transform:none;width:min(250px,calc(100% - 32px));bottom:calc(max(14px,env(safe-area-inset-bottom)) + 64px)}
+  .beat-heading,.beat-heading>span:last-child{font-size:9px;letter-spacing:.5px}
+  .beat-caption>span:first-child{font-size:8px}
+  .ravy-status{position:fixed;top:109px;left:14px;width:168px;margin-top:0;padding:9px;background:rgba(8,12,16,.75)}
+  .ravy-heading strong{font-size:19px}
+  .tutorial{top:29%;font-size:12px;padding:10px 13px}
+  .game-feedback{top:22%;font-size:28px}
+  .result-card h2{font-size:35px}
+  .result-score{font-size:53px}
+  .result-stats{gap:5px}
+  .result-stats b{font-size:21px}
+  .result-stats span{font-size:8px}
+}
+
+@media(hover:none) and (min-width:761px){
+  .game-frame.started .touch-controls{display:flex}
+  .touch-controls #jump{position:static;margin-left:auto}
+  .touch-controls #right{margin-left:0}
+  .beat-panel,.game-frame.started .beat-panel{bottom:82px;width:260px}
+}
+
+@media(max-height:540px) and (min-width:580px){
+  .site-header{height:50px}.game-topline{margin:9px 0 8px;font-size:10px}
+  .game-frame{height:calc(100svh - 88px);min-height:280px}
+  .start-screen{padding:10px 5%}
+  .start-copy{width:min(430px,63%)}
+  .start-copy h1{font-size:36px;margin:3px 0 9px}
+  .start-copy .eyebrow{display:none}
+  .start-copy .primary-button{min-height:44px}
+  .character-picker{margin-bottom:7px}
+  .level-picker{margin-bottom:9px}
+  .selected-level-details{margin-bottom:6px}
+  .character-card{height:95%;right:0}
+  .hud{grid-template-columns:auto auto 1fr;grid-template-areas:'score stats tools' 'combo stats tools';top:max(10px,env(safe-area-inset-top));column-gap:20px;row-gap:3px}
+  .run-stats{padding-top:17px;align-self:start}
+  .score-block strong{font-size:30px}
+  .game-frame .combo-stat{font-size:13px}
+  .game-frame .combo-stat strong{font-size:17px}
+  .game-frame .level-intro{top:22%}
+  .game-frame .level-intro strong{font-size:28px}
+  #countdown{font-size:62px}
+  .tutorial{top:35%;font-size:11px;line-height:1.5}
+  .game-feedback{top:25%;font-size:26px}
+  .beat-panel,.game-frame.started .beat-panel{left:max(16px,env(safe-area-inset-left));width:210px;transform:none;bottom:75px}
+  .beat-heading,.beat-heading>span:last-child{font-size:8px}
+  .ravy-status{position:static;top:auto;left:auto;width:auto;background:none;margin-top:6px;padding:5px 0 0}
+  .ravy-heading strong{font-size:17px}
+  .ravy-benefits{font-size:8px}
+  .touch-controls{bottom:max(12px,env(safe-area-inset-bottom))}
+  .touch-controls #jump{margin-left:auto}
+  .touch-controls #right{margin-left:0}
+  .result-screen{padding:18px max(20px,env(safe-area-inset-right)) 18px max(20px,env(safe-area-inset-left))}
+  .result-card{width:min(720px,100%);display:grid;grid-template-columns:minmax(210px,1fr) minmax(220px,1fr);column-gap:32px;row-gap:0;text-align:left}
+  .result-card>.eyebrow{grid-column:1;grid-row:1;margin:0 0 6px}
+  .result-card h2{grid-column:1;grid-row:2;font-size:30px;padding-right:60px;margin:0 0 8px}
+  .result-score{grid-column:1;grid-row:3;font-size:50px}
+  .result-score-label{grid-column:1;grid-row:4}
+  .result-stats{grid-column:1;grid-row:5/8;margin:11px 0 0;padding:9px 0;gap:7px;align-self:start;text-align:center}
+  .result-stats b{font-size:20px}
+  .result-stats span{font-size:7px}
+  .rank-lockup{left:calc(50% - 70px);right:auto;top:16px;max-width:58px}
+  .rank-lockup>strong{font-size:38px}
+  .rank-lockup>em{font-size:6px;max-width:65px;padding:3px}
+  #restart{grid-column:2;grid-row:1/3;align-self:start;min-height:48px}
+  #level-menu{grid-column:2;grid-row:3;align-self:start;margin-top:0}
+  .result-secondary{grid-column:2;grid-row:4/6;align-self:start}
+  .result-secondary>.share-button{font-size:10px}
+  .share-status{grid-column:2;grid-row:6;font-size:11px}
+  .result-listen{grid-column:2;grid-row:7;font-size:11px;align-self:start;margin-top:10px}
+  .result-demo{grid-column:2;grid-row:8;font-size:9px;margin-top:7px}
+  .pause-card h2{font-size:54px;margin:9px 0}
+  .pause-card p{margin:12px 0 16px}
+}
+
+@media(prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}
+  .game-frame .level-intro:not([hidden]){display:grid!important}
+  .game-frame .level-intro,.game-frame .level-intro *{clip-path:none!important;transform:none!important}
+  .primary-button:hover,.primary-button:active,.level-choice:hover,.character-choice:hover{transform:none}
+}

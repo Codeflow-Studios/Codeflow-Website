@@ -1,0 +1,1184 @@
+:root {
+  color-scheme: dark;
+  font-family: "Courier New", ui-monospace, monospace;
+  --ink: #03040a;
+  --panel: #090c17;
+  --panel-2: #111626;
+  --red: #ff3045;
+  --cyan: #00d8ff;
+  --yellow: #ffe600;
+  --white: #f7f8fc;
+  --muted: #aab2c5;
+}
+
+* { box-sizing: border-box; }
+
+html,
+body {
+  width: 100%;
+  min-height: 100%;
+  margin: 0;
+  overflow: hidden;
+  overscroll-behavior: none;
+}
+
+body {
+  display: grid;
+  place-items: center;
+  background:
+    radial-gradient(circle at 50% 12%, #202d49 0, #090d19 32%, #020308 74%),
+    #020308;
+  color: var(--white);
+}
+
+button { font: inherit; }
+
+#arcade {
+  width: min(100vw, calc((100dvh - 44px) * 16 / 9));
+  max-width: 1536px;
+  display: grid;
+  grid-template-rows: auto 44px;
+  filter: drop-shadow(0 20px 50px #000);
+  user-select: none;
+  touch-action: none;
+}
+
+#arcade:not([data-screen="fight"]) { grid-template-rows: auto; }
+#arcade:not([data-screen="fight"]) .control-deck { display: none; }
+#arcade:not([data-screen="fight"]) .sound-button { top: .45rem; bottom: auto; }
+
+#game-frame {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  isolation: isolate;
+  background: #050713;
+  border: 2px solid #30374c;
+  box-shadow: inset 0 0 0 2px #05060b, 0 0 50px #00263566;
+}
+
+#game {
+  display: block;
+  width: 100%;
+  height: 100%;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+  outline: none;
+}
+
+.vignette,
+.scanlines {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  pointer-events: none;
+}
+
+.vignette { box-shadow: inset 0 0 50px rgb(0 0 0 / 62%); }
+
+.scanlines {
+  opacity: .12;
+  background: repeating-linear-gradient(180deg, transparent 0 3px, #000 3px 4px);
+  mix-blend-mode: multiply;
+}
+
+.screen {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  overflow: hidden;
+}
+
+.is-hidden { display: none !important; }
+
+.loading-screen {
+  display: grid;
+  place-content: center;
+  gap: .8rem;
+  text-align: center;
+  background: #05060d;
+  color: var(--cyan);
+  font-weight: 900;
+  letter-spacing: .16em;
+}
+
+.loading-screen p { margin: 0; font-size: clamp(.65rem, 1.2vw, 1rem); }
+
+.bolt {
+  color: var(--yellow);
+  font: 900 clamp(3rem, 9vw, 7rem)/.8 Arial, sans-serif;
+  text-shadow: 5px 5px 0 #000, 0 0 24px #ffe60088;
+  animation: charge .7s steps(2) infinite;
+}
+
+.title-screen {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(15rem, .9fr) minmax(0, 1fr);
+  align-items: end;
+  background:
+    linear-gradient(90deg, rgb(255 48 69 / 16%), transparent 32% 68%, rgb(0 216 255 / 16%)),
+    linear-gradient(180deg, rgb(2 4 10 / 18%), rgb(2 3 9 / 70%)),
+    url("assets/skumic-street-v2.png?v=7") center / cover no-repeat;
+}
+
+.title-fighter {
+  width: 100%;
+  height: 94%;
+  align-self: end;
+  object-fit: contain;
+  object-position: bottom;
+  image-rendering: pixelated;
+  filter: drop-shadow(0 0 18px #000) drop-shadow(0 8px 0 #0008);
+}
+
+.title-fighter-left { transform: translateX(5%); }
+.title-fighter-right { transform: translateX(-5%); }
+
+.title-core {
+  z-index: 2;
+  align-self: center;
+  display: grid;
+  justify-items: center;
+  gap: clamp(.35rem, 1.3vh, .85rem);
+  text-align: center;
+  text-shadow: 4px 4px 0 #000;
+}
+
+.micro-label,
+.press-key,
+.select-header > span,
+.winner-kicker {
+  margin: 0;
+  color: var(--yellow);
+  font-size: clamp(.55rem, 1vw, .9rem);
+  font-weight: 900;
+  letter-spacing: .18em;
+}
+
+h1 { margin: 0; line-height: .72; transform: skew(-5deg); }
+h1 span,
+h1 strong { display: block; }
+
+h1 span {
+  color: #fff;
+  font-size: clamp(3rem, 7.6vw, 7rem);
+  letter-spacing: -.09em;
+  -webkit-text-stroke: max(1px, .12vw) #07080d;
+}
+
+h1 strong {
+  margin-top: .34em;
+  color: var(--yellow);
+  font-size: clamp(1.05rem, 2.6vw, 2.45rem);
+  letter-spacing: .42em;
+  transform: translateX(.22em);
+}
+
+.title-rule {
+  display: grid;
+  grid-template-columns: minmax(2rem, 1fr) auto minmax(2rem, 1fr);
+  align-items: center;
+  gap: .65rem;
+  width: min(100%, 18rem);
+  color: #fff;
+  font-size: clamp(.9rem, 1.8vw, 1.45rem);
+  font-style: italic;
+}
+
+.title-rule i { height: 2px; background: linear-gradient(90deg, transparent, currentColor); }
+.title-rule i:last-child { transform: scaleX(-1); }
+
+.pixel-button {
+  min-height: 2.65rem;
+  padding: .64rem 1.35rem;
+  border: 2px solid #fff;
+  border-right-color: #6f7789;
+  border-bottom-color: #6f7789;
+  color: #fff;
+  font-weight: 900;
+  letter-spacing: .1em;
+  text-shadow: 2px 2px 0 #000;
+  box-shadow: 5px 5px 0 #000;
+  cursor: pointer;
+}
+
+.primary-button { background: var(--red); }
+.secondary-button { background: #111827; }
+
+.pixel-button:hover,
+.pixel-button:focus-visible {
+  background: var(--yellow);
+  color: #07080d;
+  text-shadow: none;
+  outline: 2px solid var(--cyan);
+  outline-offset: 3px;
+}
+
+.pixel-button:active { transform: translate(3px, 3px); box-shadow: 2px 2px 0 #000; }
+
+.press-key {
+  color: var(--cyan);
+  animation: blink 1s steps(1) infinite;
+}
+
+.select-screen {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  gap: clamp(.3rem, 1vh, .7rem);
+  padding: clamp(.55rem, 1.8vw, 1.4rem);
+  background:
+    linear-gradient(180deg, rgb(2 4 11 / 80%), rgb(2 3 9 / 96%)),
+    url("assets/skumic-street-v2.png?v=7") center / cover no-repeat;
+  text-align: center;
+}
+
+.select-header h2 {
+  margin: .06em 0;
+  font-size: clamp(1.3rem, 3.3vw, 3rem);
+  font-style: italic;
+  line-height: .95;
+  letter-spacing: -.06em;
+  text-shadow: 4px 4px 0 #000;
+}
+
+.select-header small {
+  color: var(--muted);
+  font-size: clamp(.48rem, .8vw, .75rem);
+  font-weight: 900;
+  letter-spacing: .12em;
+}
+
+.fighter-cards {
+  min-height: 0;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: stretch;
+  gap: clamp(.35rem, 1vw, .8rem);
+}
+
+.fighter-card {
+  position: relative;
+  min-width: 0;
+  overflow: hidden;
+  border: 2px solid #495168;
+  background:
+    linear-gradient(135deg, rgb(255 255 255 / 5%), transparent 46%),
+    rgb(7 10 20 / 94%);
+  color: #fff;
+  cursor: pointer;
+  box-shadow: inset 0 0 0 2px #04050a;
+}
+
+.fighter-card::after {
+  content: "";
+  position: absolute;
+  inset: auto 0 0;
+  height: 4px;
+  background: #495168;
+}
+
+.fighter-card[data-fighter="matar"]::after { background: var(--red); }
+.fighter-card[data-fighter="gauthier"]::after { background: var(--cyan); }
+
+.fighter-card:hover,
+.fighter-card:focus-visible { border-color: #fff; outline: 2px solid currentColor; outline-offset: -6px; }
+
+.fighter-card.is-selected {
+  border-color: var(--yellow);
+  box-shadow: inset 0 0 0 2px #04050a, 0 0 22px rgb(255 230 0 / 34%);
+  transform: translateY(-2px);
+}
+
+.fighter-card img {
+  position: absolute;
+  bottom: -4%;
+  width: 58%;
+  height: 108%;
+  object-fit: contain;
+  object-position: bottom;
+  image-rendering: pixelated;
+  filter: drop-shadow(0 0 12px #000);
+}
+
+.fighter-card[data-fighter="matar"] img { left: 0; }
+.fighter-card[data-fighter="gauthier"] img { right: 0; }
+
+.fighter-info {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: clamp(.1rem, .7vh, .42rem);
+  padding: clamp(.4rem, 1.5vw, 1.25rem);
+  text-shadow: 3px 3px 0 #000;
+}
+
+.fighter-card[data-fighter="matar"] .fighter-info { left: 48%; text-align: left; align-items: flex-start; }
+.fighter-card[data-fighter="gauthier"] .fighter-info { right: 48%; text-align: right; align-items: flex-end; }
+
+.fighter-info small { color: var(--muted); font-size: clamp(.48rem, .8vw, .72rem); font-weight: 900; }
+.fighter-info strong { font-size: clamp(1.45rem, 3.4vw, 3.15rem); font-style: italic; line-height: .82; }
+.fighter-info em { color: var(--yellow); font-size: clamp(.65rem, 1.1vw, 1rem); font-style: normal; font-weight: 900; letter-spacing: .12em; }
+.fighter-info span { color: #d9deea; font-size: clamp(.44rem, .72vw, .68rem); font-weight: 700; line-height: 1.2; }
+
+.pick-tag {
+  position: absolute;
+  z-index: 4;
+  top: .35rem;
+  left: .35rem;
+  display: none;
+  padding: .18rem .35rem;
+  background: var(--yellow);
+  color: #07080d;
+  font-size: clamp(.5rem, .8vw, .72rem);
+  font-weight: 900;
+}
+
+.fighter-card.is-selected .pick-tag { display: block; }
+.fighter-card[data-fighter="gauthier"] .pick-tag { left: auto; right: .35rem; }
+
+.select-vs {
+  align-self: center;
+  color: var(--yellow);
+  font-size: clamp(1rem, 2.3vw, 2.1rem);
+  font-weight: 900;
+  font-style: italic;
+  text-shadow: 3px 3px 0 #000;
+  transform: skew(-7deg);
+}
+
+.select-footer {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: clamp(.5rem, 1.5vw, 1.2rem);
+}
+
+.equal-stats { display: flex; flex-wrap: wrap; justify-content: flex-start; gap: .28rem; }
+.equal-stats span {
+  padding: .18rem .38rem;
+  border: 1px solid #3d465e;
+  background: #090d19;
+  color: #ced5e4;
+  font-size: clamp(.42rem, .65vw, .62rem);
+  font-weight: 900;
+}
+
+.select-footer > p {
+  margin: 0;
+  color: var(--cyan);
+  font-size: clamp(.46rem, .72vw, .68rem);
+  font-weight: 900;
+  text-align: right;
+}
+
+.select-footer .pixel-button { min-height: 2.25rem; padding: .5rem 1.5rem; }
+
+.difficulty-screen {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  gap: clamp(.65rem, 2vh, 1.5rem);
+  padding: clamp(1rem, 3vw, 2.4rem);
+  background:
+    linear-gradient(180deg, rgb(2 4 11 / 78%), rgb(2 3 9 / 96%)),
+    url("assets/skumic-street-v2.png?v=7") center / cover no-repeat;
+  text-align: center;
+}
+
+.difficulty-header > span {
+  color: var(--yellow);
+  font-size: clamp(.52rem, .9vw, .78rem);
+  font-weight: 900;
+  letter-spacing: .18em;
+}
+
+.difficulty-header h2 {
+  margin: .1em 0;
+  font-size: clamp(1.7rem, 4.3vw, 4rem);
+  font-style: italic;
+  line-height: .92;
+  letter-spacing: -.06em;
+  text-shadow: 5px 5px 0 #000;
+}
+
+.difficulty-header small {
+  color: var(--muted);
+  font-size: clamp(.48rem, .8vw, .72rem);
+  font-weight: 900;
+  letter-spacing: .12em;
+}
+
+.difficulty-grid {
+  min-height: 0;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: clamp(.6rem, 1.5vw, 1.2rem);
+}
+
+.difficulty-card {
+  position: relative;
+  min-width: 0;
+  display: grid;
+  place-content: center;
+  gap: clamp(.25rem, 1vh, .7rem);
+  overflow: hidden;
+  border: 2px solid #465069;
+  background:
+    linear-gradient(145deg, rgb(255 255 255 / 8%), transparent 42%),
+    rgb(7 10 20 / 94%);
+  color: #fff;
+  cursor: pointer;
+  box-shadow: inset 0 0 0 2px #03040a, 6px 6px 0 #020308;
+}
+
+.difficulty-card::after {
+  content: "";
+  position: absolute;
+  inset: auto 0 0;
+  height: 5px;
+  background: #465069;
+}
+
+.difficulty-card[data-difficulty="easy"]::after { background: #4ee78b; }
+.difficulty-card[data-difficulty="normal"]::after { background: var(--yellow); }
+.difficulty-card[data-difficulty="hard"]::after { background: var(--red); }
+
+.difficulty-card:hover,
+.difficulty-card:focus-visible {
+  border-color: #fff;
+  outline: 2px solid var(--cyan);
+  outline-offset: -7px;
+}
+
+.difficulty-card.is-selected {
+  border-color: var(--yellow);
+  background:
+    linear-gradient(145deg, rgb(255 230 0 / 18%), transparent 46%),
+    #101526;
+  box-shadow: inset 0 0 0 2px #03040a, 0 0 28px rgb(255 230 0 / 28%);
+  transform: translateY(-4px);
+}
+
+.difficulty-number {
+  position: absolute;
+  top: .65rem;
+  left: .75rem;
+  color: #778198;
+  font-size: clamp(.65rem, 1vw, .9rem);
+  font-weight: 900;
+}
+
+.difficulty-card strong {
+  font-size: clamp(1.8rem, 4vw, 3.8rem);
+  font-style: italic;
+  line-height: .9;
+  text-shadow: 5px 5px 0 #000;
+}
+
+.difficulty-card em {
+  color: var(--yellow);
+  font-size: clamp(.6rem, 1vw, .9rem);
+  font-style: normal;
+  font-weight: 900;
+  letter-spacing: .13em;
+}
+
+.difficulty-card > span:not(.difficulty-number) {
+  color: #c6cede;
+  font-size: clamp(.48rem, .8vw, .72rem);
+  font-weight: 900;
+}
+
+.difficulty-card i {
+  color: var(--yellow);
+  font-size: clamp(.8rem, 1.5vw, 1.25rem);
+  font-style: normal;
+  letter-spacing: .2em;
+}
+
+.difficulty-footer {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 1rem;
+}
+
+.difficulty-footer p {
+  margin: 0;
+  color: var(--cyan);
+  font-size: clamp(.48rem, .75vw, .7rem);
+  font-weight: 900;
+}
+
+.winner-screen {
+  display: grid;
+  place-content: center;
+  gap: clamp(.45rem, 1.5vh, 1rem);
+  padding: 1rem;
+  background:
+    radial-gradient(circle, rgb(18 25 41 / 74%), rgb(2 3 9 / 96%) 68%),
+    url("assets/skumic-street-v2.png?v=5") center / cover no-repeat;
+  text-align: center;
+}
+
+.winner-panel {
+  display: grid;
+  grid-template-columns: minmax(8rem, 15rem) minmax(12rem, 18rem);
+  align-items: center;
+  border: 3px solid var(--yellow);
+  background: #080b15;
+  box-shadow: 8px 8px 0 #000, 0 0 30px rgb(255 230 0 / 18%);
+}
+
+.winner-panel > img {
+  width: 100%;
+  max-height: 42vh;
+  object-fit: contain;
+  align-self: end;
+  image-rendering: pixelated;
+  background: linear-gradient(135deg, #171d2d, #080a12);
+}
+
+.winner-copy { padding: clamp(.65rem, 2vw, 1.6rem); }
+.winner-copy h2 {
+  margin: .18em 0 .05em;
+  color: var(--yellow);
+  font-size: clamp(2rem, 5vw, 4.5rem);
+  font-style: italic;
+  line-height: .9;
+  letter-spacing: -.07em;
+  text-shadow: 5px 5px 0 #000;
+}
+
+.winner-copy > p { margin: .15rem 0 .8rem; font-size: clamp(1rem, 2vw, 1.7rem); font-weight: 900; }
+.winner-actions { display: flex; justify-content: center; gap: .65rem; }
+.winner-actions .pixel-button { min-width: 7.5rem; }
+
+.sound-button {
+  position: absolute;
+  z-index: 30;
+  right: .45rem;
+  bottom: .45rem;
+  width: clamp(1.65rem, 2.7vw, 2.35rem);
+  aspect-ratio: 1;
+  border: 1px solid #75809a;
+  background: rgb(3 5 12 / 82%);
+  color: #fff;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.sound-button:hover,
+.sound-button:focus-visible { border-color: var(--yellow); color: var(--yellow); outline: none; }
+
+.control-deck {
+  min-width: 0;
+  border: 2px solid #30374c;
+  border-top: 0;
+  background: linear-gradient(180deg, #111522, #070911);
+  box-shadow: inset 0 2px 0 #1d2333;
+}
+
+.touch-layout,
+.deck-strip { display: none; }
+
+.keyboard-strip {
+  height: 42px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(.65rem, 2vw, 1.7rem);
+  padding: 0 .8rem;
+  color: #b8c0d2;
+  font-size: clamp(.5rem, .72vw, .7rem);
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.keyboard-strip b { color: var(--yellow); }
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+@media (max-width: 760px), (max-height: 520px) {
+  .title-screen { grid-template-columns: 1fr minmax(9rem, .9fr) 1fr; }
+  .micro-label { font-size: clamp(.38rem, 1.1vw, .6rem); }
+  h1 span { font-size: clamp(2.15rem, 8vw, 3.3rem); }
+  h1 strong { font-size: clamp(.7rem, 2.7vw, 1rem); }
+  .title-core { gap: .25rem; }
+  .title-rule { width: 9rem; font-size: .75rem; }
+  .pixel-button { min-height: 1.9rem; padding: .35rem .75rem; font-size: .7rem; box-shadow: 3px 3px 0 #000; }
+  .press-key { font-size: .45rem; }
+
+  .select-screen { padding: .32rem .42rem; gap: .2rem; }
+  .select-header h2 { font-size: clamp(.9rem, 3.7vw, 1.35rem); }
+  .select-header small,
+  .select-header > span { font-size: .4rem; }
+  .fighter-cards { gap: .26rem; }
+  .fighter-card img { width: 47%; }
+  .fighter-info { padding: .3rem; gap: .08rem; }
+  .fighter-card[data-fighter="matar"] .fighter-info { left: 39%; }
+  .fighter-card[data-fighter="gauthier"] .fighter-info { right: 39%; }
+  .fighter-info small { font-size: .38rem; }
+  .fighter-info strong { font-size: clamp(.9rem, 3.5vw, 1.25rem); }
+  .fighter-info em { font-size: .42rem; }
+  .fighter-info span { font-size: .34rem; }
+  .select-vs { font-size: .72rem; }
+  .select-footer { gap: .35rem; }
+  .equal-stats { gap: .12rem; }
+  .equal-stats span { padding: .1rem .2rem; font-size: .32rem; }
+  .select-footer > p { font-size: .34rem; }
+  .select-footer .pixel-button { min-height: 1.65rem; padding: .25rem .8rem; }
+
+  .difficulty-screen { padding: .5rem; gap: .35rem; }
+  .difficulty-header h2 { font-size: clamp(1.15rem, 4.2vw, 1.9rem); }
+  .difficulty-header > span,
+  .difficulty-header small { font-size: .4rem; }
+  .difficulty-grid { gap: .35rem; }
+  .difficulty-card { gap: .18rem; }
+  .difficulty-card strong { font-size: clamp(1.2rem, 4vw, 1.8rem); }
+  .difficulty-card em { font-size: .45rem; }
+  .difficulty-card > span:not(.difficulty-number) { font-size: .38rem; }
+  .difficulty-card i { font-size: .65rem; }
+  .difficulty-footer { gap: .4rem; }
+  .difficulty-footer p { font-size: .36rem; }
+
+  .winner-panel { grid-template-columns: 7.5rem 11rem; }
+  .winner-copy { padding: .45rem; }
+  .winner-copy h2 { font-size: 1.8rem; }
+  .winner-copy > p { margin-bottom: .35rem; font-size: .8rem; }
+  .winner-actions { gap: .3rem; }
+  .winner-actions .pixel-button { min-width: 4.6rem; padding-inline: .35rem; }
+}
+
+@media (pointer: coarse), (hover: none) {
+  body { place-items: start center; }
+  #arcade {
+    width: 100vw;
+    height: 100dvh;
+    max-width: none;
+    grid-template-rows: auto minmax(0, 1fr);
+    filter: none;
+  }
+  #game-frame { border-inline: 0; }
+  .keyboard-strip { display: none; }
+  .control-deck {
+    position: relative;
+    min-height: 0;
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr);
+    padding: .45rem max(.55rem, env(safe-area-inset-right)) max(.55rem, env(safe-area-inset-bottom)) max(.55rem, env(safe-area-inset-left));
+    overflow: hidden;
+  }
+  .control-deck::before {
+    content: "PLAYER 1  ·  SKUMIC CONTROL DECK";
+    position: absolute;
+    z-index: 0;
+    top: 15%;
+    left: 9%;
+    right: 9%;
+    height: 23%;
+    display: grid;
+    place-items: center;
+    border: 1px solid #263049;
+    color: #47516a;
+    font-size: clamp(.48rem, 2.1vw, .68rem);
+    font-weight: 900;
+    letter-spacing: .14em;
+    background:
+      radial-gradient(circle, #020308 0 2px, transparent 2.5px) 0 0 / 12px 12px,
+      #0b0f1a;
+    box-shadow: inset 0 0 28px #000;
+  }
+  .deck-strip {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: .15rem .2rem .45rem;
+    color: var(--muted);
+    font-size: clamp(.52rem, 2.4vw, .72rem);
+    letter-spacing: .08em;
+  }
+  .deck-strip strong { color: var(--yellow); }
+  .touch-layout {
+    position: relative;
+    z-index: 1;
+    min-height: 0;
+    display: grid;
+    grid-template-columns: minmax(0, .95fr) minmax(0, 1.35fr);
+    align-items: end;
+    gap: clamp(.65rem, 4vw, 2rem);
+    padding-bottom: clamp(.6rem, 4vh, 2.2rem);
+  }
+  .touch-movement {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(2.6rem, 1fr));
+    grid-template-rows: repeat(2, minmax(2.6rem, 1fr));
+    gap: .35rem;
+  }
+  .touch-movement [data-control="jump"] { grid-column: 2; grid-row: 1; }
+  .touch-movement [data-control="left"] { grid-column: 1; grid-row: 2; }
+  .touch-movement [data-control="down"] { grid-column: 2; grid-row: 2; }
+  .touch-movement [data-control="right"] { grid-column: 3; grid-row: 2; }
+  .touch-actions {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(2.8rem, 1fr));
+    grid-template-rows: repeat(2, minmax(2.8rem, 1fr));
+    gap: .45rem;
+  }
+  .touch-actions [data-control="special1"] { grid-column: 1; grid-row: 2; }
+  .touch-actions [data-control="special2"] { grid-column: 3; grid-row: 2; }
+  .touch-movement button,
+  .touch-actions button {
+    min-width: 0;
+    min-height: 0;
+    border: 2px solid #5c657b;
+    border-right-color: #242938;
+    border-bottom-color: #242938;
+    border-radius: 8px;
+    background: linear-gradient(145deg, #232b3e, #0c101b);
+    color: #fff;
+    font-size: clamp(1rem, 5vw, 1.5rem);
+    font-weight: 900;
+    box-shadow: 3px 4px 0 #020308;
+    touch-action: none;
+  }
+  .touch-actions button { border-radius: 50%; }
+  .touch-actions button:nth-child(1) { border-color: #ff5164; }
+  .touch-actions button:nth-child(2) { border-color: #ff9c3a; }
+  .touch-actions button:nth-child(3) { border-color: #ffe600; color: #ffe600; }
+  .touch-actions button:nth-child(4),
+  .touch-actions button:nth-child(5) { border-color: #00d8ff; color: #00d8ff; }
+  .touch-actions b,
+  .touch-actions small { display: block; }
+  .touch-actions small { margin-top: .05rem; font-size: clamp(.38rem, 1.7vw, .55rem); }
+  .touch-movement button.is-held,
+  .touch-actions button.is-held {
+    transform: translate(2px, 3px);
+    background: #3b465f;
+    box-shadow: 1px 1px 0 #020308;
+  }
+}
+
+@media (pointer: coarse) and (orientation: portrait) {
+  #arcade:not([data-screen="fight"]) {
+    height: 100dvh;
+    grid-template-rows: minmax(0, 1fr);
+  }
+
+  #arcade:not([data-screen="fight"]) #game-frame {
+    height: 100dvh;
+    aspect-ratio: auto;
+    border: 0;
+  }
+
+  #arcade:not([data-screen="fight"]) #game { visibility: hidden; }
+
+  .title-screen { display: block; }
+  .title-fighter {
+    position: absolute;
+    bottom: -1%;
+    width: 58vw;
+    height: 48vh;
+  }
+  .title-fighter-left { left: -8vw; transform: none; }
+  .title-fighter-right { right: -8vw; transform: none; }
+  .title-core {
+    position: absolute;
+    z-index: 3;
+    top: 43%;
+    left: 50%;
+    width: 82%;
+    transform: translate(-50%, -50%);
+    gap: .55rem;
+  }
+  h1 span { font-size: clamp(2.4rem, 13vw, 4.4rem); }
+  h1 strong { font-size: clamp(.85rem, 4vw, 1.35rem); }
+  .title-rule { width: 10rem; }
+
+  .select-screen { padding: max(.75rem, env(safe-area-inset-top)) .7rem max(.8rem, env(safe-area-inset-bottom)); gap: .45rem; }
+  .select-header h2 { font-size: clamp(1.45rem, 7vw, 2.35rem); }
+  .fighter-cards { grid-template-columns: 1fr; grid-template-rows: minmax(0, 1fr) auto minmax(0, 1fr); gap: .35rem; }
+  .select-vs { font-size: 1rem; }
+  .fighter-card img { width: 55%; height: 108%; }
+  .fighter-card[data-fighter="matar"] .fighter-info { left: 45%; }
+  .fighter-card[data-fighter="gauthier"] .fighter-info { right: 45%; }
+  .fighter-info { padding: .65rem; gap: .2rem; }
+  .fighter-info small { font-size: .5rem; }
+  .fighter-info strong { font-size: clamp(1.45rem, 7vw, 2.2rem); }
+  .fighter-info em { font-size: .58rem; }
+  .fighter-info span { font-size: .46rem; }
+  .select-footer { grid-template-columns: 1fr auto; }
+  .select-footer > p { display: none; }
+  .equal-stats { display: grid; grid-template-columns: repeat(2, max-content); }
+  .equal-stats span { font-size: .42rem; }
+
+  .difficulty-screen { padding: max(1rem, env(safe-area-inset-top)) .8rem max(1rem, env(safe-area-inset-bottom)); gap: .8rem; }
+  .difficulty-header h2 { font-size: clamp(1.7rem, 8vw, 2.7rem); }
+  .difficulty-header > span,
+  .difficulty-header small { font-size: .52rem; }
+  .difficulty-grid { grid-template-columns: 1fr; grid-template-rows: repeat(3, minmax(0, 1fr)); gap: .65rem; }
+  .difficulty-card { gap: .28rem; }
+  .difficulty-card strong { font-size: clamp(1.6rem, 8vw, 2.6rem); }
+  .difficulty-card em { font-size: .6rem; }
+  .difficulty-card > span:not(.difficulty-number) { font-size: .5rem; }
+  .difficulty-card i { font-size: .8rem; }
+  .difficulty-footer { grid-template-columns: auto 1fr; }
+  .difficulty-footer p { display: none; }
+  .difficulty-footer .primary-button { justify-self: end; }
+  .difficulty-footer .pixel-button { padding-inline: .55rem; }
+
+  .winner-panel { grid-template-columns: minmax(7rem, 11rem) minmax(9rem, 13rem); }
+}
+
+@media (pointer: coarse) and (orientation: landscape) {
+  #arcade { width: min(100vw, calc(100dvh * 16 / 9)); height: 100dvh; grid-template-rows: minmax(0, 1fr); }
+  #game-frame { height: 100dvh; width: auto; max-width: 100vw; margin: auto; }
+  .control-deck {
+    position: fixed;
+    inset: auto 0 0;
+    z-index: 40;
+    height: 35vh;
+    padding: .35rem 1rem max(.35rem, env(safe-area-inset-bottom));
+    background: linear-gradient(180deg, transparent, rgb(3 4 10 / 82%) 20%);
+    border: 0;
+    pointer-events: none;
+  }
+  .deck-strip { display: none; }
+  .touch-layout { width: 100%; pointer-events: none; }
+  .touch-movement,
+  .touch-actions { pointer-events: auto; opacity: .86; }
+}
+
+@keyframes blink { 0%, 48% { opacity: 1; } 49%, 100% { opacity: .2; } }
+@keyframes charge { 0%, 100% { transform: scale(1); } 50% { transform: scale(.94); } }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .001ms !important; animation-iteration-count: 1 !important; }
+}
+
+/* Fighter select: dramatic arcade-versus presentation. */
+.select-screen {
+  padding: clamp(.75rem, 2vw, 1.5rem) clamp(1rem, 2.8vw, 2.4rem) clamp(.65rem, 1.5vw, 1.2rem);
+  gap: clamp(.45rem, 1.4vh, 1rem);
+  background:
+    linear-gradient(180deg, rgb(2 4 11 / 72%), rgb(2 3 9 / 96%)),
+    url("assets/skumic-street-v2.png?v=7") center / cover no-repeat;
+}
+
+.select-header { position: relative; }
+.select-header::before,
+.select-header::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  width: 22%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, #44516c);
+}
+.select-header::before { left: 0; }
+.select-header::after { right: 0; transform: scaleX(-1); }
+.select-header-row {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 1rem;
+  color: var(--muted);
+  font-size: clamp(.5rem, .85vw, .72rem);
+  font-weight: 900;
+  letter-spacing: .15em;
+}
+.select-header-row span:first-child { color: var(--red); text-align: left; }
+.select-header-row span:last-child { color: var(--cyan); text-align: right; }
+.select-header-row b { color: var(--yellow); font-size: .8em; letter-spacing: .22em; }
+.select-header h2 {
+  margin: .08em 0 .02em;
+  color: #fff;
+  font-size: clamp(1.7rem, 4.2vw, 3.9rem);
+  letter-spacing: -.075em;
+  text-shadow: 5px 5px 0 #000, 0 0 18px rgb(255 230 0 / 18%);
+}
+.select-header small { color: #c3cada; letter-spacing: .2em; }
+
+.fighter-cards {
+  position: relative;
+  isolation: isolate;
+  gap: clamp(.55rem, 1.5vw, 1.1rem);
+}
+.fighter-card {
+  isolation: isolate;
+  border-width: 3px;
+  border-color: #38445e;
+  background:
+    linear-gradient(130deg, rgb(255 48 69 / 11%), transparent 35%),
+    linear-gradient(320deg, rgb(0 216 255 / 9%), transparent 36%),
+    rgb(5 8 17 / 95%);
+  transition: transform .12s steps(2), border-color .12s steps(2), box-shadow .12s steps(2);
+}
+.fighter-card[data-fighter="gauthier"] {
+  background:
+    linear-gradient(230deg, rgb(0 216 255 / 12%), transparent 35%),
+    linear-gradient(40deg, rgb(255 48 69 / 8%), transparent 36%),
+    rgb(5 8 17 / 95%);
+}
+.fighter-card::before {
+  content: "";
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+  pointer-events: none;
+  background: repeating-linear-gradient(135deg, transparent 0 18px, rgb(255 255 255 / 3%) 18px 19px);
+  mix-blend-mode: screen;
+}
+.fighter-card::after { height: 7px; z-index: 4; }
+.fighter-card img {
+  z-index: 0;
+  width: 64%;
+  height: 116%;
+  bottom: -7%;
+  opacity: .97;
+  filter: drop-shadow(0 0 14px #000) drop-shadow(0 0 22px rgb(0 216 255 / 12%));
+  transition: transform .18s steps(3), filter .18s steps(3);
+}
+.fighter-card[data-fighter="matar"] img { left: -2%; }
+.fighter-card[data-fighter="gauthier"] img { right: -2%; }
+.fighter-card:hover img,
+.fighter-card:focus-visible img,
+.fighter-card.is-selected img { transform: scale(1.06); filter: drop-shadow(0 0 16px #000) drop-shadow(0 0 28px rgb(255 230 0 / 18%)); }
+.fighter-card.is-selected {
+  border-color: var(--yellow);
+  box-shadow: inset 0 0 0 2px #04050a, 0 0 0 2px rgb(255 230 0 / 18%), 0 0 32px rgb(255 230 0 / 24%);
+  transform: translateY(-4px);
+}
+.fighter-card[data-fighter="gauthier"].is-selected { box-shadow: inset 0 0 0 2px #04050a, 0 0 0 2px rgb(0 216 255 / 32%), 0 0 32px rgb(0 216 255 / 25%); }
+.pick-tag {
+  display: block;
+  z-index: 5;
+  top: .55rem;
+  left: .55rem;
+  padding: .25rem .45rem;
+  background: var(--red);
+  color: #fff;
+  font-size: clamp(.46rem, .72vw, .65rem);
+  letter-spacing: .08em;
+  box-shadow: 3px 3px 0 #000;
+}
+.fighter-card[data-fighter="gauthier"] .pick-tag { left: auto; right: .55rem; background: var(--cyan); color: #04101a; }
+.card-index {
+  position: absolute;
+  z-index: 5;
+  top: .6rem;
+  right: .7rem;
+  color: #6e7890;
+  font-size: clamp(.65rem, 1vw, .9rem);
+  font-weight: 900;
+  letter-spacing: .12em;
+}
+.fighter-card[data-fighter="gauthier"] .card-index { right: auto; left: .7rem; }
+.fighter-info {
+  z-index: 3;
+  gap: clamp(.13rem, .65vh, .4rem);
+  padding: clamp(.55rem, 1.6vw, 1.35rem);
+  text-shadow: 3px 3px 0 #000;
+}
+.fighter-card[data-fighter="matar"] .fighter-info { left: 47%; }
+.fighter-card[data-fighter="gauthier"] .fighter-info { right: 47%; }
+.fighter-info small { color: #d4d9e4; font-size: clamp(.46rem, .72vw, .66rem); letter-spacing: .08em; }
+.fighter-info strong { font-size: clamp(1.8rem, 4.2vw, 3.8rem); letter-spacing: -.08em; }
+.fighter-info em { font-size: clamp(.62rem, 1vw, .9rem); }
+.fighter-moves { color: #eef2fb !important; font-size: clamp(.43rem, .68vw, .62rem) !important; letter-spacing: .03em; }
+.fighter-stats {
+  display: grid !important;
+  width: min(100%, 12rem);
+  gap: .2rem;
+  margin-top: .28rem;
+}
+.fighter-stats > span {
+  display: grid !important;
+  grid-template-columns: 3.2rem minmax(2.5rem, 1fr) 1.5rem;
+  align-items: center;
+  gap: .3rem;
+  color: #abb5ca !important;
+  font-size: .42rem !important;
+  letter-spacing: .06em;
+}
+.fighter-stats > span > b { font-size: .8em; }
+.fighter-stats > span > i {
+  display: block;
+  height: 4px;
+  border: 1px solid #57627a;
+  background: #111727;
+}
+.fighter-stats > span > i > i { display: block; width: 100%; height: 100%; background: linear-gradient(90deg, var(--yellow), #fff26a); }
+.fighter-stats > span > em { color: var(--yellow); font-size: .9em; font-style: normal; }
+.selected-mark {
+  position: absolute;
+  z-index: 6;
+  right: .7rem;
+  bottom: 1rem;
+  display: none;
+  color: var(--yellow);
+  font-size: clamp(.45rem, .7vw, .62rem);
+  font-weight: 900;
+  letter-spacing: .18em;
+  text-shadow: 2px 2px 0 #000;
+}
+.fighter-card.is-selected .selected-mark { display: block; animation: selectBlink 1s steps(2) infinite; }
+.fighter-card[data-fighter="gauthier"] .selected-mark { right: auto; left: .7rem; color: var(--cyan); }
+.select-vs {
+  z-index: 5;
+  display: grid;
+  place-items: center;
+  align-self: center;
+  gap: .5rem;
+  min-width: clamp(3rem, 5vw, 5.5rem);
+  color: var(--yellow);
+  font-size: clamp(1.4rem, 3vw, 2.8rem);
+  text-shadow: 4px 4px 0 #000, 0 0 16px rgb(255 230 0 / 32%);
+  transform: skew(-8deg) rotate(-4deg);
+  animation: vsPulse 1.8s steps(3) infinite;
+}
+.select-vs span { display: block; }
+.select-vs small { color: #aeb9ce; font-size: clamp(.4rem, .55vw, .55rem); font-weight: 900; line-height: 1.25; text-align: center; letter-spacing: .08em; }
+.select-footer {
+  grid-template-columns: minmax(9rem, .7fr) minmax(0, 1.45fr) auto minmax(11rem, .75fr);
+  border-top: 1px solid #27324b;
+  padding-top: .55rem;
+}
+.select-identity { display: grid; justify-items: start; gap: .12rem; text-align: left; }
+.select-identity small { color: var(--muted); font-size: clamp(.42rem, .62vw, .58rem); font-weight: 900; letter-spacing: .12em; }
+.select-identity strong { color: #fff; font-size: clamp(.95rem, 1.6vw, 1.5rem); font-style: italic; line-height: .9; text-shadow: 3px 3px 0 #000; }
+.select-identity span { color: var(--yellow); font-size: clamp(.46rem, .7vw, .64rem); font-weight: 900; letter-spacing: .1em; }
+.equal-stats { justify-content: center; align-content: center; }
+.equal-stats span { border-color: #53607a; background: #0b1120; color: #e6ebf7; font-size: clamp(.4rem, .6vw, .58rem); }
+.select-footer > p { text-align: right; }
+
+@keyframes selectBlink { 0%, 45% { opacity: 1; } 46%, 100% { opacity: .3; } }
+@keyframes vsPulse { 0%, 100% { filter: brightness(1); } 50% { filter: brightness(1.35); } }
+
+@media (max-width: 760px), (max-height: 520px) {
+  .select-header::before, .select-header::after { width: 12%; }
+  .select-header-row { gap: .35rem; font-size: .38rem; }
+  .select-header-row b { font-size: .65em; }
+  .select-header h2 { font-size: clamp(1.1rem, 4vw, 1.65rem); }
+  .select-header small { font-size: .36rem; letter-spacing: .12em; }
+  .fighter-card img { width: 58%; height: 112%; }
+  .fighter-card[data-fighter="matar"] .fighter-info { left: 44%; }
+  .fighter-card[data-fighter="gauthier"] .fighter-info { right: 44%; }
+  .fighter-info { padding: .35rem; gap: .08rem; }
+  .fighter-info small { font-size: .34rem; }
+  .fighter-info strong { font-size: clamp(1rem, 3.5vw, 1.45rem); }
+  .fighter-info em { font-size: .4rem; }
+  .fighter-moves { font-size: .31rem !important; }
+  .fighter-stats { display: none !important; }
+  .pick-tag { top: .3rem; left: .3rem; padding: .14rem .22rem; font-size: .34rem; }
+  .fighter-card[data-fighter="gauthier"] .pick-tag { right: .3rem; }
+  .card-index { top: .35rem; right: .4rem; font-size: .48rem; }
+  .fighter-card[data-fighter="gauthier"] .card-index { left: .4rem; }
+  .selected-mark { bottom: .5rem; font-size: .34rem; }
+  .select-vs { min-width: 2.1rem; gap: .2rem; font-size: .78rem; }
+  .select-vs small { font-size: .28rem; }
+  .select-footer { grid-template-columns: minmax(5rem, .8fr) minmax(0, 1.1fr) auto; gap: .25rem; padding-top: .3rem; }
+  .select-identity small { font-size: .3rem; }
+  .select-identity strong { font-size: .85rem; }
+  .select-identity span { font-size: .34rem; }
+  .equal-stats { gap: .08rem; }
+  .equal-stats span { font-size: .28rem; padding: .08rem .14rem; }
+  .select-footer > p { display: none; }
+  .select-footer .pixel-button { padding-inline: .65rem; }
+}
+
+@media (pointer: coarse) and (orientation: portrait) {
+  .select-header-row { padding-right: 2.2rem; font-size: .5rem; }
+  .select-header-row b { font-size: .72em; }
+  .select-header h2 { font-size: clamp(1.55rem, 7vw, 2.4rem); }
+  .select-header small { font-size: .44rem; }
+  .fighter-card img { width: 52%; height: 110%; }
+  .fighter-card[data-fighter="matar"] .fighter-info { left: 46%; }
+  .fighter-card[data-fighter="gauthier"] .fighter-info { right: 46%; }
+  .fighter-info { padding: .55rem; gap: .17rem; }
+  .fighter-info small { font-size: .45rem; }
+  .fighter-info strong { font-size: clamp(1.35rem, 7vw, 2.1rem); }
+  .fighter-info em { font-size: .53rem; }
+  .fighter-moves { font-size: .4rem !important; }
+  .selected-mark { font-size: .4rem; }
+  .select-vs { min-width: 2.8rem; font-size: .95rem; }
+  .select-vs small { font-size: .34rem; }
+  .select-footer { grid-template-columns: 1fr auto; grid-template-areas: "identity button" "stats stats"; gap: .25rem .45rem; }
+  .select-identity { grid-area: identity; }
+  .select-footer .equal-stats { grid-area: stats; justify-content: start; }
+  .select-footer .pixel-button { grid-area: button; align-self: center; }
+}
+
+/* 32-bit presentation pass: higher-resolution output, softer sampling and richer arcade materials. */
+#arcade[data-era="32bit"] {
+  --red: #ff3f55;
+  --cyan: #3be8ff;
+  --yellow: #ffe75b;
+  max-width: 1600px;
+  filter: drop-shadow(0 22px 60px rgb(0 0 0 / 72%));
+}
+
+#arcade[data-era="32bit"] #game-frame {
+  border: 3px solid #59657f;
+  border-radius: 6px;
+  background: #040712;
+  box-shadow: inset 0 0 0 2px #0b0f1c, inset 0 0 28px rgb(0 216 255 / 8%), 0 0 34px rgb(0 216 255 / 13%), 0 0 70px rgb(255 48 69 / 10%);
+}
+
+#arcade[data-era="32bit"] #game {
+  image-rendering: auto;
+  filter: saturate(1.08) contrast(1.04);
+}
+
+#arcade[data-era="32bit"] .scanlines {
+  opacity: .055;
+  background: repeating-linear-gradient(180deg, transparent 0 4px, rgb(3 4 10 / 35%) 4px 5px);
+  mix-blend-mode: soft-light;
+}
+
+#arcade[data-era="32bit"] .vignette { box-shadow: inset 0 0 80px rgb(0 0 0 / 48%); }
+
+#arcade[data-era="32bit"] .screen { animation: screenIn32 .22s cubic-bezier(.2, .8, .2, 1) both; }
+
+#arcade[data-era="32bit"] .title-fighter,
+#arcade[data-era="32bit"] .fighter-card img,
+#arcade[data-era="32bit"] #winner-portrait { image-rendering: auto; }
+
+#arcade[data-era="32bit"] .fighter-card,
+#arcade[data-era="32bit"] .difficulty-card,
+#arcade[data-era="32bit"] .winner-panel {
+  border-radius: 6px;
+  backdrop-filter: blur(5px);
+}
+
+#arcade[data-era="32bit"] .pixel-button {
+  border-radius: 4px;
+  background-image: linear-gradient(135deg, rgb(255 255 255 / 18%), transparent 42%);
+  box-shadow: 4px 4px 0 #000, 0 0 18px rgb(255 48 69 / 14%);
+  transition: transform .14s ease, box-shadow .14s ease, filter .14s ease;
+}
+
+#arcade[data-era="32bit"] .pixel-button:hover,
+#arcade[data-era="32bit"] .pixel-button:focus-visible { filter: brightness(1.12) saturate(1.12); }
+
+#arcade[data-era="32bit"] .fighter-card.is-selected {
+  box-shadow: inset 0 0 0 2px #04050a, 0 0 0 2px rgb(255 230 0 / 22%), 0 0 42px rgb(255 230 0 / 28%);
+}
+
+@keyframes screenIn32 {
+  from { opacity: 0; transform: scale(1.012); filter: saturate(.82) brightness(.82); }
+  to { opacity: 1; transform: none; filter: none; }
+}
