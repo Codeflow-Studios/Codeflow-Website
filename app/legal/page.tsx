@@ -6,19 +6,11 @@ export const metadata: Metadata = {
   description: 'Official company information for Codeflow Studios CommV.',
 };
 
-type PageProps = {
-  searchParams: Promise<{ lang?: string | string[] }>;
-};
-
-export default async function LegalPage({ searchParams }: PageProps) {
-  const { lang: requestedLanguage } = await searchParams;
-  const lang = Array.isArray(requestedLanguage) ? requestedLanguage[0] : requestedLanguage;
-  const homeHref = lang === 'nl' ? '/?lang=nl' : '/?lang=en';
-
+export default function LegalPage() {
   return (
     <div className="legal-page" id="top">
       <main className="legal-main container">
-        <a className="legal-back" href={homeHref}>
+        <a className="legal-back" href="/">
           <ArrowLeft size={17} />
           Back to Codeflow Studios
         </a>
