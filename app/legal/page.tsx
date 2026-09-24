@@ -1,0 +1,76 @@
+import type { Metadata } from 'next';
+import { ArrowLeft } from 'lucide-react';
+
+export const metadata: Metadata = {
+  title: 'Legal & Company Information — Codeflow Studios',
+  description: 'Official company information for Codeflow Studios CommV.',
+};
+
+type PageProps = {
+  searchParams: Promise<{ lang?: string | string[] }>;
+};
+
+export default async function LegalPage({ searchParams }: PageProps) {
+  const { lang: requestedLanguage } = await searchParams;
+  const lang = Array.isArray(requestedLanguage) ? requestedLanguage[0] : requestedLanguage;
+  const homeHref = lang === 'nl' ? '/?lang=nl' : '/?lang=en';
+
+  return (
+    <div className="legal-page" id="top">
+      <main className="legal-main container">
+        <a className="legal-back" href={homeHref}>
+          <ArrowLeft size={17} />
+          Back to Codeflow Studios
+        </a>
+
+        <header className="legal-heading">
+          <p className="eyebrow">LEGAL / COMPANY INFORMATION</p>
+          <h1>Codeflow Studios CommV</h1>
+          <p>
+            Official company and contact information for Codeflow Studios CommV,
+            a Belgian company based in Bruges.
+          </p>
+        </header>
+
+        <dl className="legal-details">
+          <div className="legal-row">
+            <dt>Company</dt>
+            <dd>Codeflow Studios CommV</dd>
+          </div>
+          <div className="legal-row">
+            <dt>Country</dt>
+            <dd>Belgium</dd>
+          </div>
+          <div className="legal-row">
+            <dt>Enterprise number</dt>
+            <dd>1026.498.540</dd>
+          </div>
+          <div className="legal-row">
+            <dt>VAT</dt>
+            <dd>BE 1026.498.540</dd>
+          </div>
+          <div className="legal-row">
+            <dt>Registered office</dt>
+            <dd>Sint-Gillisdorpstraat 40, 8000 Brugge, Belgium</dd>
+          </div>
+          <div className="legal-row">
+            <dt>Email</dt>
+            <dd><a href="mailto:codeflowstudios@proton.me">codeflowstudios@proton.me</a></dd>
+          </div>
+          <div className="legal-row">
+            <dt>Phone</dt>
+            <dd><a href="tel:+32480667519">+32 480 66 75 19</a></dd>
+          </div>
+          <div className="legal-row">
+            <dt>Website</dt>
+            <dd><a href="https://www.codeflowstudios.dev">www.codeflowstudios.dev</a></dd>
+          </div>
+        </dl>
+
+        <p className="legal-note">
+          These details identify the business responsible for this website and its services.
+        </p>
+      </main>
+    </div>
+  );
+}
