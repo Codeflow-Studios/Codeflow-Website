@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { ArrowRight, Check, CircleAlert, Clock3, Link2, LoaderCircle, Sparkles, TrendingUp, Video } from 'lucide-react';
 import { Header, useLanguage } from './shared';
+import { isTestEnvironmentHost, marketingBrandStorageKey } from './marketing-storage';
 
 type Trend = {
   trend: { id: string; title: string; summary: string; keywords: string[]; provider: string };
@@ -139,7 +140,7 @@ export default function Dashboard() {
   const [isTestEnvironment, setIsTestEnvironment] = useState(false);
 
   useEffect(() => {
-    setIsTestEnvironment(location.hostname.endsWith('.dev') || location.hostname.includes('-staging.up.railway.app'));
+    setIsTestEnvironment(isTestEnvironmentHost(location.hostname));
   }, []);
 
   const loadConnections = useCallback(async (id: string) => {
@@ -155,6 +156,13 @@ export default function Dashboard() {
     try {
       await fetch('/api/marketing/trends', { method: 'POST' });
       const response = await fetch(`/api/marketing/brands/${encodeURIComponent(id)}/trends`);
+      if (response.status === 404 && isTestEnvironmentHost(location.hostname)) {
+        localStorage.removeItem(marketingBrandStorageKey(location.hostname));
+        setBrandId('');
+        setTrends([]);
+        setSelectedTrend('');
+        return;
+      }
       if (!response.ok) throw new Error('trends failed');
       const result = await response.json() as Trend[];
       setTrends(result);
@@ -168,7 +176,9 @@ export default function Dashboard() {
 
   useEffect(() => {
     const params = new URLSearchParams(location.search);
-    const id = params.get('brand') || localStorage.getItem('codeflow-marketing-brand') || '';
+    const testEnvironment = isTestEnvironmentHost(location.hostname);
+    const id = (testEnvironment ? '' : params.get('brand'))
+      || localStorage.getItem(marketingBrandStorageKey(location.hostname)) || '';
     const socialStatus = params.get('social');
     const socialMessage = params.get('socialMessage');
 
@@ -178,7 +188,7 @@ export default function Dashboard() {
 
     if (id) {
       void loadTrends(id);
-      void loadConnections(id).catch(() => setError(t.error));
+      if (!testEnvironment) void loadConnections(id).catch(() => setError(t.error));
     } else {
       setLoading(false);
     }
@@ -302,7 +312,7 @@ export default function Dashboard() {
         <div className="approval-note"><Check size={18}/><span>{t.approval}</span></div>
       </section>
       {isTestEnvironment && <div className="approval-note" role="status"><span>{en ? 'Test environment: campaigns and signals use demo data. Nothing is published.' : 'Testomgeving: campagnes en signalen gebruiken testgegevens. Er wordt niets gepubliceerd.'}</span></div>}
-      {!brandId && <div className="dashboard-error" role="alert"><CircleAlert size={20}/>{t.missing}</div>}
+      {!brandId && <div className="dashboard-error" role="alert"><CircleAlert size={20}/><span>{t.missing} <a href={`/onboarding?plan=flow&lang=${lang}`}>{en ? 'Create a profile' : 'Maak een profiel'}</a></span></div>}
       {notice && <div className="approval-note" role="status"><Check size={18}/><span>{notice}</span></div>}
       {error && <div className="dashboard-error" role="alert"><CircleAlert size={20}/>{error}</div>}
       {brandId && <section className="dashboard-grid">
