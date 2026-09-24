@@ -9,6 +9,9 @@ const wranglerPath = path.join(projectRoot, "node_modules", "wrangler", "bin", "
 const port = process.env.PORT || "8787";
 const stagingPassword = process.env.STAGING_PASSWORD;
 const workerPort = stagingPassword ? (process.env.STAGING_INTERNAL_PORT || "8788") : port;
+const mockApi = process.env.STAGING_MOCK_AI === 'true'
+  ? await (await import('./staging-marketing-api.mjs')).startStagingMarketingApi()
+  : null;
 
 const child = spawn(
   process.execPath,
@@ -44,11 +47,13 @@ if (gate) console.log(`Staging gate ready on port ${port}`);
 for (const signal of ["SIGINT", "SIGTERM"]) {
   process.on(signal, () => {
     gate?.close();
+    mockApi?.close();
     child.kill(signal);
   });
 }
 
 child.on("exit", (code, signal) => {
+  mockApi?.close();
   if (signal) process.kill(process.pid, signal);
   else process.exit(code ?? 1);
 });

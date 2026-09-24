@@ -136,6 +136,11 @@ export default function Dashboard() {
   const [publishingPlatform, setPublishingPlatform] = useState('');
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
+  const [isTestEnvironment, setIsTestEnvironment] = useState(false);
+
+  useEffect(() => {
+    setIsTestEnvironment(location.hostname.endsWith('.dev') || location.hostname.includes('-staging.up.railway.app'));
+  }, []);
 
   const loadConnections = useCallback(async (id: string) => {
     const response = await fetch(`/api/marketing/social/connections?brandProfileId=${encodeURIComponent(id)}`);
@@ -296,6 +301,7 @@ export default function Dashboard() {
         <div><p className="eyebrow">{t.eyebrow}</p><h1>{t.title}</h1><p>{t.intro}</p></div>
         <div className="approval-note"><Check size={18}/><span>{t.approval}</span></div>
       </section>
+      {isTestEnvironment && <div className="approval-note" role="status"><span>{en ? 'Test environment: campaigns and signals use demo data. Nothing is published.' : 'Testomgeving: campagnes en signalen gebruiken testgegevens. Er wordt niets gepubliceerd.'}</span></div>}
       {!brandId && <div className="dashboard-error" role="alert"><CircleAlert size={20}/>{t.missing}</div>}
       {notice && <div className="approval-note" role="status"><Check size={18}/><span>{notice}</span></div>}
       {error && <div className="dashboard-error" role="alert"><CircleAlert size={20}/>{error}</div>}
@@ -329,10 +335,10 @@ export default function Dashboard() {
           {!campaign && <div className="campaign-empty"><Video size={28}/><p>{en ? 'Your selected trend will become a tailored hook, video script and caption.' : 'Je gekozen trend wordt een hook, videoscript en caption op maat.'}</p></div>}
           {campaign && <div className="campaign-content">{publishingReady
             ? <div className="publishing-card">
-                <Check size={28}/><h3>{allPublished ? t.published : t.ready}</h3><p>{t.readyText}</p>{renderMedia()}
+                <Check size={28}/><h3>{allPublished ? t.published : t.ready}</h3><p>{isTestEnvironment ? (en ? 'This is a demo campaign. Social publishing is disabled here.' : 'Dit is een testcampagne. Publiceren op sociale kanalen is hier uitgeschakeld.') : t.readyText}</p>{renderMedia()}
                 {activeConnections.length > 0 && <div>{activeConnections.map((connection) =>
                   <span key={connection.id}><Link2 size={14}/> {connection.platform}: {t.connectedAs} {connection.externalAccountName}</span>)}</div>}
-                {needsMeta && <a className="button dashboard-action" href={`/api/marketing/social/meta/connect?brandProfileId=${encodeURIComponent(brandId)}`}>
+                {needsMeta && !isTestEnvironment && <a className="button dashboard-action" href={`/api/marketing/social/meta/connect?brandProfileId=${encodeURIComponent(brandId)}`}>
                   <Link2 size={18}/>{t.connectMeta}<ArrowRight size={18}/>
                 </a>}
                 <div>{displayJobs.map((job) =>
