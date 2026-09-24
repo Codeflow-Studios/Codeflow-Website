@@ -63,7 +63,15 @@ export default async function LegalPage({ searchParams }: PageProps) {
           </div>
           <div className="legal-row">
             <dt>Website</dt>
-            <dd><a href="https://www.codeflowstudios.dev">www.codeflowstudios.dev</a></dd>
+            <dd>
+              <a href="https://www.codeflowstudios.be">codeflowstudios.be</a>
+              {' · '}
+              <a href="https://www.codeflowstudios.eu">codeflowstudios.eu</a>
+              {' · '}
+              <a href="https://www.codeflowstudios.net">codeflowstudios.net</a>
+              {' · '}
+              <a href="https://www.codeflowstudios.org">codeflowstudios.org</a>
+            </dd>
           </div>
         </dl>
 
