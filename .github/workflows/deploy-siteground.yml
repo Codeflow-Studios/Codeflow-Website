@@ -5,6 +5,10 @@ on:
     branches: [main]
   workflow_dispatch:
     inputs:
+      rollback_sha:
+        description: Full SHA of an earlier main commit to redeploy
+        type: string
+        default: ''
       dry_run:
         description: Show files to upload without changing SiteGround
         type: boolean
@@ -21,6 +25,26 @@ jobs:
       contents: read
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Select release commit
+        shell: bash
+        env:
+          ROLLBACK_SHA: ${{ inputs.rollback_sha }}
+        run: |
+          if [ -n "$ROLLBACK_SHA" ]; then
+            if [[ ! "$ROLLBACK_SHA" =~ ^[0-9a-fA-F]{40}$ ]]; then
+              echo "Enter a full 40-character commit SHA." >&2
+              exit 1
+            fi
+            git fetch origin main
+            if ! git merge-base --is-ancestor "$ROLLBACK_SHA" origin/main; then
+              echo "Rollback commit must be on the main branch." >&2
+              exit 1
+            fi
+            git checkout --detach "$ROLLBACK_SHA"
+          fi
+          echo "Deploying $(git rev-parse HEAD)"
       - uses: pnpm/action-setup@v4
         with:
           version: 11.19.0
@@ -30,6 +54,13 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm build:siteground
+      - name: Save exact website build
+        uses: actions/upload-artifact@v4
+        with:
+          name: siteground-${{ github.run_id }}
+          path: ./out/
+          include-hidden-files: true
+          retention-days: 14
       - name: Upload website through FTPS
         uses: docker://ghcr.io/airvzxf/ftp-deployment-action:v2.11.13
         with:
