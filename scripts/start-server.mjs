@@ -35,6 +35,7 @@ const gate = stagingPassword
       password: stagingPassword,
       port: Number(port),
       upstreamPort: Number(workerPort),
+      allowPublicGame: process.env.STAGING_ALLOW_PUBLIC_GAME !== 'false',
     })
   : null;
 

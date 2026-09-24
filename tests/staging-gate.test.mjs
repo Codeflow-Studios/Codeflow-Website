@@ -60,3 +60,21 @@ test('the staging gate protects pages and API requests with a signed session', a
     await new Promise((resolve) => upstream.close(resolve));
   }
 });
+
+test('the test environment can also protect the game route', async () => {
+  const upstream = createServer((_request, response) => response.end('game'));
+  await new Promise((resolve) => upstream.listen(0, '127.0.0.1', resolve));
+  const gate = await startStagingGate({
+    password: 'test-secret', port: 0, upstreamPort: upstream.address().port,
+    allowPublicGame: false,
+  });
+
+  try {
+    const response = await fetch(`http://127.0.0.1:${gate.address().port}/skumic-game/`, { redirect: 'manual' });
+    assert.equal(response.status, 302);
+    assert.match(response.headers.get('location'), /__staging\/login/);
+  } finally {
+    await new Promise((resolve) => gate.close(resolve));
+    await new Promise((resolve) => upstream.close(resolve));
+  }
+});

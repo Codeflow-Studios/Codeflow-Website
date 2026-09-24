@@ -63,7 +63,7 @@ function readForm(request) {
   });
 }
 
-export function startStagingGate({ password, port, upstreamPort }) {
+export function startStagingGate({ password, port, upstreamPort, allowPublicGame = true }) {
   if (!password) throw new Error('STAGING_PASSWORD must be set for the staging gate.');
   const passwordHash = createHash('sha256').update(password).digest();
   const signingKey = scryptSync(password, 'codeflow-staging-v1', 32);
@@ -100,7 +100,7 @@ export function startStagingGate({ password, port, upstreamPort }) {
   const server = createServer(async (request, response) => {
     const url = new URL(request.url || '/', 'http://localhost');
     // The public .be website embeds only these static game files from Railway.
-    if ((request.method === 'GET' || request.method === 'HEAD')
+    if (allowPublicGame && (request.method === 'GET' || request.method === 'HEAD')
       && (url.pathname === '/skumic-game' || url.pathname.startsWith('/skumic-game/'))) {
       forward(request, response);
       return;
