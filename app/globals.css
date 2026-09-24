@@ -77,3 +77,21 @@
 .campaign-wait{display:flex;align-items:center;gap:10px;color:var(--quiet);padding:15px 0;font-size:.92rem}.campaign-wait.failed,.campaign-status.failed{color:#ffd7de}.campaign-status.failed{border-color:#a75463;background:#392027}.campaign-image{display:block;width:100%;max-height:520px;object-fit:cover;border-radius:8px;border:1px solid #3d3d45;background:#202025}.publishing-card .campaign-image{margin-top:24px;max-width:300px;aspect-ratio:9/16}
 @media(max-width:800px){.dashboard{padding-top:38px;padding-bottom:70px}.dashboard-intro{display:block;padding-bottom:32px}.dashboard-intro h1{font-size:clamp(3rem,13vw,4.8rem)}.approval-note{margin-top:26px;max-width:420px}.dashboard-grid{grid-template-columns:minmax(0,1fr)}.trend-panel,.campaign-panel{min-height:auto;padding:23px}.dashboard-loading,.campaign-empty{min-height:220px}.panel-heading h2{font-size:1.45rem}}
 @media(max-width:480px){.dashboard-intro>div:first-child>p:last-child{font-size:1rem}.trend-panel,.campaign-panel{padding:19px}.panel-heading{gap:13px;flex-wrap:wrap}.text-button{font-size:.78rem}.trend-card{padding:14px}.campaign-status{font-size:.68rem}.dashboard-action{font-size:.9rem}}
+
+
+/* Legal / company information */
+.legal-page{min-height:100vh;background:#121214}
+.legal-main{padding-block:90px 110px;max-width:980px}
+.legal-back{display:inline-flex;align-items:center;gap:10px;color:var(--quiet);font-size:.9rem;margin-bottom:70px}
+.legal-back:hover{color:var(--orange)}
+.legal-heading .eyebrow{color:var(--orange);margin-bottom:22px}
+.legal-heading h1{font-size:clamp(3.4rem,7vw,6rem);max-width:850px}
+.legal-heading>p:last-child{max-width:620px;color:var(--quiet);font-size:1.05rem;line-height:1.8;margin-top:26px}
+.legal-details{margin-top:68px;border-top:1px solid var(--line)}
+.legal-row{display:grid;grid-template-columns:minmax(180px,.55fr) minmax(0,1fr);gap:30px;padding:24px 0;border-bottom:1px solid var(--line)}
+.legal-row dt{color:var(--quiet);font-size:.82rem;letter-spacing:.06em;text-transform:uppercase}
+.legal-row dd{margin:0;font-size:1.05rem;overflow-wrap:anywhere}
+.legal-row a:hover{color:var(--orange)}
+.legal-note{margin-top:34px;color:var(--quiet);font-size:.82rem;line-height:1.7}
+.footer-bottom a:hover{color:var(--orange)}
+@media(max-width:600px){.legal-main{padding-block:55px 75px}.legal-back{margin-bottom:45px}.legal-row{grid-template-columns:1fr;gap:7px;padding:19px 0}.legal-heading>p:last-child{font-size:1rem}}
