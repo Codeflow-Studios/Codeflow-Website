@@ -8,12 +8,12 @@ export default function Home({initialLang='nl'}:{initialLang?:Language}){
  const services=en?[
   {key:'marketing',number:'01',title:'Marketing',kicker:'Real-time relevance',description:'Trend-driven strategy and automated marketing built around your company, audience and market.',href:'/services/marketing',Icon:Radio},
   {key:'design',number:'02',title:'Graphic design',kicker:'A recognisable identity',description:'Logos, visual identities, digital artwork and web design with one consistent visual language.',href:'/services/graphic-design',Icon:Palette},
-  {key:'software',number:'03',title:'Software development',kicker:'Ideas made functional',description:'Websites, web applications and custom software — including Codeflow Tower and Skumic Run.',href:'/services/software-development',Icon:Code2},
+  {key:'software',number:'03',title:'Software development',kicker:'Ideas made functional',description:'Websites, web applications and custom software — including Codeflow Tower, Skumic Fighters and Beatdown City.',href:'/services/software-development',Icon:Code2},
   {key:'rebranding',number:'04',title:'Rebranding',kicker:'The complete package',description:'Marketing, graphic design and software development combined into one coordinated relaunch.',href:'/services/rebranding',Icon:Layers3}
  ]:[
   {key:'marketing',number:'01',title:'Marketing',kicker:'Realtime relevantie',description:'Strategie op basis van trends en geautomatiseerde marketing, afgestemd op jouw bedrijf, publiek en markt.',href:'/services/marketing',Icon:Radio},
   {key:'design',number:'02',title:'Grafisch design',kicker:'Een herkenbare identiteit',description:'Logo’s, visuele identiteiten, digitaal artwork en webdesign binnen één consequente beeldtaal.',href:'/services/graphic-design',Icon:Palette},
-  {key:'software',number:'03',title:'Softwareontwikkeling',kicker:'Ideeën die werken',description:'Websites, webapplicaties en software op maat — inclusief Codeflow Tower en Skumic Run.',href:'/services/software-development',Icon:Code2},
+  {key:'software',number:'03',title:'Softwareontwikkeling',kicker:'Ideeën die werken',description:'Websites, webapplicaties en software op maat — inclusief Codeflow Tower, Skumic Fighters en Beatdown City.',href:'/services/software-development',Icon:Code2},
   {key:'rebranding',number:'04',title:'Rebranding',kicker:'Het totaalpakket',description:'Marketing, grafisch design en softwareontwikkeling gecombineerd in één afgestemde herlancering.',href:'/services/rebranding',Icon:Layers3}
  ];
  return <div id="top"><a className="skip" href="#main">{en?'Skip to content':'Naar de inhoud'}</a><Header lang={lang} setLang={setLang}/><main id="main">
