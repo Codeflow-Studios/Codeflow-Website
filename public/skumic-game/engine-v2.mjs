@@ -1,4 +1,4 @@
-import { FIGHTERS, INPUT_LABELS, STAGE, STAGES, otherFighter } from "./roster-v2.mjs?v=10";
+import { FIGHTERS, INPUT_LABELS, STAGE, STAGES, otherFighter } from "./roster-v2.mjs?v=11";
 
 const W = 480;
 const H = 270;
@@ -21,6 +21,37 @@ function loadImage(src) {
   });
 }
 
+function measureFootOffset(frame) {
+  const ctx = frame.getContext("2d");
+  const pixels = ctx.getImageData(0, 0, frame.width, frame.height).data;
+  let lastVisibleRow = frame.height - 1;
+  for (let y = frame.height - 1; y >= 0; y -= 1) {
+    let found = false;
+    for (let x = 0; x < frame.width; x += 1) {
+      if (pixels[(y * frame.width + x) * 4 + 3] > 127) {
+        found = true;
+        break;
+      }
+    }
+    if (found) {
+      lastVisibleRow = y;
+      break;
+    }
+  }
+  frame.footOffset = frame.height - 1 - lastVisibleRow;
+  return frame;
+}
+
+function prepareFrame(image) {
+  const frame = document.createElement("canvas");
+  frame.width = image.naturalWidth;
+  frame.height = image.naturalHeight;
+  const ctx = frame.getContext("2d");
+  ctx.imageSmoothingEnabled = false;
+  ctx.drawImage(image, 0, 0);
+  return measureFootOffset(frame);
+}
+
 function sliceAtlas(image) {
   const frames = [];
   const width = image.naturalWidth / 4;
@@ -33,23 +64,7 @@ function sliceAtlas(image) {
       const ctx = frame.getContext("2d");
       ctx.imageSmoothingEnabled = false;
       ctx.drawImage(image, column * width, row * height, width, height, 0, 0, width, height);
-      const pixels = ctx.getImageData(0, 0, width, height).data;
-      let lastVisibleRow = height - 1;
-      for (let y = height - 1; y >= 0; y -= 1) {
-        let found = false;
-        for (let x = 0; x < width; x += 1) {
-          if (pixels[(y * width + x) * 4 + 3] > 127) {
-            found = true;
-            break;
-          }
-        }
-        if (found) {
-          lastVisibleRow = y;
-          break;
-        }
-      }
-      frame.footOffset = height - 1 - lastVisibleRow;
-      frames.push(frame);
+      frames.push(measureFootOffset(frame));
     }
   }
   return frames;
@@ -355,18 +370,25 @@ export class FighterGame {
   }
 
   async load() {
-    const [stageImages, matarPortrait, gauthierPortrait, matarAtlas, gauthierAtlas] = await Promise.all([
+    const frameOverrideEntries = Object.values(FIGHTERS).flatMap((fighter) =>
+      Object.entries(fighter.frameOverrides || {}).map(([frameIndex, source]) => [fighter.id, Number(frameIndex), source]),
+    );
+    const [stageImages, matarPortrait, gauthierPortrait, matarAtlas, gauthierAtlas, frameOverrides] = await Promise.all([
       Promise.all(Object.values(STAGES).map(async (stage) => [stage.id, await loadImage(stage.image)])),
       loadImage(FIGHTERS.matar.portrait),
       loadImage(FIGHTERS.gauthier.portrait),
       loadImage(FIGHTERS.matar.atlas),
       loadImage(FIGHTERS.gauthier.atlas),
+      Promise.all(frameOverrideEntries.map(async ([fighterId, frameIndex, source]) =>
+        [fighterId, frameIndex, prepareFrame(await loadImage(source))],
+      )),
     ]);
     this.assets.stages = Object.fromEntries(stageImages);
     this.assets.portraits.matar = matarPortrait;
     this.assets.portraits.gauthier = gauthierPortrait;
     this.assets.frames.matar = sliceAtlas(matarAtlas);
     this.assets.frames.gauthier = sliceAtlas(gauthierAtlas);
+    for (const [fighterId, frameIndex, frame] of frameOverrides) this.assets.frames[fighterId][frameIndex] = frame;
     this.state = "title";
     this.emit("ready", {});
     this.render();
@@ -729,7 +751,13 @@ export class FighterGame {
     ctx.translate(Math.round(fighter.x), Math.round(fighter.y));
     if (flip) ctx.scale(-1, 1);
     if (fighter.flash > 0) ctx.filter = "brightness(2.8) saturate(.25)";
-    ctx.drawImage(frame, -64, -170 + (frame.footOffset || 0), 128, 170);
+    ctx.drawImage(
+      frame,
+      -frame.width / 2,
+      -frame.height + (frame.footOffset || 0),
+      frame.width,
+      frame.height,
+    );
     ctx.filter = "none";
     if (fighter.isCountering()) {
       ctx.strokeStyle = "#ffe600";
