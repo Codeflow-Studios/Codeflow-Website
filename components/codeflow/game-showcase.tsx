@@ -20,7 +20,7 @@ export default function GameShowcase({ lang }: { lang: Language }) {
     <div className="games-grid">
       <article className="game-card beatdown-card">
         <div className="game-card-media">
-          <img src="/games/beatdown-city/preview.png" alt="Pixel-art interiors in Beatdown City: club, hotel, warehouse and diner" width="1280" height="720" />
+          <img src="/games/beatdown-city/preview.png" alt="Beatdown City Street Pulse with a dynamic street crime and police response" width="1280" height="720" />
           <span className="game-badge">WEB · PLAYABLE ALPHA</span>
         </div>
         <div className="game-card-copy">
@@ -28,9 +28,9 @@ export default function GameShowcase({ lang }: { lang: Language }) {
           <Swords size={24} />
           <h3>Beatdown City</h3>
           <p>{en
-            ? 'Explore two neon city maps, take street jobs and enter 31 distinct establishments in this pixel-art action alpha.'
-            : 'Verken twee neonsteden, voer straatopdrachten uit en betreed 31 unieke locaties in deze pixel-art actiegame.'}</p>
-          <div className="game-card-tags"><span>{en ? 'Browser game' : 'Browsergame'}</span><span>Alpha 0.13.0</span></div>
+            ? 'Navigate dynamic street crimes, faction jobs and escalating police searches across two neon city maps and 31 enterable locations.'
+            : 'Beleef dynamische straatmisdaad, factieopdrachten en escalerende politiejachten in twee neonsteden met 31 betreedbare locaties.'}</p>
+          <div className="game-card-tags"><span>{en ? 'Browser game' : 'Browsergame'}</span><span>Alpha 0.14.0</span></div>
           <a className="button game-launch" href="/beatdown-city/index.html" target="_blank" rel="noopener noreferrer">PLAY NOW<ArrowUpRight size={18} /></a>
         </div>
       </article>
@@ -49,3 +49,4 @@ export default function GameShowcase({ lang }: { lang: Language }) {
     <div className="games-signature"><span>{en ? 'Original games' : 'Originele games'}</span><strong>Made by Codeflow Studios</strong></div>
   </section>;
 }
+
