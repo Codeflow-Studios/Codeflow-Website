@@ -31,7 +31,7 @@ export default function GameShowcase({ lang }: { lang: Language }) {
             ? 'Navigate dynamic street crimes, faction jobs and escalating police searches across two neon city maps and 31 enterable locations.'
             : 'Beleef dynamische straatmisdaad, factieopdrachten en escalerende politiejachten in twee neonsteden met 31 betreedbare locaties.'}</p>
           <div className="game-card-tags"><span>{en ? 'Browser game' : 'Browsergame'}</span><span>Alpha 0.14.0</span></div>
-          <a className="button game-launch" href="/beatdown-city/index.html" target="_blank" rel="noopener noreferrer">PLAY NOW<ArrowUpRight size={18} /></a>
+          <a className="button game-launch" href="/beatdown-city-014/index.html" target="_blank" rel="noopener noreferrer">PLAY NOW<ArrowUpRight size={18} /></a>
         </div>
       </article>
 
@@ -49,4 +49,5 @@ export default function GameShowcase({ lang }: { lang: Language }) {
     <div className="games-signature"><span>{en ? 'Original games' : 'Originele games'}</span><strong>Made by Codeflow Studios</strong></div>
   </section>;
 }
+
 

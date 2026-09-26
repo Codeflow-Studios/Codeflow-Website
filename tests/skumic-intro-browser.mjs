@@ -18,12 +18,16 @@ const response = await page.goto(url, { waitUntil: 'networkidle' });
 assert.equal(response?.status(), 200);
 await page.locator('#codeflow-intro').waitFor({ state: 'visible' });
 const intro = await page.locator('#codeflow-intro-video').evaluate(video => ({
+  autoplay: video.autoplay,
   muted: video.muted,
+  paused: video.paused,
   volume: video.volume,
   readyState: video.readyState,
   source: video.currentSrc,
 }));
+assert.equal(intro.autoplay, true, 'intro must request autoplay');
 assert.equal(intro.muted, false, 'intro sound must default to on');
+assert.equal(intro.paused, false, 'intro must be playing automatically');
 assert.equal(intro.volume, 1, 'intro volume must default to full');
 assert.ok(intro.readyState >= 2, 'intro video must load playable data');
 assert.match(intro.source, /codeflow-studios-intro\.mp4$/);

@@ -231,15 +231,32 @@
         shell.classList.add('is-done');
         setTimeout(() => { shell.remove(); document.getElementById('start')?.focus(); }, 360);
       };
-      const start = () => video.play().then(() => play.classList.add('is-hidden')).catch(() => play.classList.remove('is-hidden'));
+      const start = () => {
+        video.muted = false;
+        sound.textContent = 'SOUND ON';
+        return video.play()
+          .then(() => play.classList.add('is-hidden'))
+          .catch(() => {
+            video.muted = true;
+            sound.textContent = 'TURN SOUND ON';
+            return video.play()
+              .then(() => play.classList.add('is-hidden'))
+              .catch(() => play.classList.remove('is-hidden'));
+          });
+      };
       video.addEventListener('ended', finish);
       video.addEventListener('error', finish);
       play.addEventListener('click', start);
       skip.addEventListener('click', finish);
       sound.addEventListener('click', () => {
-        video.muted = !video.muted;
-        sound.textContent = video.muted ? 'SOUND OFF' : 'SOUND ON';
-        if (video.paused) start();
+        if (video.muted) {
+          video.muted = false;
+          sound.textContent = 'SOUND ON';
+          video.play().then(() => play.classList.add('is-hidden')).catch(() => play.classList.remove('is-hidden'));
+        } else {
+          video.muted = true;
+          sound.textContent = 'TURN SOUND ON';
+        }
       });
       start();
     })();
