@@ -106,7 +106,7 @@ export const STAGES = Object.freeze({
 
 export const STAGE = Object.freeze({
   groundY: 246,
-  bounds: { left: 30, right: 450 },
+  bounds: { left: 64, right: 416 },
 });
 
 export const INPUT_LABELS = Object.freeze({
