@@ -10,11 +10,19 @@
   <link rel="preload" as="image" href="assets/skumic-logo-2025.png">
   <link rel="preload" as="font" href="assets/fonts/PixelifySans.ttf" type="font/ttf" crossorigin>
   <link rel="preload" as="font" href="assets/fonts/PressStart2P-Regular.ttf" type="font/ttf" crossorigin>
-  <link rel="stylesheet" href="revamp.css?v=9">
+  <link rel="stylesheet" href="revamp.css?v=10">
   <link rel="stylesheet" href="pixel-art.css?v=4">
   <title>Skumic Fighters</title>
 </head>
 <body>
+  <section id="codeflow-intro" class="codeflow-intro" aria-label="Codeflow Studios intro">
+    <video id="codeflow-intro-video" playsinline preload="auto" src="assets/codeflow-studios-intro.mp4"></video>
+    <div class="codeflow-intro-controls">
+      <button id="codeflow-intro-sound" class="pixel-button secondary-button" type="button">SOUND ON</button>
+      <button id="codeflow-intro-play" class="pixel-button primary-button is-hidden" type="button">PLAY INTRO</button>
+      <button id="codeflow-intro-skip" class="pixel-button secondary-button" type="button">SKIP</button>
+    </div>
+  </section>
   <main id="arcade" data-screen="loading" data-era="32bit" aria-label="Skumic Fighters arcadegame">
     <section id="game-frame" aria-label="Gamebeeld">
       <canvas id="game" width="960" height="540" tabindex="0" aria-label="Skumic Fighters gevecht"></canvas>
@@ -206,6 +214,36 @@
       </div>
     </section>
   </main>
+  <script>
+    (() => {
+      const shell = document.getElementById('codeflow-intro');
+      const video = document.getElementById('codeflow-intro-video');
+      const play = document.getElementById('codeflow-intro-play');
+      const sound = document.getElementById('codeflow-intro-sound');
+      const skip = document.getElementById('codeflow-intro-skip');
+      let finished = false;
+      video.muted = false;
+      video.volume = 1;
+      const finish = () => {
+        if (finished) return;
+        finished = true;
+        video.pause();
+        shell.classList.add('is-done');
+        setTimeout(() => { shell.remove(); document.getElementById('start')?.focus(); }, 360);
+      };
+      const start = () => video.play().then(() => play.classList.add('is-hidden')).catch(() => play.classList.remove('is-hidden'));
+      video.addEventListener('ended', finish);
+      video.addEventListener('error', finish);
+      play.addEventListener('click', start);
+      skip.addEventListener('click', finish);
+      sound.addEventListener('click', () => {
+        video.muted = !video.muted;
+        sound.textContent = video.muted ? 'SOUND OFF' : 'SOUND ON';
+        if (video.paused) start();
+      });
+      start();
+    })();
+  </script>
   <script type="module" src="app-v2.mjs?v=15"></script>
 </body>
 </html>
