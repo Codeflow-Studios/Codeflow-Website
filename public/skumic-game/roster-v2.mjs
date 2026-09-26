@@ -70,6 +70,7 @@ export const FIGHTERS = Object.freeze({
     artFacing: -1,
     portrait: "assets/gauthier-portrait-v2.png?v=7",
     atlas: "assets/gauthier-atlas-v2.png?v=7",
+    frameOverrides: { 2: "assets/gauthier-punch-v3.png?v=1" },
     stats: SHARED_STATS,
     moves: {
       ...basics(),

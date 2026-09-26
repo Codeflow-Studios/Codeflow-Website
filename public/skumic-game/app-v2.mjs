@@ -1,5 +1,5 @@
-import { FIGHTERS, STAGES } from "./roster-v2.mjs?v=10";
-import { CPU_DIFFICULTIES, FighterGame } from "./engine-v2.mjs?v=13";
+import { FIGHTERS, STAGES } from "./roster-v2.mjs?v=11";
+import { CPU_DIFFICULTIES, FighterGame } from "./engine-v2.mjs?v=14";
 
 const $ = (selector) => document.querySelector(selector);
 const $$ = (selector) => [...document.querySelectorAll(selector)];
@@ -399,7 +399,7 @@ document.addEventListener("visibilitychange", () => {
 });
 
 window.skumicGame = Object.freeze({
-  version: "3.6-combat-visibility",
+  version: "3.7-complete-punch",
   getState: () => engine.getState(),
   startMatch: (fighterId = "matar", difficulty = "easy", stageId = "the-stage") => beginMatch(FIGHTERS[fighterId] ? fighterId : "matar", CPU_DIFFICULTIES[difficulty] ? difficulty : "easy", STAGES[stageId] ? stageId : "the-stage"),
   selectFighter: (fighterId = "matar") => selectFighter(FIGHTERS[fighterId] ? fighterId : "matar"),
