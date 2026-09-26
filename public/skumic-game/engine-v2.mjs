@@ -1,4 +1,4 @@
-import { FIGHTERS, INPUT_LABELS, STAGE, STAGES, otherFighter } from "./roster-v2.mjs?v=9";
+import { FIGHTERS, INPUT_LABELS, STAGE, STAGES, otherFighter } from "./roster-v2.mjs?v=10";
 
 const W = 480;
 const H = 270;
