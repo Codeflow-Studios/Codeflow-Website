@@ -677,7 +677,12 @@ export class FighterGame {
     this.drawStage(ctx);
     if (this.player && this.cpu) {
       this.drawProjectiles(ctx);
-      const order = this.player.x < this.cpu.x ? [this.cpu, this.player] : [this.player, this.cpu];
+      const order = [this.player, this.cpu].sort((fighterA, fighterB) => {
+        const priorityA = fighterA.isActive() ? 2 : Number(Boolean(fighterA.action));
+        const priorityB = fighterB.isActive() ? 2 : Number(Boolean(fighterB.action));
+        if (priorityA !== priorityB) return priorityA - priorityB;
+        return fighterB.x - fighterA.x;
+      });
       for (const fighter of order) this.drawFighter(ctx, fighter);
       this.drawParticles(ctx);
     }
