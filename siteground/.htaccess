@@ -2,6 +2,7 @@ DirectoryIndex index.html index.php
 
 <IfModule mod_rewrite.c>
 RewriteEngine On
+RewriteRule ^nightly-build-club/?$ /flow-community/ [R=301,L]
 RewriteRule ^api/marketing/index\.php$ - [L]
 RewriteRule ^api/marketing/.*$ api/marketing/index.php [L]
 </IfModule>
