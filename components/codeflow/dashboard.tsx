@@ -30,6 +30,32 @@ type CampaignView = {
   publishingJobs: PublishingJob[];
 };
 
+type PromptPackage = {
+  trend: {
+    useTrend: boolean;
+    selectedTrendId?: string | null;
+    selectedTrendName?: string | null;
+    reason: string;
+    recommendedUsage: string;
+    scores?: { overallFit?: number } | null;
+  };
+  creative: {
+    name: string;
+    oneSentenceIdea: string;
+    hookVisual: string;
+    hookText: string;
+    trendAdaptation: string;
+    callToAction: string;
+  };
+  video: {
+    masterPrompt: string;
+    negativePrompt: string;
+    textOverlays: Array<{ startSeconds: number; endSeconds: number; text: string }>;
+    audioDirection: string;
+    finalFrame: string;
+  };
+};
+
 type SocialConnection = {
   id: string;
   platform: string;
@@ -48,8 +74,16 @@ const copy = {
     customerSignal: 'Customer data',
     liveTrend: 'Live Google trend',
     loading: 'Finding signals that fit your brand…',
-    generate: 'Create campaign',
-    generating: 'Creating your draft…',
+    generate: 'Build video prompt',
+    generating: 'Building your prompt…',
+    promptPreview: 'Video prompt preview',
+    selectedTrend: 'Selected trend',
+    trendReason: 'Why this trend',
+    concept: 'Creative concept',
+    masterPrompt: 'Master video prompt',
+    negativePrompt: 'Avoid',
+    overlays: 'Text overlays',
+    promptReady: 'Prompt ready. Video generation is not started yet.',
     review: 'Your campaign draft',
     hook: 'Hook',
     script: 'Video script',
@@ -84,8 +118,16 @@ const copy = {
     customerSignal: 'Klantdata',
     liveTrend: 'Live Google-trend',
     loading: 'Signalen zoeken die bij jouw merk passen…',
-    generate: 'Campagne maken',
-    generating: 'Je concept wordt gemaakt…',
+    generate: 'Videoprompt maken',
+    generating: 'Je prompt wordt opgebouwd…',
+    promptPreview: 'Voorbeeld videoprompt',
+    selectedTrend: 'Gekozen trend',
+    trendReason: 'Waarom deze trend',
+    concept: 'Creatief concept',
+    masterPrompt: 'Master videoprompt',
+    negativePrompt: 'Vermijden',
+    overlays: 'Tekstoverlays',
+    promptReady: 'Prompt klaar. Videogeneratie is nog niet gestart.',
     review: 'Jouw campagneconcept',
     hook: 'Hook',
     script: 'Videoscript',
@@ -130,6 +172,7 @@ export default function Dashboard() {
   const [trends, setTrends] = useState<Trend[]>([]);
   const [selectedTrend, setSelectedTrend] = useState('');
   const [campaign, setCampaign] = useState<CampaignView | null>(null);
+  const [promptPackage, setPromptPackage] = useState<PromptPackage | null>(null);
   const [connections, setConnections] = useState<SocialConnection[]>([]);
   const [loading, setLoading] = useState(true);
   const [working, setWorking] = useState(false);
@@ -147,6 +190,7 @@ export default function Dashboard() {
     setLoading(true);
     setError('');
     setCampaign(null);
+    setPromptPackage(null);
     try {
       await fetch('/api/marketing/trends', { method: 'POST' });
       const response = await fetch(`/api/marketing/brands/${encodeURIComponent(id)}/trends`);
@@ -198,6 +242,38 @@ export default function Dashboard() {
 
     return () => window.clearInterval(timer);
   }, [campaign?.campaign.id, campaign?.campaign.status, refreshCampaign]);
+
+  async function generatePrompt() {
+    if (!brandId) return;
+    setWorking(true);
+    setError('');
+    setPromptPackage(null);
+    try {
+      const response = await fetch('/api/marketing/prompts', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          brandProfileId: brandId,
+          platform: 'instagram_reels',
+          objective: 'lead_generation',
+          language: lang === 'nl' ? 'nl-BE' : 'en-BE',
+          durationSeconds: 15,
+          aspectRatio: '9:16',
+          callToAction: null,
+          trendLimit: 8,
+          refreshTrends: true,
+        }),
+      });
+      if (!response.ok) throw new Error(await readProblem(response, 'Prompt generation failed.'));
+      const result = await response.json() as PromptPackage;
+      setPromptPackage(result);
+      if (result.trend.selectedTrendId) setSelectedTrend(result.trend.selectedTrendId);
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : t.error);
+    } finally {
+      setWorking(false);
+    }
+  }
 
   async function createCampaign() {
     if (!brandId || !selectedTrend) return;
@@ -314,9 +390,9 @@ export default function Dashboard() {
                 {selectedTrend === trend.id && <Check className="trend-check" size={18}/>}
               </button>)}</div>}
           {!loading && trends.length > 0 &&
-            <button className="button dashboard-action" type="button" disabled={working} onClick={() => void createCampaign()}>
-              {working && !campaign ? <LoaderCircle className="spin" size={18}/> : <Sparkles size={18}/>}
-              {working && !campaign ? t.generating : t.generate}<ArrowRight size={18}/>
+            <button className="button dashboard-action" type="button" disabled={working} onClick={() => void generatePrompt()}>
+              {working && !promptPackage ? <LoaderCircle className="spin" size={18}/> : <Sparkles size={18}/>}
+              {working && !promptPackage ? t.generating : t.generate}<ArrowRight size={18}/>
             </button>}
         </div>
         <div className="campaign-panel">
@@ -326,7 +402,16 @@ export default function Dashboard() {
               {publishingReady ? t.ready : failed ? t.failed : awaitingApproval ? <><Clock3 size={14}/> {t.reviewNeeded}</> : <><LoaderCircle className="spin" size={14}/> {t.creating}</>}
             </span>}
           </div>
-          {!campaign && <div className="campaign-empty"><Video size={28}/><p>{en ? 'Your selected trend will become a tailored hook, video script and caption.' : 'Je gekozen trend wordt een hook, videoscript en caption op maat.'}</p></div>}
+          {!campaign && !promptPackage && <div className="campaign-empty"><Video size={28}/><p>{en ? 'Build a business-specific prompt from current social signals before spending video credits.' : 'Maak eerst een bedrijfsspecifieke prompt op basis van actuele social-signalen, vóór je videocredits gebruikt.'}</p></div>}
+          {!campaign && promptPackage && <div className="campaign-content">
+            <article><span>{t.selectedTrend}</span><h3>{promptPackage.trend.selectedTrendName || (en ? 'Customer-first creative pattern' : 'Klantgerichte creatieve formule')}</h3><p>{promptPackage.trend.recommendedUsage}</p></article>
+            <article><span>{t.trendReason}</span><p>{promptPackage.trend.reason}</p></article>
+            <article><span>{t.concept}</span><h3>{promptPackage.creative.name}</h3><p>{promptPackage.creative.oneSentenceIdea}</p><p><strong>{promptPackage.creative.hookText}</strong> — {promptPackage.creative.hookVisual}</p></article>
+            <article><span>{t.masterPrompt}</span><p>{promptPackage.video.masterPrompt}</p></article>
+            <article><span>{t.negativePrompt}</span><p>{promptPackage.video.negativePrompt}</p></article>
+            {promptPackage.video.textOverlays.length > 0 && <article><span>{t.overlays}</span><p>{promptPackage.video.textOverlays.map((item) => `${item.startSeconds}-${item.endSeconds}s: ${item.text}`).join(' · ')}</p></article>}
+            <div className="approval-note"><Check size={18}/><span>{t.promptReady}</span></div>
+          </div>}
           {campaign && <div className="campaign-content">{publishingReady
             ? <div className="publishing-card">
                 <Check size={28}/><h3>{allPublished ? t.published : t.ready}</h3><p>{t.readyText}</p>{renderMedia()}
