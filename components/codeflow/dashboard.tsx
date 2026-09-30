@@ -26,6 +26,7 @@ type CampaignView = {
     caption?: string;
     videoUrl?: string;
     videoProvider?: string;
+    rejectionReason?: string;
   };
   publishingJobs: PublishingJob[];
 };
@@ -495,7 +496,7 @@ export default function Dashboard() {
                       {working ? t.approving : t.approve}<ArrowRight size={18}/>
                     </button>
                   : failed
-                    ? <div className="campaign-wait failed"><CircleAlert size={18}/>{t.failed}</div>
+                    ? <div className="campaign-wait failed"><CircleAlert size={18}/><span>{campaign.campaign.rejectionReason || t.failed}</span></div>
                     : <div className="campaign-wait"><LoaderCircle className="spin" size={18}/>{t.creating}</div>}
               </>}
           </div>}
