@@ -31,6 +31,14 @@ type CampaignView = {
 };
 
 type PromptPackage = {
+  brief: {
+    platform: string;
+    objective: string;
+    language: string;
+    durationSeconds: number;
+    aspectRatio: string;
+    callToAction?: string | null;
+  };
   trend: {
     useTrend: boolean;
     selectedTrendId?: string | null;
@@ -271,7 +279,7 @@ export default function Dashboard() {
           platform: 'instagram_reels',
           objective: 'lead_generation',
           language: lang === 'nl' ? 'nl-BE' : 'en-BE',
-          durationSeconds: 15,
+          durationSeconds: 10,
           aspectRatio: '9:16',
           callToAction: null,
           trendLimit: 8,
@@ -311,6 +319,8 @@ export default function Dashboard() {
           shotList,
           videoPrompt: promptPackage.video.masterPrompt,
           callToAction: promptPackage.creative.callToAction,
+          aspectRatio: promptPackage.brief.aspectRatio,
+          durationSeconds: promptPackage.brief.durationSeconds,
         }),
       });
 
