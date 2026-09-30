@@ -46,6 +46,16 @@ type PromptPackage = {
     hookText: string;
     trendAdaptation: string;
     callToAction: string;
+    scenes: Array<{
+      scene: number;
+      startSeconds: number;
+      endSeconds: number;
+      purpose: string;
+      description: string;
+      camera: string;
+      onScreenText: string;
+      audio: string;
+    }>;
   };
   video: {
     masterPrompt: string;
@@ -84,6 +94,8 @@ const copy = {
     negativePrompt: 'Avoid',
     overlays: 'Text overlays',
     promptReady: 'Prompt ready. Video generation is not started yet.',
+    generateVideo: 'Approve prompt & generate video',
+    generatingVideo: 'Starting video generation…',
     review: 'Your campaign draft',
     hook: 'Hook',
     script: 'Video script',
@@ -128,6 +140,8 @@ const copy = {
     negativePrompt: 'Vermijden',
     overlays: 'Tekstoverlays',
     promptReady: 'Prompt klaar. Videogeneratie is nog niet gestart.',
+    generateVideo: 'Prompt goedkeuren & video genereren',
+    generatingVideo: 'Videogeneratie starten…',
     review: 'Jouw campagneconcept',
     hook: 'Hook',
     script: 'Videoscript',
@@ -275,18 +289,37 @@ export default function Dashboard() {
     }
   }
 
-  async function createCampaign() {
-    if (!brandId || !selectedTrend) return;
+  async function generateVideoFromPrompt() {
+    if (!brandId || !promptPackage) return;
     setWorking(true);
     setError('');
+
+    const shotList = promptPackage.creative.scenes.map((scene) =>
+      `${scene.startSeconds}-${scene.endSeconds}s · ${scene.purpose}: ${scene.description} · Camera: ${scene.camera}`
+    );
+
     try {
-      const response = await fetch('/api/marketing/campaigns', {
+      const response = await fetch('/api/marketing/campaigns/from-prompt', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ brandProfileId: brandId, trendSignalId: selectedTrend }),
+        body: JSON.stringify({
+          brandProfileId: brandId,
+          trendSignalId: promptPackage.trend.selectedTrendId || null,
+          trendName: promptPackage.trend.selectedTrendName || '',
+          hook: promptPackage.creative.hookText,
+          concept: `${promptPackage.creative.name}: ${promptPackage.creative.oneSentenceIdea}`,
+          shotList,
+          videoPrompt: promptPackage.video.masterPrompt,
+          callToAction: promptPackage.creative.callToAction,
+        }),
       });
-      if (!response.ok) throw new Error(await readProblem(response, 'Campaign creation failed.'));
+
+      if (!response.ok) {
+        throw new Error(await readProblem(response, 'Video generation could not be started.'));
+      }
+
       const created = await response.json() as { id: string };
+      setPromptPackage(null);
       await refreshCampaign(created.id);
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : t.error);
@@ -411,6 +444,10 @@ export default function Dashboard() {
             <article><span>{t.negativePrompt}</span><p>{promptPackage.video.negativePrompt}</p></article>
             {promptPackage.video.textOverlays.length > 0 && <article><span>{t.overlays}</span><p>{promptPackage.video.textOverlays.map((item) => `${item.startSeconds}-${item.endSeconds}s: ${item.text}`).join(' · ')}</p></article>}
             <div className="approval-note"><Check size={18}/><span>{t.promptReady}</span></div>
+            <button className="button dashboard-action" type="button" disabled={working} onClick={() => void generateVideoFromPrompt()}>
+              {working ? <LoaderCircle className="spin" size={18}/> : <Video size={18}/>}
+              {working ? t.generatingVideo : t.generateVideo}<ArrowRight size={18}/>
+            </button>
           </div>}
           {campaign && <div className="campaign-content">{publishingReady
             ? <div className="publishing-card">
