@@ -48,6 +48,9 @@ if ($route === 'brand' && $method === 'POST') {
 } elseif ($route === 'prompts' && $method === 'POST') {
     $backendPath = '/api/prompts/generate';
     $timeout = 120;
+} elseif ($route === 'campaigns/from-prompt' && $method === 'POST') {
+    $backendPath = '/api/campaigns/from-prompt';
+    $timeout = 30;
 } elseif ($route === 'campaigns' && $method === 'POST') {
     $backendPath = '/api/campaigns';
 } elseif (preg_match('~^campaigns/([^/]+)$~D', $route, $match) && in_array($method, ['GET', 'POST'], true)) {
