@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { ArrowUpRight, ArrowRight, Menu } from 'lucide-react';
 export type Language = 'en' | 'nl';
 export const email = 'codeflowstudios@proton.me';
-export const shopUrl = 'https://shop.codeflowstudios.be';
+export const shopUrl = '/shop/';
 export function useLanguage(initialLang: Language = 'nl') {
   const [lang, set] = useState<Language>(initialLang);
   useEffect(() => { const query = new URLSearchParams(location.search).get('lang'); if (query === 'en' || query === 'nl') { set(query); try { localStorage.setItem('codeflow-language', query); } catch {} } else { try { const saved = localStorage.getItem('codeflow-language'); if (saved === 'en' || saved === 'nl') set(saved); } catch {} } }, []);
