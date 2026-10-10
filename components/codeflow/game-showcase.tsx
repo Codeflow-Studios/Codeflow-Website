@@ -20,7 +20,7 @@ export default function GameShowcase({ lang }: { lang: Language }) {
     <div className="games-grid">
       <article className="game-card beatdown-card">
         <div className="game-card-media">
-          <img src="/games/beatdown-city/preview.png" alt="Beatdown City Street Pulse with a dynamic street crime and police response" width="1280" height="720" />
+          <img src="/games/beatdown-city/preview.png?v=0.14.0" alt="Beatdown City Street Pulse with a dynamic street crime and police response" width="1418" height="802" />
           <span className="game-badge">WEB · PLAYABLE ALPHA</span>
         </div>
         <div className="game-card-copy">

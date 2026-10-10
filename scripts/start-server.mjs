@@ -8,7 +8,7 @@ const projectRoot = fileURLToPath(new URL("../", import.meta.url));
 const wranglerPath = path.join(projectRoot, "node_modules", "wrangler", "bin", "wrangler.js");
 const port = process.env.PORT || "8787";
 const stagingPassword = process.env.STAGING_PASSWORD;
-const workerPort = stagingPassword ? (process.env.STAGING_INTERNAL_PORT || "8788") : port;
+const workerPort = process.env.WORKER_INTERNAL_PORT || "8788";
 
 const child = spawn(
   process.execPath,
@@ -21,7 +21,7 @@ const child = spawn(
     "--persist-to",
     path.join(projectRoot, ".wrangler", "state"),
     "--ip",
-    stagingPassword ? "127.0.0.1" : "0.0.0.0",
+    "127.0.0.1",
     "--port",
     workerPort,
     "--inspector-port",
@@ -33,15 +33,18 @@ const child = spawn(
 const gate = stagingPassword
   ? await (await import('./staging-gate.mjs')).startStagingGate({
       password: stagingPassword,
-      port: Number(port),
+      port: Number(process.env.STAGING_INTERNAL_PORT || "8789"),
       upstreamPort: Number(workerPort),
     })
   : null;
 
-if (gate) console.log(`Staging gate ready on port ${port}`);
+const { createAdminServer } = await import("./admin-server.mjs");
+const adminServer = createAdminServer({ upstreamPort: gate ? Number(process.env.STAGING_INTERNAL_PORT || "8789") : Number(workerPort) });
+adminServer.listen(Number(port), "0.0.0.0");
 
 for (const signal of ["SIGINT", "SIGTERM"]) {
   process.on(signal, () => {
+    adminServer.close();
     gate?.close();
     child.kill(signal);
   });
@@ -51,4 +54,3 @@ child.on("exit", (code, signal) => {
   if (signal) process.kill(process.pid, signal);
   else process.exit(code ?? 1);
 });
-

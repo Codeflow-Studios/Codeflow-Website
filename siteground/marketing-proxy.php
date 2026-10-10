@@ -45,6 +45,12 @@ if ($route === 'brand' && $method === 'POST') {
 } elseif (preg_match('~^brands/([^/]+)/trends$~D', $route, $match) && $method === 'GET') {
     $id = id_segment($match[1]);
     if ($id !== null) $backendPath = '/api/brands/' . $id . '/trends?limit=3';
+} elseif ($route === 'prompts' && $method === 'POST') {
+    $backendPath = '/api/prompts/generate';
+    $timeout = 120;
+} elseif ($route === 'campaigns/from-prompt' && $method === 'POST') {
+    $backendPath = '/api/campaigns/from-prompt';
+    $timeout = 30;
 } elseif ($route === 'campaigns' && $method === 'POST') {
     $backendPath = '/api/campaigns';
 } elseif (preg_match('~^campaigns/([^/]+)$~D', $route, $match) && in_array($method, ['GET', 'POST'], true)) {
