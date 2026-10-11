@@ -120,3 +120,22 @@
 .audit-page .audit-panel-note{color:var(--quiet);font-size:.95rem;line-height:1.7;margin-top:24px}
 @media(max-width:980px){.audit-page .audit-hero{grid-template-columns:1fr;gap:40px;padding-top:62px}.audit-page .audit-copy h1{max-width:12ch}.audit-page .audit-panel{margin-top:0;max-width:720px}.audit-page .audit-actions{flex-wrap:wrap}}
 @media(max-width:600px){.audit-page .audit-hero{padding-top:44px;padding-bottom:62px}.audit-page .audit-copy h1{font-size:clamp(3.35rem,15vw,4.7rem);max-width:none;margin:26px 0 28px}.audit-page .audit-actions{display:grid;grid-template-columns:1fr}.audit-page .audit-actions .button,.audit-page .audit-secondary{width:100%}.audit-page .audit-panel{padding:24px}.audit-page .audit-panel h2{font-size:2.25rem}.audit-page .audit-points p{padding:15px 0}}
+
+/* Dedicated homepage audit card. */
+.homepage-audit{padding-top:72px;scroll-margin-top:120px}
+.homepage-audit-card{display:grid;grid-template-columns:1.15fr 1fr;gap:64px;padding:clamp(28px,4vw,56px);border:1px solid #895044;border-radius:12px;background:radial-gradient(ellipse at top left,#57302466,transparent 65%),#1b191d}
+.homepage-audit-copy .eyebrow{color:var(--orange)}
+.homepage-audit-copy h2{margin-top:26px;font-size:clamp(2.5rem,4.4vw,4.2rem);line-height:1.08;letter-spacing:-.05em}
+.homepage-audit-copy h2 em{color:var(--orange)}
+.homepage-audit-copy>p:not(.eyebrow){margin:24px 0 28px;color:var(--quiet);line-height:1.8;max-width:490px}
+.homepage-audit-note{display:block;margin-top:16px;color:var(--quiet);font-size:.8rem;line-height:1.6}
+.homepage-audit-review{align-self:center;min-width:0}
+.homepage-audit-review>.eyebrow{color:var(--orange);margin-bottom:24px}
+.homepage-audit-review ul{list-style:none;margin:0;padding:0}
+.homepage-audit-review li{display:flex;gap:18px;padding:23px 0;border-top:1px solid var(--line)}
+.homepage-audit-review li:last-child{padding-bottom:0}
+.homepage-audit-review svg{flex-shrink:0;color:var(--orange);margin-top:3px}
+.homepage-audit-review h3{font-size:1.2rem;letter-spacing:-.02em}
+.homepage-audit-review li p{margin-top:9px;font-size:.92rem;line-height:1.7;color:var(--quiet)}
+@media(max-width:800px){.homepage-audit{padding-top:48px}.homepage-audit-card{grid-template-columns:1fr;gap:36px}}
+@media(max-width:480px){.homepage-audit-card{padding:25px}.homepage-audit-copy .button{width:100%;justify-content:space-between;gap:12px}.homepage-audit-copy .eyebrow{font-size:.68rem}.homepage-audit-review li{gap:14px}}
