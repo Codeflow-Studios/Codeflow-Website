@@ -100,3 +100,23 @@
 .desktop-navigation{gap:18px!important}.flow-community-link[aria-current=page]{color:#b83f23;font-weight:700}.flow-shop-link{display:inline-flex;align-items:center;gap:5px}.mobile-navigation{display:none;position:relative}.mobile-navigation>summary{list-style:none;display:flex;align-items:center;gap:8px;border:1px solid #d5d5dc;border-radius:6px;padding:10px 13px;font-size:.86rem;font-weight:700;cursor:pointer}.mobile-navigation>summary::-webkit-details-marker{display:none}.mobile-navigation[open]>summary{background:#f3f3f6}.mobile-menu-panel{position:absolute;z-index:30;top:calc(100% + 11px);right:0;width:min(340px,calc(100vw - 24px));padding:14px;background:#fff;border:1px solid #d7d7dd;border-radius:8px;box-shadow:0 20px 60px #17181c2b}.mobile-menu-links{display:grid}.mobile-menu-links>a{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 10px;border-bottom:1px solid #ededf0;font-size:.94rem}.mobile-menu-footer{display:flex;align-items:center;justify-content:space-between;gap:12px;padding-top:14px}.mobile-menu-footer .nav-action{font-size:.76rem}.footer-bottom{flex-wrap:wrap}.inline-shop-link{display:inline-flex;align-items:center;gap:4px;color:#9f381f;font-weight:700}.inline-shop-link:hover{text-decoration:underline;text-underline-offset:4px}
 @media(max-width:1120px){.header-inner>.desktop-navigation{display:none}.mobile-navigation{display:block}}
 @media(max-width:480px){.mobile-menu-panel{position:fixed;top:88px;right:4%;left:4%;width:auto}.mobile-menu-footer{align-items:stretch;flex-direction:column}.mobile-menu-footer .language{align-self:flex-start}.mobile-menu-footer .nav-action{max-width:none;justify-content:space-between}.community-teaser .studio-services article{align-items:flex-start}}
+
+
+/* Free audit landing page */
+.audit-page .audit-hero{grid-template-columns:minmax(0,1.08fr) minmax(360px,.72fr);gap:clamp(48px,7vw,110px);align-items:start;padding-top:88px;padding-bottom:90px}
+.audit-page .audit-copy{max-width:760px}
+.audit-page .audit-copy h1{font-size:clamp(4.2rem,6.2vw,6.65rem);line-height:.96;letter-spacing:-.07em;max-width:11ch;margin:34px 0 34px;text-wrap:balance}
+.audit-page .audit-copy .hero-description{max-width:590px;font-size:1.08rem;line-height:1.8}
+.audit-page .audit-actions{align-items:stretch;gap:12px;margin-top:34px}
+.audit-page .audit-actions .button{min-height:58px;padding-inline:22px}
+.audit-page .audit-secondary{display:inline-flex;align-items:center;justify-content:space-between;gap:22px;min-height:58px;padding:16px 20px;border:1px solid #414149;border-radius:5px;color:#e8e8ed;font-size:.9rem;transition:border-color .2s,background .2s,transform .2s}
+.audit-page .audit-secondary:hover{border-color:var(--orange);background:#1d1d21;transform:translateY(-2px)}
+.audit-page .audit-panel{margin:34px 0 0;padding:34px;border:1px solid #34343c;border-radius:10px;background:linear-gradient(145deg,#1c1c20,#151519);align-self:start;min-height:auto}
+.audit-page .audit-panel .eyebrow{color:var(--orange);margin-bottom:16px}
+.audit-page .audit-panel h2{font-size:clamp(2rem,3.4vw,3.15rem);margin-bottom:28px}
+.audit-page .audit-points{display:grid;gap:0;border-top:1px solid #34343c}
+.audit-page .audit-points p{display:grid;grid-template-columns:24px 1fr;gap:13px;align-items:start;padding:17px 0;border-bottom:1px solid #34343c;line-height:1.55}
+.audit-page .audit-points svg{color:var(--orange);margin-top:2px}
+.audit-page .audit-panel-note{color:var(--quiet);font-size:.95rem;line-height:1.7;margin-top:24px}
+@media(max-width:980px){.audit-page .audit-hero{grid-template-columns:1fr;gap:40px;padding-top:62px}.audit-page .audit-copy h1{max-width:12ch}.audit-page .audit-panel{margin-top:0;max-width:720px}.audit-page .audit-actions{flex-wrap:wrap}}
+@media(max-width:600px){.audit-page .audit-hero{padding-top:44px;padding-bottom:62px}.audit-page .audit-copy h1{font-size:clamp(3.35rem,15vw,4.7rem);max-width:none;margin:26px 0 28px}.audit-page .audit-actions{display:grid;grid-template-columns:1fr}.audit-page .audit-actions .button,.audit-page .audit-secondary{width:100%}.audit-page .audit-panel{padding:24px}.audit-page .audit-panel h2{font-size:2.25rem}.audit-page .audit-points p{padding:15px 0}}
