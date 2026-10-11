@@ -15,6 +15,7 @@ export function Header({lang,setLang,onboarding=false,current}:{lang:Language;se
   const en = lang === 'en';
   const links = onboarding ? [] : [
     {label:en?'Services':'Diensten',href:`/?lang=${lang}#services`},
+    {label:en?'Free audit':'Gratis audit',href:`/free-audit?lang=${lang}`},
     {label:'Rebranding',href:`/services/rebranding?lang=${lang}`},
     {label:'Games',href:`/services/software-development?lang=${lang}#game`},
     {label:'Flow Community',href:`/flow-community?lang=${lang}`,community:true},
