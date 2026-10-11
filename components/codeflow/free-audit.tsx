@@ -14,27 +14,27 @@ export default function FreeAudit({ initialLang='nl' }: { initialLang?: Language
     ? ['Website & mobile conversion review', 'Visibility and marketing opportunities', 'Practical automation opportunities', 'Three priority actions — no obligation']
     : ['Website- en mobiele conversiecheck', 'Zichtbaarheid en marketingkansen', 'Praktische automatiseringskansen', 'Drie prioritaire acties — zonder verplichting'];
 
-  return <div id="top">
+  return <div id="top" className="audit-page">
     <Header lang={lang} setLang={setLang}/>
     <main>
-      <section className="hero container">
-        <div className="hero-copy">
+      <section className="hero container audit-hero">
+        <div className="hero-copy audit-copy">
           <p className="eyebrow"><span className="accent-line"/> {en?'FREE DIGITAL AUDIT':'GRATIS DIGITALE AUDIT'}</p>
-          <h1>{en?<>Find what is<br/>holding your business<br/><em>back online.</em></>:<>Ontdek wat jouw<br/>bedrijf online<br/><em>tegenhoudt.</em></>}</h1>
+          <h1>{en?<>Find what is holding your business <em>back online.</em></>:<>Ontdek wat jouw bedrijf online <em>tegenhoudt.</em></>}</h1>
           <p className="hero-description">{en
             ? 'We review your website, digital presence and opportunities for smarter automation, then give you concrete next steps.'
             : 'We bekijken je website, digitale aanwezigheid en kansen voor slimmere automatisering en geven je concrete volgende stappen.'}</p>
-          <div className="hero-actions">
+          <div className="hero-actions audit-actions">
             <CTA href={`mailto:${email}?subject=${encodeURIComponent(subject)}&body=${body}`}>{en?'Request my free audit':'Vraag mijn gratis audit'}</CTA>
-            <a className="text-link" href={`/?lang=${lang}#services`}>{en?'See our services':'Bekijk onze diensten'} <ArrowUpRight size={18}/></a>
+            <a className="audit-secondary" href={`/?lang=${lang}#services`}>{en?'See our services':'Bekijk onze diensten'} <ArrowUpRight size={18}/></a>
           </div>
         </div>
-        <div className="hero-visual audit-panel">
+        <aside className="hero-visual audit-panel" aria-label={en?'Audit deliverables':'Wat de audit bevat'}>
           <p className="eyebrow">CODEFLOW / AUDIT</p>
           <h2>{en?'What you get':'Wat je krijgt'}</h2>
           <div className="audit-points">{points.map(point=><p key={point}><CheckCircle2 size={20}/><span>{point}</span></p>)}</div>
-          <p>{en?'Built for SMEs that want more leads, a stronger digital presence or less repetitive work.':'Voor kmo’s die meer leads, een sterkere digitale aanwezigheid of minder repetitief werk willen.'}</p>
-        </div>
+          <p className="audit-panel-note">{en?'Built for SMEs that want more leads, a stronger digital presence or less repetitive work.':'Voor kmo’s die meer leads, een sterkere digitale aanwezigheid of minder repetitief werk willen.'}</p>
+        </aside>
       </section>
       <section className="contact-section"><div className="container">
         <div className="contact-top"><p className="eyebrow">01 / {en?'START HERE':'START HIER'}</p><span>{en?'NO OBLIGATION':'ZONDER VERPLICHTING'}</span></div>
