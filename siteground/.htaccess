@@ -1,5 +1,13 @@
 DirectoryIndex index.html index.php
 
+# Keep contact details and mail links current after static deployments.
+# SiteGround requires a one-time Dynamic Cache flush for existing entries.
+<IfModule mod_headers.c>
+  <FilesMatch "\.html$">
+    Header set Cache-Control "private, no-cache, max-age=0, must-revalidate"
+  </FilesMatch>
+</IfModule>
+
 <IfModule mod_rewrite.c>
 RewriteEngine On
 RewriteRule ^admin(?:/.*)?$ https://codeflow-studios-production.up.railway.app/admin [R=302,L,QSD]
