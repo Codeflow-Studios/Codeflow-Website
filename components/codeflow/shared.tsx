@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react';
 import { ArrowUpRight, ArrowRight, Menu } from 'lucide-react';
 export type Language = 'en' | 'nl';
-export const email = 'codeflowstudios@proton.me';
+export const email = 'info@codeflowstudios.be';
 export const shopUrl = '/shop/';
 export function useLanguage(initialLang: Language = 'nl') {
   const [lang, set] = useState<Language>(initialLang);
