@@ -7,6 +7,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
   const routes = [
     '',
     '/flow-community/',
+    '/drop-1/',
     '/services/marketing/',
     '/services/graphic-design/',
     '/services/software-development/',
