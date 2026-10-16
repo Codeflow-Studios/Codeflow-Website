@@ -57,7 +57,7 @@ function handle_audit_request(string $method, string $origin, string $contentTyp
         'Content-Transfer-Encoding' => 'base64',
     ];
     $message = chunk_split(base64_encode(implode("\r\n", $lines)), 76, "\r\n");
-    $accepted = $send('codeflowstudios@proton.me', 'Codeflow - nieuwe digitale auditaanvraag', $message, $headers);
+    $accepted = $send('info@codeflowstudios.be', 'Codeflow - nieuwe digitale auditaanvraag', $message, $headers);
     return $accepted ? ['status' => 202, 'ok' => true, 'reference' => $reference] : ['status' => 503, 'ok' => false];
 }
 

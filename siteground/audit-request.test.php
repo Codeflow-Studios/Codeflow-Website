@@ -17,7 +17,7 @@ $sender = static function ($to, $subject, $body, $headers) use (&$sent): bool {
 $request = static fn($data, $origin = 'https://codeflowstudios.be', $method = 'POST', $rate = true, $mailer = null) => handle_audit_request($method, $origin, 'application/json', json_encode($data), $mailer ?? $sender, static fn() => $rate);
 $result = $request($valid);
 expect_audit($result['status'] === 202 && strlen($result['reference']) === 12, 'Valid request is accepted with a reference');
-expect_audit(count($sent) === 1 && $sent[0]['to'] === 'codeflowstudios@proton.me', 'Only the fixed business inbox receives the request');
+expect_audit(count($sent) === 1 && $sent[0]['to'] === 'info@codeflowstudios.be', 'Only the fixed business inbox receives the request');
 expect_audit($sent[0]['headers']['Reply-To'] === 'klant@example.com', 'Reply goes to the validated visitor');
 expect_audit(str_contains(base64_decode($sent[0]['body']), 'https://example.com') && str_contains(base64_decode($sent[0]['body']), 'utm_source: meta'), 'Website and campaign attribution survive delivery');
 foreach ([['email' => "valid@example.com\r\nBcc: attacker@example.com"], ['company' => ['not a string']], ['website' => 'javascript:alert(1)'], ['website' => 'https://user:pass@example.com'], ['goal' => str_repeat('a', 3001)]] as $bad) {
