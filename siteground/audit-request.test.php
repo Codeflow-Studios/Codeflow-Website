@@ -34,4 +34,16 @@ expect_audit(count($sent) === 1, 'Rejected requests did not reach the mailer');
 $testIp = 'audit-test-' . bin2hex(random_bytes(10));
 expect_audit(audit_rate_limit($testIp) === true && audit_rate_limit($testIp) === false, 'Real private rate storage rejects a rapid repeat');
 @unlink(sys_get_temp_dir() . '/codeflow-audit-rate/' . hash('sha256', $testIp) . '.json');
+
+$contact = ['kind' => 'contact', 'company' => 'Voorbeeld', 'email' => 'klant@example.com', 'goal' => 'Ik wil een website', 'context' => 'software / software-web'];
+expect_audit($request($contact)['status'] === 202, 'Contact works without a website');
+$contactMail = $sent[count($sent) - 1];
+expect_audit($contactMail['to'] === 'info@codeflowstudios.be' && str_contains($contactMail['subject'], 'contactaanvraag'), 'Contact uses the fixed inbox and subject');
+expect_audit(str_contains(base64_decode($contactMail['body']), 'software-web'), 'Package context reaches the inbox');
+expect_audit($request(array_replace($contact, ['goal' => '']))['status'] === 422, 'Contact needs a message');
+expect_audit($request(array_replace($contact, ['kind' => 'arbitrary']))['status'] === 422, 'Unknown form types are rejected');
+expect_audit($request(array_replace($contact, ['context' => "test\r\nInjected"]))['status'] === 422, 'Context cannot inject new lines');
+expect_audit(handle_audit_request('POST', 'https://codeflowstudios.be', 'text/plain', json_encode($contact), $sender, static fn() => true)['status'] === 400, 'Non-JSON submissions are rejected');
+expect_audit(handle_audit_request('POST', 'https://codeflowstudios.be', 'application/json', str_repeat('x', 12001), $sender, static fn() => true)['status'] === 400, 'Oversized submissions are rejected');
+
 echo "Passed $checks audit request checks.\n";

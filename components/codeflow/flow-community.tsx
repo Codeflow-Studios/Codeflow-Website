@@ -17,7 +17,7 @@ import {
   Users,
   Zap,
 } from 'lucide-react';
-import { Footer, Header, email, shopUrl, useLanguage } from './shared';
+import { Footer, Header, shopUrl, useLanguage } from './shared';
 import type { Language } from './shared';
 
 type SpaceKey = 'builds' | 'feedback' | 'ideas' | 'live';
@@ -37,10 +37,8 @@ export default function FlowCommunity({
     || process.env.NEXT_PUBLIC_NIGHTLY_DISCORD_URL
     || ''
   ).trim();
-  const emailInviteRequest = `mailto:${email}?subject=${encodeURIComponent(
-    'Flow Community — Discord invite',
-  )}`;
-  const discordInviteHref = configuredDiscordUrl || emailInviteRequest;
+  const inviteRequest = `/contact?lang=${lang}&topic=Flow%20Community%20Discord`;
+  const discordInviteHref = configuredDiscordUrl || inviteRequest;
   const discordActionLabel = configuredDiscordUrl
     ? (en ? 'Open Discord' : 'Open Discord')
     : (en ? 'Request an invite' : 'Vraag een uitnodiging');

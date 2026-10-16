@@ -47,7 +47,7 @@ export default function LegalPage() {
           </div>
           <div className="legal-row">
             <dt>Email</dt>
-            <dd><a href="mailto:info@codeflowstudios.be">info@codeflowstudios.be</a></dd>
+            <dd>info@codeflowstudios.be · <a href="/contact/">Contact</a></dd>
           </div>
           <div className="legal-row">
             <dt>Phone</dt>

@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-// A single-purpose SiteGround endpoint. No visitor-controlled recipient or sender.
+// Contact and audit forms share fixed delivery and abuse controls.
 function handle_audit_request(string $method, string $origin, string $contentType, string $raw, callable $send, callable $rate): array
 {
     if ($method !== 'POST') return ['status' => 405, 'ok' => false];
@@ -21,28 +21,39 @@ function handle_audit_request(string $method, string $origin, string $contentTyp
     $email = $text('email', 254);
     $website = $text('website', 1000);
     $goal = $text('goal', 3000);
+    $kind = $data['kind'] ?? 'audit';
+    $context = $text('context', 240);
+    if (!in_array($kind, ['audit', 'contact'], true) || $context === null || preg_match('/[\r\n\x00]/', $context)) {
+        return ['status' => 422, 'ok' => false];
+    }
     $trap = $text('fax', 1000);
     if ($trap === null || $trap !== '') return ['status' => 202, 'ok' => true];
     if ($company === null || $company === '' || preg_match('/[\r\n\x00]/', $company)
         || $email === null || preg_match('/[\r\n\x00]/', $email) || !filter_var($email, FILTER_VALIDATE_EMAIL)
-        || $website === null || $website === '' || $goal === null || str_contains($goal, "\0")) {
+        || $website === null || ($kind === 'audit' && $website === '')
+        || $goal === null || str_contains($goal, "\0") || ($kind === 'contact' && $goal === '')) {
         return ['status' => 422, 'ok' => false];
     }
-    if (!preg_match('~^https?://~i', $website)) $website = 'https://' . $website;
-    $url = parse_url($website);
-    if (!filter_var($website, FILTER_VALIDATE_URL) || !is_array($url)
-        || !in_array(strtolower($url['scheme'] ?? ''), ['https', 'http'], true)
-        || empty($url['host']) || isset($url['user']) || isset($url['pass'])) {
-        return ['status' => 422, 'ok' => false];
+    if ($website !== '') {
+        if (!preg_match('~^https?://~i', $website)) $website = 'https://' . $website;
+        $url = parse_url($website);
+        if (!filter_var($website, FILTER_VALIDATE_URL) || !is_array($url)
+            || !in_array(strtolower($url['scheme'] ?? ''), ['https', 'http'], true)
+            || empty($url['host']) || isset($url['user']) || isset($url['pass'])) {
+            return ['status' => 422, 'ok' => false];
+        }
     }
     $allowed = $rate();
     if ($allowed === null) return ['status' => 503, 'ok' => false];
     if (!$allowed) return ['status' => 429, 'ok' => false];
     $reference = strtoupper(bin2hex(random_bytes(6)));
     $lines = [
-        'Nieuwe digitale auditaanvraag', 'Referentie: ' . $reference,
-        'Bedrijf: ' . $company, 'E-mail: ' . $email, 'Website: ' . $website,
-        '', 'Belangrijkste doel:', $goal ?: '(niet ingevuld)', '', 'Herkomst: /free-audit',
+        $kind === 'audit' ? 'Nieuwe digitale auditaanvraag' : 'Nieuwe contactaanvraag',
+        'Referentie: ' . $reference,
+        'Naam / bedrijf: ' . $company, 'E-mail: ' . $email, 'Website: ' . ($website ?: '(niet ingevuld)'),
+        'Onderwerp / pakket: ' . ($context ?: '(algemene aanvraag)'),
+        '', 'Bericht / doel:', $goal ?: '(niet ingevuld)', '',
+        'Formulier: ' . ($kind === 'audit' ? 'Gratis audit' : 'Contact'),
     ];
     // Only campaign tags are retained, never arbitrary URL parameters/referrers.
     foreach (['utm_source', 'utm_medium', 'utm_campaign', 'utm_content'] as $key) {
@@ -57,7 +68,8 @@ function handle_audit_request(string $method, string $origin, string $contentTyp
         'Content-Transfer-Encoding' => 'base64',
     ];
     $message = chunk_split(base64_encode(implode("\r\n", $lines)), 76, "\r\n");
-    $accepted = $send('info@codeflowstudios.be', 'Codeflow - nieuwe digitale auditaanvraag', $message, $headers);
+    $subject = $kind === 'audit' ? 'Codeflow - nieuwe digitale auditaanvraag' : 'Codeflow - nieuwe contactaanvraag';
+    $accepted = $send('info@codeflowstudios.be', $subject, $message, $headers);
     return $accepted ? ['status' => 202, 'ok' => true, 'reference' => $reference] : ['status' => 503, 'ok' => false];
 }
 

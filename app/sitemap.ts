@@ -13,6 +13,8 @@ export default function sitemap(): MetadataRoute.Sitemap {
     '/services/software-development/',
     '/services/rebranding/',
     '/legal/',
+    '/contact/',
+    '/free-audit/',
   ];
 
   return routes.map((route) => ({
