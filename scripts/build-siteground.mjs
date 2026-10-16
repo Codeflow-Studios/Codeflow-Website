@@ -39,6 +39,9 @@ try {
     const proxyOutput = path.join(output, 'api', 'marketing');
     mkdirSync(proxyOutput, { recursive: true });
     copyFileSync(path.join(root, 'siteground', 'marketing-proxy.php'), path.join(proxyOutput, 'index.php'));
+    const auditOutput = path.join(output, 'api', 'audit');
+    mkdirSync(auditOutput, { recursive: true });
+    copyFileSync(path.join(root, 'siteground', 'audit-request.php'), path.join(auditOutput, 'index.php'));
     copyFileSync(path.join(root, 'siteground', '.htaccess'), path.join(output, '.htaccess'));
   }
 } finally {

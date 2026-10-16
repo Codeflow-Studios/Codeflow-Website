@@ -53,6 +53,10 @@ jobs:
           node-version: '22'
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      - name: Validate audit request delivery and abuse controls
+        run: |
+          php -l siteground/audit-request.php
+          php siteground/audit-request.test.php
       - run: pnpm build:siteground
       - name: Save exact website build
         uses: actions/upload-artifact@v4
