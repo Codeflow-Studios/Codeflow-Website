@@ -65,6 +65,29 @@ jobs:
           path: ./out/
           include-hidden-files: true
           retention-days: 14
+      - name: Wait for the matching protected admin gateway
+        if: ${{ !inputs.dry_run && !inputs.rollback_sha }}
+        timeout-minutes: 12
+        shell: bash
+        run: |
+          node --input-type=module <<'NODE'
+          import { execFileSync } from 'node:child_process';
+          import { readFileSync } from 'node:fs';
+          if (!readFileSync('scripts/admin-server.mjs', 'utf8').includes('X-Codeflow-Admin-Revision')) process.exit(0);
+          const expected = execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim();
+          const deadline = Date.now() + 9 * 60 * 1000;
+          while (Date.now() < deadline) {
+            try {
+              const response = await fetch('https://codeflow-studios-production.up.railway.app/admin/finance/', { redirect: 'manual', cache: 'no-store', signal: AbortSignal.timeout(10000) });
+              if (response.status === 303 && response.headers.get('location') === '/admin/login' && response.headers.get('x-codeflow-admin-revision') === expected) {
+                console.log('Matching admin gateway is live; anonymous finance access remains protected.');
+                process.exit(0);
+              }
+            } catch { /* Deployment may still be starting. */ }
+            await new Promise(resolve => setTimeout(resolve, 5000));
+          }
+          throw new Error('The matching protected admin gateway did not become ready. SiteGround was not changed.');
+          NODE
       - name: Upload website through FTPS
         uses: docker://ghcr.io/airvzxf/ftp-deployment-action:v2.11.13
         with:

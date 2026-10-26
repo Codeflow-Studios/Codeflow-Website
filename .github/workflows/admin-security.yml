@@ -1,0 +1,24 @@
+name: Verify admin and finance access
+on:
+  pull_request:
+    paths:
+      - 'scripts/admin-*.mjs'
+      - 'siteground/.htaccess'
+      - '.github/workflows/admin-security.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'scripts/admin-*.mjs'
+      - 'siteground/.htaccess'
+      - '.github/workflows/admin-security.yml'
+permissions:
+  contents: read
+jobs:
+  access:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node --test scripts/admin-server.test.mjs scripts/admin-finance-proxy.test.mjs

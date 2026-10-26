@@ -2,6 +2,7 @@ import { createServer, request as httpRequest } from 'node:http';
 import { createHmac, randomBytes, scrypt, timingSafeEqual } from 'node:crypto';
 import { promisify } from 'node:util';
 import { css, dashboard, loginPage, page } from './admin-content.mjs';
+import { createFinanceProxy, isFinancePath } from './admin-finance-proxy.mjs';
 
 const derive = promisify(scrypt);
 const cookieName = '__Host-codeflow_admin';
@@ -40,6 +41,9 @@ export function createAdminServer({ upstreamPort, env = process.env, now = Date.
   let origin;
   try { const parsed = new URL(env.ADMIN_ORIGIN); if (parsed.protocol === 'https:' && parsed.origin === env.ADMIN_ORIGIN) origin = parsed.origin; } catch { /* fail closed */ }
   const ready = Boolean(match && origin && env.ADMIN_USERNAME && env.ADMIN_SESSION_SECRET?.length >= 32);
+  const revision = /^[a-f0-9]{40}$/.test(env.RAILWAY_GIT_COMMIT_SHA || '') ? env.RAILWAY_GIT_COMMIT_SHA : 'local';
+  const finance = createFinanceProxy({ env, sessions, now });
+  const revoke = id => { finance.revoke(id); sessions.delete(id); };
   const sign = value => createHmac('sha256', env.ADMIN_SESSION_SECRET).update(value).digest('hex');
   const csrfToken = () => { const value = `${now() + windowMs}.${randomBytes(24).toString('hex')}`; return `${value}.${sign(value)}`; };
   const validCsrf = (token) => {
@@ -48,7 +52,7 @@ export function createAdminServer({ upstreamPort, env = process.env, now = Date.
     return /^\d+$/.test(expiry || '') && Number(expiry) > now() && Number(expiry) <= now() + windowMs
       && /^[a-f0-9]{48}$/.test(nonce || '') && equal(signature, sign(`${expiry}.${nonce}`));
   };
-  return createServer(async (req, res) => {
+  const server = createServer(async (req, res) => {
     let pathname;
     try { pathname = decodeURIComponent(new URL(req.url, 'http://localhost').pathname).replace(/\\/g, '/'); } catch { res.writeHead(400).end(); return; }
     if (pathname !== '/admin' && !pathname.startsWith('/admin/')) {
@@ -59,6 +63,7 @@ export function createAdminServer({ upstreamPort, env = process.env, now = Date.
       req.pipe(proxy); return;
     }
     res.setHeader('Cache-Control', 'no-store, private');
+    res.setHeader('X-Codeflow-Admin-Revision', revision);
     res.setHeader('X-Robots-Tag', 'noindex, nofollow');
     res.setHeader('X-Content-Type-Options', 'nosniff');
     res.setHeader('Referrer-Policy', 'same-origin');
@@ -70,9 +75,13 @@ export function createAdminServer({ upstreamPort, env = process.env, now = Date.
     if (!ready) { send(503, page('<main><h1>Admin nog niet beschikbaar.</h1><p>De beveiligde toegang moet nog worden geconfigureerd.</p></main>')); return; }
     const canonical = new URL(origin);
     if (req.headers.host !== canonical.host) { send(400, 'Ongeldige host.'); return; }
-    for (const [id, session] of sessions) if (session.expires <= now()) sessions.delete(id);
+    for (const [id, session] of sessions) if (session.expires <= now()) revoke(id);
     const sessionId = readCookie(req, cookieName);
     const session = sessionId && sessions.get(sessionId);
+    if (isFinancePath(pathname)) {
+      if (!session) { redirect('/admin/login'); return; }
+      finance.handle(req, res); return;
+    }
     const showLogin = (status = 200, error = '') => { const token = csrfToken(); res.setHeader('Set-Cookie', cookie(loginCookie, token, 900)); send(status, loginPage(token, error)); };
     if (['GET','HEAD'].includes(req.method)) {
       if (pathname === '/admin/login') { if (session) redirect('/admin'); else showLogin(); return; }
@@ -87,7 +96,7 @@ export function createAdminServer({ upstreamPort, env = process.env, now = Date.
       const form = await readForm(req);
       if (pathname === '/admin/logout') {
         if (!session || !equal(form.get('csrf'), session.csrf)) { send(403, 'Ongeldige aanvraag.'); return; }
-        sessions.delete(sessionId); res.setHeader('Set-Cookie', cookie(cookieName, '', 0)); redirect('/admin/login'); return;
+        revoke(sessionId); res.setHeader('Set-Cookie', cookie(cookieName, '', 0)); redirect('/admin/login'); return;
       }
       if (pathname !== '/admin/login') { send(404, 'Niet gevonden.'); return; }
       if (!validCsrf(form.get('csrf')) || !equal(form.get('csrf'), readCookie(req, loginCookie))) { send(403, 'Ververs de loginpagina en probeer opnieuw.'); return; }
@@ -101,12 +110,15 @@ export function createAdminServer({ upstreamPort, env = process.env, now = Date.
       try { candidate = await derive(password, match[1], 64, { N: 32768, r: 8, p: 1, maxmem: 64 * 1024 * 1024 }); } finally { verifying = false; }
       if (!timingSafeEqual(candidate, Buffer.from(match[2], 'hex')) || !equal(form.get('username'), env.ADMIN_USERNAME)) { showLogin(401, 'Gebruikersnaam of wachtwoord klopt niet.'); return; }
       // Rotate on login and cap state. Logout invalidates the server-side record.
-      if (sessionId) sessions.delete(sessionId);
-      if (sessions.size >= 20) sessions.delete(sessions.keys().next().value);
+      if (sessionId) revoke(sessionId);
+      if (sessions.size >= 20) revoke(sessions.keys().next().value);
       const id = randomBytes(32).toString('hex');
       sessions.set(id, { expires: now() + lifetime, csrf: randomBytes(32).toString('hex') });
       res.setHeader('Set-Cookie', [cookie(cookieName, id, lifetime / 1000), cookie(loginCookie, '', 0)]);
       redirect('/admin');
     } catch { if (!res.headersSent) send(400, 'Ongeldige aanvraag.'); }
   });
+  server.on('upgrade', finance.upgrade);
+  server.on('close', finance.close);
+  return server;
 }
