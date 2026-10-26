@@ -41,6 +41,7 @@ export function createAdminServer({ upstreamPort, env = process.env, now = Date.
   let origin;
   try { const parsed = new URL(env.ADMIN_ORIGIN); if (parsed.protocol === 'https:' && parsed.origin === env.ADMIN_ORIGIN) origin = parsed.origin; } catch { /* fail closed */ }
   const ready = Boolean(match && origin && env.ADMIN_USERNAME && env.ADMIN_SESSION_SECRET?.length >= 32);
+  const revision = /^[a-f0-9]{40}$/.test(env.RAILWAY_GIT_COMMIT_SHA || '') ? env.RAILWAY_GIT_COMMIT_SHA : 'local';
   const finance = createFinanceProxy({ env, sessions, now });
   const revoke = id => { finance.revoke(id); sessions.delete(id); };
   const sign = value => createHmac('sha256', env.ADMIN_SESSION_SECRET).update(value).digest('hex');
@@ -62,6 +63,7 @@ export function createAdminServer({ upstreamPort, env = process.env, now = Date.
       req.pipe(proxy); return;
     }
     res.setHeader('Cache-Control', 'no-store, private');
+    res.setHeader('X-Codeflow-Admin-Revision', revision);
     res.setHeader('X-Robots-Tag', 'noindex, nofollow');
     res.setHeader('X-Content-Type-Options', 'nosniff');
     res.setHeader('Referrer-Policy', 'same-origin');

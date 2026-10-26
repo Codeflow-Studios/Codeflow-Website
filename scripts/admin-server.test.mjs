@@ -12,6 +12,7 @@ test('admin security and actual HTTP login lifecycle', async t => {
   const upstream = createServer((req, res) => res.end('public upstream'));
   await new Promise(resolve => upstream.listen(0, '127.0.0.1', resolve));
   const env = { ADMIN_USERNAME: 'admin', ADMIN_PASSWORD_HASH: await hashPassword(password), ADMIN_SESSION_SECRET: randomBytes(32).toString('hex'), ADMIN_ORIGIN: 'https://admin.example.test' };
+  env.RAILWAY_GIT_COMMIT_SHA = 'a'.repeat(40);
   const server = createAdminServer({ upstreamPort: upstream.address().port, env, now: () => now });
   await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
   t.after(() => { server.close(); upstream.close(); });
@@ -48,6 +49,7 @@ test('admin security and actual HTTP login lifecycle', async t => {
   assert.match(dashboard.text, /href="\/admin\/finance\/"/);
   assert.equal((await call('/admin/finance/', { headers: { cookie: sessionCookie } })).status, 503, 'finance without configured upstream stays closed');
   assert.match(dashboard.headers['cache-control'], /no-store/); assert.equal(dashboard.headers['x-robots-tag'], 'noindex, nofollow');
+  assert.equal(dashboard.headers['x-codeflow-admin-revision'], env.RAILWAY_GIT_COMMIT_SHA);
   assert.ok(!dashboard.text.includes(password)); assert.ok(!dashboard.text.includes(env.ADMIN_PASSWORD_HASH));
   const csrf = /name="csrf" value="([^"]+)"/.exec(dashboard.text)[1];
   assert.equal((await post('/admin/logout', { csrf: 'wrong' }, sessionCookie)).status, 403);

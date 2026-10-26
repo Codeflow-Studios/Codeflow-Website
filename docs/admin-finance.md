@@ -15,6 +15,8 @@ On this existing website service, add:
 
 Existing admin username, password hash, session secret and canonical origin do not change. Never commit these values. The finance service must be healthy before deploying the gateway integration; the SiteGround redirect is deployed last.
 
+The normal SiteGround workflow waits until the gateway serves the matching Git commit in `X-Codeflow-Admin-Revision` and redirects anonymous finance requests to login. This prevents publishing the new redirect before its protected gateway is available. Existing dry-run and SiteGround-only rollback behavior is preserved.
+
 ## Access guarantees
 
 - Every finance page, asset and negotiation request is behind the normal admin session.
