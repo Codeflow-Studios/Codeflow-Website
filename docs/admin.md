@@ -13,6 +13,19 @@ entry is added. All admin responses have `noindex, nofollow` and `no-store`.
 
 ## Railway configuration
 
+### Flow ERP
+
+`/admin/erp` is forwarded only after the existing admin session is validated,
+including all ERP assets and API routes. The admin dashboard links to it.
+`scripts/admin-erp-proxy.mjs` requires `FLOWERP_UPSTREAM` (private HTTP origin,
+currently `http://flow-erp.railway.internal:8080`) and a server-only
+`FLOWERP_GATEWAY_KEY`, matching the private ERP service. It strips browser
+credentials, cookies and spoofed gateway headers; mutations require the exact
+admin origin. ERP sessions follow the admin login's expiry and logout.
+ERP response headers replace the login page's restrictive CSP only for the
+authenticated ERP route. Existing login and finance protections are preserved.
+
+
 Set these **service-level** variables on project `Skumic`, production environment
 `eee2223f-5047-46ae-892e-76d3a29799cd`, website service
 `f736fbd3-12ac-43ab-89ef-d2b49d0b0ff0` (source `Codeflow-Studios/Codeflow-Website`).

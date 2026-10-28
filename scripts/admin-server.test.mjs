@@ -29,7 +29,7 @@ test('admin security and actual HTTP login lifecycle', async t => {
   };
   const post = (path, form, cookie, origin = env.ADMIN_ORIGIN) => call(path, { method: 'POST', body: new URLSearchParams(form).toString(), headers: { origin, cookie, 'content-type': 'application/x-www-form-urlencoded' } });
   assert.equal((await call('/')).text, 'public upstream');
-  for (const path of ['/admin','/admin/','/admin/private','/%61dmin','/admin/finance','/admin/finance/','/admin/finance/app.css','/admin/finance/_blazor/negotiate']) {
+  for (const path of ['/admin','/admin/','/admin/private','/%61dmin','/admin/finance','/admin/finance/','/admin/finance/app.css','/admin/finance/_blazor/negotiate','/admin/erp','/admin/erp/','/admin/erp/_next/static/app.js','/admin/erp/api/session']) {
     const result = await call(path); assert.equal(result.status, 303); assert.equal(result.headers.location, '/admin/login'); assert.ok(!result.text.includes('Marketing AI'));
   }
   assert.equal((await call('/admin', { headers: { cookie: '__Host-codeflow_admin=forged' } })).status, 303);
@@ -48,6 +48,8 @@ test('admin security and actual HTTP login lifecycle', async t => {
   assert.equal(dashboard.status, 200); assert.match(dashboard.text, /What’s Next/); assert.match(dashboard.text, /https:\/\/www.codeflowstudios.be\/webmail/);
   assert.match(dashboard.text, /href="\/admin\/finance\/"/);
   assert.equal((await call('/admin/finance/', { headers: { cookie: sessionCookie } })).status, 503, 'finance without configured upstream stays closed');
+  assert.match(dashboard.text, /href="\/admin\/erp\/"/);
+  assert.equal((await call('/admin/erp/', { headers: { cookie: sessionCookie } })).status, 503);
   assert.match(dashboard.headers['cache-control'], /no-store/); assert.equal(dashboard.headers['x-robots-tag'], 'noindex, nofollow');
   assert.equal(dashboard.headers['x-codeflow-admin-revision'], env.RAILWAY_GIT_COMMIT_SHA);
   assert.ok(!dashboard.text.includes(password)); assert.ok(!dashboard.text.includes(env.ADMIN_PASSWORD_HASH));

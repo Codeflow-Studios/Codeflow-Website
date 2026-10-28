@@ -3,6 +3,7 @@ import { createHmac, randomBytes, scrypt, timingSafeEqual } from 'node:crypto';
 import { promisify } from 'node:util';
 import { css, dashboard, loginPage, page } from './admin-content.mjs';
 import { createFinanceProxy, isFinancePath } from './admin-finance-proxy.mjs';
+import { createErpProxy, isErpPath } from './admin-erp-proxy.mjs';
 
 const derive = promisify(scrypt);
 const cookieName = '__Host-codeflow_admin';
@@ -43,6 +44,7 @@ export function createAdminServer({ upstreamPort, env = process.env, now = Date.
   const ready = Boolean(match && origin && env.ADMIN_USERNAME && env.ADMIN_SESSION_SECRET?.length >= 32);
   const revision = /^[a-f0-9]{40}$/.test(env.RAILWAY_GIT_COMMIT_SHA || '') ? env.RAILWAY_GIT_COMMIT_SHA : 'local';
   const finance = createFinanceProxy({ env, sessions, now });
+  const erp = createErpProxy({ env, sessions, now });
   const revoke = id => { finance.revoke(id); sessions.delete(id); };
   const sign = value => createHmac('sha256', env.ADMIN_SESSION_SECRET).update(value).digest('hex');
   const csrfToken = () => { const value = `${now() + windowMs}.${randomBytes(24).toString('hex')}`; return `${value}.${sign(value)}`; };
@@ -78,6 +80,10 @@ export function createAdminServer({ upstreamPort, env = process.env, now = Date.
     for (const [id, session] of sessions) if (session.expires <= now()) revoke(id);
     const sessionId = readCookie(req, cookieName);
     const session = sessionId && sessions.get(sessionId);
+    if (isErpPath(pathname)) {
+      if (!session) { redirect('/admin/login'); return; }
+      erp.handle(req, res); return;
+    }
     if (isFinancePath(pathname)) {
       if (!session) { redirect('/admin/login'); return; }
       finance.handle(req, res); return;
