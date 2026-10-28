@@ -1,4 +1,4 @@
-name: Verify admin and finance access
+name: Verify admin, finance and ERP access
 on:
   pull_request:
     paths:
@@ -21,4 +21,4 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - run: node --test scripts/admin-server.test.mjs scripts/admin-finance-proxy.test.mjs
+      - run: node --test scripts/admin-server.test.mjs scripts/admin-finance-proxy.test.mjs scripts/admin-erp-proxy.test.mjs
