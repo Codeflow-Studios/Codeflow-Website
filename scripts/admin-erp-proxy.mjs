@@ -19,7 +19,10 @@ export function createErpProxy({env,sessions,now=Date.now}) {
       try { pathname=decodeURIComponent(new URL(req.url,'http://localhost').pathname).replace(/\\/g,'/'); }catch{res.writeHead(400).end();return;}
       if(!isErpPath(pathname)){res.writeHead(404).end();return;}
       const id=sessionCookie(req),session=id&&sessions.get(id);
-      if(!origin||req.headers.host!==origin.host||!session||session.expires<=now()||req.headers['sec-fetch-site']==='cross-site'||(req.headers.origin&&req.headers.origin!==origin.origin)||(!['GET','HEAD'].includes(req.method)&&req.headers.origin!==origin.origin)){
+      // SiteGround redirects the .be entry here. Permit real top-level page
+      // navigation while continuing to isolate API, asset and write requests.
+      const navigation=req.method==='GET'&&req.headers['sec-fetch-mode']==='navigate'&&req.headers['sec-fetch-dest']==='document'&&!/^\/admin\/erp\/(api|_next)(\/|$)/.test(pathname);
+      if(!origin||req.headers.host!==origin.host||!session||session.expires<=now()||(req.headers['sec-fetch-site']==='cross-site'&&!navigation)||(req.headers.origin&&req.headers.origin!==origin.origin)||(!['GET','HEAD'].includes(req.method)&&req.headers.origin!==origin.origin)){
         res.writeHead(403).end('Ongeldige aanvraag.');return;
       }
       if(!ready){res.writeHead(503).end('ERP is nog niet gekoppeld.');return;}
