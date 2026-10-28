@@ -44,3 +44,13 @@ test('ERP missing config and public upstreams fail closed',async t=>{
     const f=await fixture(t,overrides);assert.equal((await f.call()).status,503);assert.equal(f.received.length,0);
   }
 });
+test('SiteGround redirect permits authenticated page navigation, with API and assets still isolated',async t=>{
+  const f=await fixture(t),headers={'sec-fetch-site':'cross-site','sec-fetch-mode':'navigate','sec-fetch-dest':'document'};
+  assert.equal((await f.call('/admin/erp',{headers})).status,200);
+  assert.equal((await f.call('/admin/erp/projects',{headers})).status,200);
+  for(const path of ['/admin/erp/api/session','/admin/erp/api','/admin/erp/_next/static/app.js'])assert.equal((await f.call(path,{headers})).status,403);
+  assert.equal((await f.call('/admin/erp',{headers:{...headers,'sec-fetch-dest':'iframe'}})).status,403);
+  assert.equal((await f.call('/admin/erp',{headers:{...headers,'sec-fetch-mode':'cors'}})).status,403);
+  assert.equal((await f.call('/admin/erp',{headers:{...headers,cookie:''}})).status,403);
+  assert.equal((await f.call('/admin/erp/api/resources/projects',{method:'POST',headers:{...headers,origin:'https://evil.test'}})).status,403);
+});
