@@ -10,7 +10,7 @@ export default function GameShowcase({ lang }: { lang: Language }) {
     <div className="section-heading">
       <div>
         <p className="eyebrow">04 / SELECTED WORK</p>
-        <h2>{en ? <>Three worlds.<br /><span>One studio.</span></> : <>Drie werelden.<br /><span>Eén studio.</span></>}</h2>
+        <h2>{en ? <>Four games.<br /><span>One studio.</span></> : <>Vier games.<br /><span>Eén studio.</span></>}</h2>
       </div>
       <p className="section-intro">{en
         ? 'We turn concepts into playable systems, from Beatdown City to a C# office RPG and a 32-bit browser fighter.'
@@ -44,10 +44,19 @@ export default function GameShowcase({ lang }: { lang: Language }) {
         <div className="game-card-media"><img src="/games/skumic-run/showcase.png" alt={en ? 'Skumic Fighters character selection' : 'Personageselectie van Skumic Fighters'} width="1344" height="634" loading="lazy" /><span className="game-badge">WEB · 32-BIT</span></div>
         <div className="game-card-copy"><div className="game-card-number">03</div><Music2 size={24} /><h3>Skumic Fighters</h3><p>{en ? 'Choose Matar or Gauthier and face off in a 32-bit browser fighter set in the world of Skumic.' : 'Kies Matar of Gauthier en neem het tegen elkaar op in een 32-bit browserfighter in de wereld van Skumic.'}</p><div className="game-card-tags"><span>{en ? 'Browser game' : 'Browsergame'}</span><span>2 fighters</span></div><a className="button game-launch" href="/skumic">{en ? 'Start fight' : 'Start gevecht'}<ArrowUpRight size={18} /></a></div>
       </article>
+
+      <article className="game-card meppn-card">
+        <div className="game-card-media"><img src="/games/skumic-meppn/showcase.png" alt={en ? 'Matar and Gauthier fighting in the purple Skumic arena' : 'Matar en Gauthier vechten in de paarse Skumic-arena'} width="1600" height="900" loading="lazy" /><span className="game-badge">UNITY C# · WEB · 32-BIT</span></div>
+        <div className="game-card-copy">
+          <div className="game-card-number">04</div><Swords size={24} />
+          <h3>Meppn, detsn &amp; dokkn met Skumic</h3>
+          <p>{en ? 'Matar and Gauthier enter the arena in a Unity / C# fighting game with Skumic artwork and a 32-bit pixel style. Play against the CPU, train your moves or challenge a friend on one keyboard.' : 'Matar en Gauthier in een Unity / C#-vechtgame met Skumic-artwork en een 32-bit pixelstijl. Speel tegen de computer, oefen je moves of daag een vriend uit op één toetsenbord.'}</p>
+          <div className="game-card-tags"><span>{en ? 'Browser game' : 'Browsergame'}</span><span>VS CPU / {en ? 'Local versus' : 'Lokale versus'}</span><span>{en ? 'Keyboard' : 'Toetsenbord'}</span></div>
+          <a className="button game-launch" href="https://skumic-meppn-production.up.railway.app/" target="_blank" rel="noopener noreferrer">{en ? 'Play Meppn' : 'Speel Meppn'}<ArrowUpRight size={18} /></a>
+        </div>
+      </article>
     </div>
 
-    <div className="games-signature"><span>{en ? 'Original games' : 'Originele games'}</span><strong>Made by Codeflow Studios</strong></div>
+    <div className="games-signature"><span>{en ? 'Original games' : 'Originele games'}</span><div className="games-maker"><img src="/codeflow-logo.png" alt="Codeflow Studios logo" width="64" height="64" loading="lazy" /><strong>Made by Codeflow Studios</strong></div></div>
   </section>;
 }
-
-

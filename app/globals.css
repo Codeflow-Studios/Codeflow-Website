@@ -172,3 +172,5 @@
 @media(max-width:520px){.inquiry-row{grid-template-columns:1fr;gap:22px}.inquiry-card{padding:24px}.inquiry-heading h3{font-size:1.7rem}.homepage-contact-form{margin-top:30px}.inquiry-submit{font-size:.86rem;padding-inline:16px}}
 
 .audit-form-visual{min-width:0;scroll-margin-top:28px}.audit-page .inquiry-section .audit-panel{margin-top:0}
+/* Four showcases, with room for artwork and the full game title. */
+.games-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.meppn-card .game-card-media{background:#020105}.meppn-card .game-card-media img{object-fit:contain;image-rendering:pixelated}.games-maker{display:flex;align-items:center;gap:14px}.games-maker img{display:block;border-radius:4px;object-fit:contain}@media(max-width:800px){.games-grid{grid-template-columns:1fr}}
