@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#020105"><meta name="description" content="Strap in. Turn it up. A Skumic pixel arcade runner. Drum & bass, transforming vehicles and four reactive worlds.">
+  <title>Bluvn goan met Skumic</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%23020105'/%3E%3Cpath d='M38 4 12 36h18l-5 24 28-34H35z' fill='%23dcf105'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="header">
+    <a href="#" class="brand" aria-label="Skumic home"><canvas class="brand-logo" width="280" height="110" aria-label="Skumic"></canvas><span class="arcade">ARCADE<br><b>DIVISION</b></span></a>
+    <nav aria-label="Main navigation"><button class="nav active" id="nav-play">PLAY <i>01</i></button><button class="nav" id="nav-artists">ARTISTS <i>02</i></button><button class="nav" id="nav-log">FLIGHT LOG <i>03</i></button></nav>
+    <div class="header-actions"><button class="icon-button" id="sound" aria-label="Turn sound on" title="Skumic music · M">♪<span class="mute-slash"></span></button><button class="icon-button" id="help" aria-label="How to play" title="How to play">?</button></div>
+  </header>
+  <main>
+    <div class="game-heading"><div><span class="live-dot"></span>BLUVN GOAN MET SKUMIC <span class="version">VOL. 05</span></div><span class="heading-right">SKUMIC ON REPEAT. <span>↗</span></span></div>
+    <section class="game-shell" id="game-shell" aria-label="Jetpack arcade game">
+      <canvas id="game" width="1280" height="640" tabindex="0" aria-label="Game area. Hold Space, click or touch to rise. Release to fall. P pauses."></canvas>
+      <div class="scanlines" aria-hidden="true"></div>
+      <div id="home" class="home-overlay">
+        <div class="home-copy"><div class="eyebrow"><span>ENDLESS RUNNER</span><button id="choose-artist" class="artist-shortcut" aria-label="Choose artist">SKUMIC ▾</button></div><h1>BLUVN GOAN<br><em>MET SKUMIC<span>✳</span></em></h1><p>Catch notes. Build hype.<br>Drop the bass.</p><button class="play-button" id="start">LET’S FLY <span>↗</span></button><div class="control-hint"><kbd>SPACE</kbd> / HOLD CLICK TO FLY <span>•</span> RELEASE TO FALL</div></div>
+        <div class="hero-sticker">CHARGE UP.<br><b>DROP THE BASS.</b><span>✳</span></div>
+        <div class="home-bottom"><span><span class="tiny-label">PERSONAL BEST</span><b id="home-best">0000</b><small>m</small></span><span class="sector-tag"><i></i><b id="selected-name">SKUMIC</b> / <span id="selected-scene">THE MAIN STAGE</span></span></div>
+      </div>
+      <div id="hud" class="hud" hidden><div class="hud-group"><span class="hud-distance"><small>DISTANCE</small><b id="distance">0000</b><em>m</em></span><span class="hud-identity"><span class="hud-artist" id="run-artist">SKUMIC</span><small class="hud-score"><b id="run-score">0</b> PTS <em id="run-combo" hidden>×1</em></small></span></div><div class="hud-group"><span id="sector" class="hud-sector">THE MAIN STAGE</span><button id="pause" class="icon-button" aria-label="Pause game">Ⅱ</button></div></div>
+      <div id="arcade-hud" class="arcade-hud" hidden><span id="hype-label">HYPE · 0%</span><div class="hype-track"><i id="hype-fill"></i></div><small>FILL IT → THE DROP</small></div>
+      <div id="live-goal" class="live-goal" hidden></div>
+      <button id="pulse-action" aria-label="Sonic Pulse" class="pulse-action ready" hidden><b id="pulse-label">SONIC PULSE</b><small>SHIFT / X · CLEAR THE WAY</small></button>
+      <div id="power-status" class="power-status" hidden></div>
+      <div id="run-hint" class="run-hint" hidden>FOLLOW THE NOTES <span>♪</span> SHIFT = SONIC PULSE</div>
+      <div id="toast" role="status" class="toast" hidden></div>
+      <div id="pause-panel" class="center-overlay" hidden><div class="panel pause-panel"><span class="eyebrow">TAKE A BREATHER</span><h2>ON HOLD.</h2><p>Your flight is right where you left it.</p><button class="play-button" id="resume">KEEP FLYING <span>↗</span></button><button class="text-button" id="quit">END FLIGHT</button></div></div>
+      <div id="results" class="center-overlay" hidden><div class="panel results-panel"><span class="eyebrow" id="result-label">THAT WAS LOUD.</span><h2>WHAT A RIDE.</h2><div class="result-distance"><b id="result-distance">0</b><span>METRES FLOWN</span></div><div class="result-stats"><span>GATES DODGED <b id="result-gates">0</b></span><span>BEST DISTANCE <b id="result-best">0 m</b></span></div><div class="result-scoreline"><span>ARCADE SCORE <b id="result-score">0</b></span><span>HAZARDS SMASHED <b id="result-breaks">0</b></span></div><p id="result-note"></p><button class="play-button" id="retry">ONE MORE RUN <span>↗</span></button><button class="text-button" id="home-button">BACK TO BASE</button></div></div>
+      <div class="loading" id="loading">WARMING UP THE JETPACK…</div>
+    </section>
+    <div class="below-game"><span><span class="key-icon">↥</span> HOLD <kbd>SPACE</kbd> / CLICK / TOUCH</span><span><kbd>P</kbd> PAUSE <span class="divider">/</span> <kbd>M</kbd> SOUND <span class="divider">/</span> <kbd>SHIFT</kbd> PULSE</span><button id="fullscreen">GO FULLSCREEN <span>⛶</span></button></div>
+    <div class="soundtrack-bar"><label for="track-select">♫ SKUMIC SOUNDTRACK</label><select id="track-select" aria-label="Choose Skumic track"></select><label class="volume-control" for="music-volume">VOLUME <input id="music-volume" aria-label="Music volume" type="range" min="0" max="100" value="4"><output id="volume-value">4%</output></label><button class="timing-toggle" id="timing-toggle" aria-expanded="false">DROP TIMING</button><span id="track-status" role="status">START A FLIGHT TO PLAY</span></div>
+<div id="timing-panel" class="timing-panel" hidden><label for="drop-times-input">DROP MOMENTEN <input id="drop-times-input" aria-label="Dropmomenten" placeholder="0:54, 1:38, 2:22"></label><button id="save-drop-times">OPSLAAN</button><button id="mark-drop">DIT IS DE DROP</button><small id="timing-status">Pas de momenten aan of tik op de knop als je de drop hoort. De muziek blijft gewoon doorspelen.</small></div>
+    <audio id="soundtrack" preload="metadata" data-state="paused"></audio>
+    <section class="artists-section" aria-labelledby="artists-heading"><div class="section-label"><h2 id="artists-heading">CHOOSE YOUR ARTIST<span> YOUR FLIGHT. YOUR STAGE.</span></h2><span>ALL THREE READY TO FLY</span></div><div class="artist-picker" id="artist-picker"></div></section>
+    <section class="missions" aria-labelledby="missions-heading"><div class="section-label"><h2 id="missions-heading">SIDE QUESTS<span> A LITTLE EXTRA TROUBLE.</span></h2><span id="mission-count">0 / 6 COMPLETE</span></div><div class="mission-grid" id="missions"></div></section>
+    <footer><span>SKUMIC ARCADE <span class="footer-cross">✳</span> PLAY LOUD. FLY LOUDER.</span><a href="evidence.html">HOW IT WAS BUILT ↗</a><span class="local-save" id="save-status">PROGRESS SAVED ON THIS DEVICE <i></i></span></footer>
+  </main>
+  <dialog id="modal"><div class="modal-header"><span class="eyebrow" id="modal-kicker">SKUMIC ARCADE</span><button class="icon-button" id="close-modal" aria-label="Close dialog">×</button></div><div id="modal-body"></div></dialog>
+  <script type="module" src="app.mjs"></script>
+</body>
+</html>

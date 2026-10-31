@@ -10,11 +10,11 @@ export default function GameShowcase({ lang }: { lang: Language }) {
     <div className="section-heading">
       <div>
         <p className="eyebrow">04 / SELECTED WORK</p>
-        <h2>{en ? <>Four games.<br /><span>One studio.</span></> : <>Vier games.<br /><span>Eén studio.</span></>}</h2>
+        <h2>{en ? <>Five games.<br /><span>One studio.</span></> : <>Vijf games.<br /><span>Eén studio.</span></>}</h2>
       </div>
       <p className="section-intro">{en
-        ? 'We turn concepts into playable systems, from Beatdown City to a C# office RPG and a 32-bit browser fighter.'
-        : 'We vertalen concepten naar speelbare systemen: van Beatdown City tot een C#-kantoor-RPG en een 32-bit browserfighter.'}</p>
+        ? 'We turn concepts into playable systems, from Beatdown City and a C# office RPG to browser fighters and a music-driven arcade runner.'
+        : 'We vertalen concepten naar speelbare systemen: van Beatdown City en een C#-kantoor-RPG tot browserfighters en een muzikale arcadegame.'}</p>
     </div>
 
     <div className="games-grid">
@@ -53,6 +53,15 @@ export default function GameShowcase({ lang }: { lang: Language }) {
           <p>{en ? 'Matar and Gauthier enter the arena in a Unity / C# fighting game with Skumic artwork and a 32-bit pixel style. Play against the CPU, train your moves or challenge a friend on one keyboard.' : 'Matar en Gauthier in een Unity / C#-vechtgame met Skumic-artwork en een 32-bit pixelstijl. Speel tegen de computer, oefen je moves of daag een vriend uit op één toetsenbord.'}</p>
           <div className="game-card-tags"><span>{en ? 'Browser game' : 'Browsergame'}</span><span>VS CPU / {en ? 'Local versus' : 'Lokale versus'}</span><span>{en ? 'Keyboard' : 'Toetsenbord'}</span></div>
           <a className="button game-launch" href="https://skumic-meppn-production.up.railway.app/" target="_blank" rel="noopener noreferrer">{en ? 'Play Meppn' : 'Speel Meppn'}<ArrowUpRight size={18} /></a>
+        </div>
+      </article>
+      <article className="game-card bluvn-card">
+        <div className="game-card-media"><img src="/games/bluvn-goan/assets/stage.png" alt={en ? 'Concert venue artwork from Bluvn goan met Skumic' : 'Concertomgeving uit Bluvn goan met Skumic'} width="1672" height="941" loading="lazy" /><span className="game-badge">WEB · SKUMIC SOUNDTRACK</span></div>
+        <div className="game-card-copy">
+          <div className="game-card-number">05</div><Music2 size={24} /><h3>Bluvn goan met Skumic</h3>
+          <p>{en ? 'Keep flying with Skumic, Gauthier or Matar. Dodge zappers and missiles, ride the Raveboard and power up the Bass Mech. Drops in the Skumic soundtrack trigger ten seconds of invincibility.' : 'Bluvn goan met Skumic, Gauthier of Matar. Ontwijk zappers en raketten, pak de Raveboard en stap in de Bass Mech. Drops in de Skumic-soundtrack geven tien seconden onverwoestbaarheid.'}</p>
+          <div className="game-card-tags"><span>{en ? 'Browser game' : 'Browsergame'}</span><span>3 {en ? 'characters' : 'personages'}</span><span>{en ? 'Keyboard & touch' : 'Toetsenbord & touch'}</span></div>
+          <a className="button game-launch" href="/bluvn-goan/">{en ? 'Play Bluvn goan' : 'Speel Bluvn goan'}<ArrowUpRight size={18} /></a>
         </div>
       </article>
     </div>
