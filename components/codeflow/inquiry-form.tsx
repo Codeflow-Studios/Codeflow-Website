@@ -74,8 +74,8 @@ export default function InquiryForm({ lang, kind = 'contact' }: { lang: Language
   </div>;
 
   return <form className="inquiry-card" onSubmit={submit} aria-labelledby={`${id}-title`} aria-busy={sending}>
-    <div className="inquiry-heading"><p className="eyebrow">{audit ? (en ? 'YOUR FREE DIGITAL AUDIT' : 'JOUW GRATIS DIGITALE AUDIT') : (en ? 'LET’S TALK' : 'VERTEL ONS JE IDEE')}</p>
-      <h3 id={`${id}-title`}>{audit ? (en ? 'Where can we help you grow?' : 'Waar kunnen we je helpen groeien?') : (en ? 'What would you like to build?' : 'Wat wil jij in beweging zetten?')}</h3>
+    <div className="inquiry-heading"><p className="eyebrow">{audit ? (en ? 'YOUR FREE WEBSITE AUDIT' : 'JOUW GRATIS WEBSITECHECK') : (en ? 'LET’S TALK' : 'VERTEL ONS JE IDEE')}</p>
+      <h3 id={`${id}-title`}>{audit ? (en ? 'Which website can we review?' : 'Welke website mogen we bekijken?') : (en ? 'What would you like to build?' : 'Wat wil jij in beweging zetten?')}</h3>
       <p>{en ? 'A few details are all we need to get started.' : 'Met een paar gegevens kunnen we aan de slag.'}</p>
     </div>
     {context && <p className="inquiry-context">{en ? 'About' : 'Over'}: {context}</p>}
@@ -89,7 +89,7 @@ export default function InquiryForm({ lang, kind = 'contact' }: { lang: Language
       <div><label htmlFor={`${id}-goal`}>{audit ? (en ? 'What would you like to improve?' : 'Wat wil je verbeteren?') : (en ? 'Your question or idea' : 'Je vraag of idee')} {!audit && <span>*</span>}</label><textarea id={`${id}-goal`} name="goal" rows={4} required={!audit} maxLength={3000} placeholder={audit ? (en ? 'More enquiries, better visibility, less repetitive work…' : 'Meer aanvragen, betere zichtbaarheid, minder repetitief werk…') : (en ? 'Tell us a little about your project.' : 'Vertel ons kort wat je voor ogen hebt.')}/></div>
       <div className="inquiry-trap" aria-hidden="true"><label htmlFor={`${id}-fax`}>Fax</label><input id={`${id}-fax`} name="fax" tabIndex={-1} autoComplete="off"/></div>
       <p className="inquiry-privacy">{en ? 'We only use these details to handle your request. No newsletter signup.' : 'We gebruiken je gegevens alleen om je aanvraag te behandelen. Je wordt niet ingeschreven voor een nieuwsbrief.'} <a href={`/legal?lang=${lang}`}>{en ? 'Company details' : 'Bedrijfsgegevens'}</a></p>
-      <button className="button inquiry-submit" type="submit">{sending ? (en ? 'Sending…' : 'Versturen…') : audit ? (en ? 'Request my free audit' : 'Vraag mijn gratis audit') : (en ? 'Send my request' : 'Verstuur mijn aanvraag')}{sending ? <LoaderCircle className="inquiry-spinner" size={19} aria-hidden="true"/> : <ArrowRight size={19} aria-hidden="true"/>}</button>
+      <button className="button inquiry-submit" type="submit">{sending ? (en ? 'Sending…' : 'Versturen…') : audit ? (en ? 'Request my free audit' : 'Vraag mijn gratis websitecheck') : (en ? 'Send my request' : 'Verstuur mijn aanvraag')}{sending ? <LoaderCircle className="inquiry-spinner" size={19} aria-hidden="true"/> : <ArrowRight size={19} aria-hidden="true"/>}</button>
       <p className="inquiry-note">{en ? 'Free to ask. No obligation.' : 'Vrijblijvend. Zonder verplichting.'}</p>
     </fieldset>
   </form>;

@@ -1,238 +1,73 @@
-"use client";
-import {
-  ArrowLeft,
-  ArrowRight,
-  BarChart3,
-  Brush,
-  Code2,
-  Layers3,
-  Radio,
-  Sparkles,
-  Workflow,
-} from "lucide-react";
-import { Header, Footer, useLanguage } from "./shared";
-import Packages, { type Service } from "./packages";
-import GameShowcase from "./game-showcase";
-import DesignShowcase from "./design-showcase";
+'use client';
+
+import { ArrowLeft, ArrowRight } from 'lucide-react';
+import { Header, Footer, useLanguage } from './shared';
+import Packages, { serviceLabels, type Service } from './packages';
+import GameShowcase from './game-showcase';
+import DesignShowcase from './design-showcase';
 
 const content = {
   marketing: {
-    label: "Marketing",
-    eyebrow: { nl: "REAL-TIME RELEVANTIE", en: "REAL-TIME RELEVANCE" },
-    title: {
-      nl: "Marketing die beweegt met jouw markt.",
-      en: "Marketing that moves with your market.",
-    },
+    eyebrow: { nl: 'EEN HELDERE RICHTING', en: 'A CLEAR DIRECTION' },
+    title: { nl: 'Weet wie je wil bereiken. En hoe.', en: 'Know who to reach. And how.' },
     intro: {
-      nl: "We verbinden jouw bedrijf met relevante trends en vertalen die signalen naar een duidelijke marketingrichting, content en campagnes.",
-      en: "We connect your business to relevant trends and turn those signals into clear marketing direction, content and campaigns.",
-    },
-    points: {
-      nl: [
-        [
-          "Realtime signalen",
-          "Ontdek welke trends werkelijk passen bij je sector en publiek.",
-        ],
-        [
-          "Strategische vertaling",
-          "Van losse aandacht naar merkgerichte content en campagnes.",
-        ],
-        [
-          "Slimme flow",
-          "Een schaalbare aanpak met automatisering als fundament.",
-        ],
-      ],
-      en: [
-        [
-          "Real-time signals",
-          "Find trends that genuinely fit your industry and audience.",
-        ],
-        [
-          "Strategic translation",
-          "Turn attention into brand-led content and campaigns.",
-        ],
-        ["A smarter flow", "A scalable approach with automation at its core."],
-      ],
+      nl: 'Een praktisch plan voor je boodschap, kanalen en content. Met acties die passen bij jouw bedrijf en de tijd die je hebt.',
+      en: 'A practical plan for your message, channels and content, with actions that fit your business and the time you have.',
     },
   },
   design: {
-    label: "Graphic design",
-    eyebrow: { nl: "VISUELE IDENTITEIT", en: "VISUAL IDENTITY" },
-    title: {
-      nl: "Design dat herkenning opbouwt.",
-      en: "Design that builds recognition.",
-    },
+    eyebrow: { nl: 'GRAFISCH DESIGN', en: 'GRAPHIC DESIGN' },
+    title: { nl: 'Laat je bedrijf herkenbaar zien.', en: 'Make your business recognisable.' },
     intro: {
-      nl: "Van logo en huisstijl tot digitaal artwork en webdesign: we creëren een visuele taal die klopt op elk relevant contactpunt.",
-      en: "From logos and identity systems to digital artwork and web design, we create a visual language that works across every relevant touchpoint.",
-    },
-    points: {
-      nl: [
-        ["Merkbasis", "Logo, kleur en typografie met een duidelijke reden."],
-        [
-          "Digitale toepassingen",
-          "Social templates, visuals en interfaces in één lijn.",
-        ],
-        [
-          "Richtlijnen",
-          "Een werkbaar systeem waarmee je merk consistent blijft.",
-        ],
-      ],
-      en: [
-        [
-          "Brand foundations",
-          "Logo, colour and typography with a clear purpose.",
-        ],
-        [
-          "Digital applications",
-          "Social templates, visuals and interfaces in one system.",
-        ],
-        ["Guidelines", "A practical system that keeps your brand consistent."],
-      ],
+      nl: 'Van een logo tot een samenhangende huisstijl. We maken een visuele basis die je kunt gebruiken op je website, drukwerk en sociale media.',
+      en: 'From a logo to a coherent visual identity. We create a foundation you can use across your website, print materials and social media.',
     },
   },
   software: {
-    label: "Software development",
-    eyebrow: { nl: "DIGITALE PRODUCTEN", en: "DIGITAL PRODUCTS" },
-    title: {
-      nl: "Software gebouwd rond echte noden.",
-      en: "Software built around real needs.",
-    },
+    eyebrow: { nl: 'WEBSITES & SOFTWARE', en: 'WEBSITES & SOFTWARE' },
+    title: { nl: 'Een website die aanvragen makkelijker maakt.', en: 'A website that makes enquiries easier.' },
     intro: {
-      nl: "We ontwikkelen websites, webapplicaties en software op maat. Functioneel, eigenzinnig en afgestemd op de mensen die ermee werken.",
-      en: "We develop websites, web applications and custom software: functional, distinctive and shaped around the people using it.",
-    },
-    points: {
-      nl: [
-        [
-          "Websites",
-          "Responsieve ervaringen die je merk en doelen ondersteunen.",
-        ],
-        [
-          "Webapps",
-          "Gerichte toepassingen voor klanten en dagelijkse processen.",
-        ],
-        ["Maatwerk", "Architectuur en integraties met ruimte om te groeien."],
-      ],
-      en: [
-        ["Websites", "Responsive experiences supporting your brand and goals."],
-        ["Web apps", "Focused applications for customers and daily processes."],
-        ["Custom software", "Architecture and integrations with room to grow."],
-      ],
+      nl: 'Toon je werk, leg je diensten helder uit en help bezoekers de volgende stap te zetten. Extra software of koppelingen bekijken we wanneer je die nodig hebt.',
+      en: 'Showcase your work, explain your services and help visitors take the next step. We discuss extra software or integrations when you need them.',
     },
   },
   rebranding: {
-    label: "Rebranding",
-    eyebrow: { nl: "HET TOTAALPAKKET", en: "THE COMPLETE PACKAGE" },
-    title: {
-      nl: "Eén nieuw verhaal. Drie disciplines.",
-      en: "One new story. Three disciplines.",
-    },
+    eyebrow: { nl: 'REBRANDING', en: 'REBRANDING' },
+    title: { nl: 'Je bedrijf groeit. Je uitstraling groeit mee.', en: 'Your business moves forward. Your brand follows.' },
     intro: {
-      nl: "Rebranding is onze geïntegreerde aanpak: marketing, grafisch design en softwareontwikkeling werken samen aan één sterke herlancering.",
-      en: "Rebranding is our integrated approach: marketing, graphic design and software development work together in one strong relaunch.",
-    },
-    points: {
-      nl: [
-        ["Marketing", "Positionering, doelgroep en campagne-aanpak."],
-        [
-          "Grafisch design",
-          "Een herkenbare identiteit en alle nodige toepassingen.",
-        ],
-        [
-          "Software",
-          "Een digitale ervaring die het vernieuwde merk waarmaakt.",
-        ],
-      ],
-      en: [
-        ["Marketing", "Positioning, audience and campaign direction."],
-        [
-          "Graphic design",
-          "A recognisable identity and the applications it needs.",
-        ],
-        [
-          "Software",
-          "A digital experience that delivers on the renewed brand.",
-        ],
-      ],
+      nl: 'We stemmen je boodschap, visuele identiteit en website op elkaar af. Eén gerichte vernieuwing, met een vooraf afgesproken omvang.',
+      en: 'We bring your message, visual identity and website together in one focused refresh, with the scope agreed in advance.',
     },
   },
 } as const;
 
 export default function ServicePage({ service }: { service: Service }) {
   const { lang, setLang, en } = useLanguage();
-  const c = content[service];
-  const icons =
-    service === "marketing"
-      ? [Radio, BarChart3, Workflow]
-      : service === "design"
-        ? [Brush, Sparkles, Layers3]
-        : service === "software"
-          ? [Code2, Workflow, Layers3]
-          : [Radio, Brush, Code2];
-  return (
-    <div id="top">
-      <Header lang={lang} setLang={setLang} />
-      <main>
-        <section className={`service-hero service-hero-${service}`}>
-          <div className="container">
-            <a className="service-back" href={`/?lang=${lang}#services`}>
-              <ArrowLeft size={17} />
-              {en ? "All services" : "Alle diensten"}
-            </a>
-            <p className="eyebrow">{c.eyebrow[lang]}</p>
-            <h1>{c.title[lang]}</h1>
-            <p>{c.intro[lang]}</p>
-            <a className="button" href="#packages">
-              {en ? "View packages" : "Bekijk pakketten"}
-              <ArrowRight size={18} />
-            </a>
-          </div>
-        </section>
-        <section className="container service-points">
-          {c.points[lang].map(([title, description], i) => {
-            const Icon = icons[i];
-            return (
-              <article key={title}>
-                <Icon size={28} />
-                <span>0{i + 1}</span>
-                <h2>{title}</h2>
-                <p>{description}</p>
-              </article>
-            );
-          })}
-        </section>
-        <Packages lang={lang} service={service} standalone />
-        {service === "design" && <DesignShowcase lang={lang} />}
-        {service === "software" && <GameShowcase lang={lang} />}
-        <section className="service-switch container">
-          <p>
-            {en ? "Explore another discipline" : "Ontdek een andere discipline"}
-          </p>
-          <div>
-            {(["marketing", "design", "software", "rebranding"] as Service[])
-              .filter((s) => s !== service)
-              .map((s) => (
-                <a
-                  key={s}
-                  href={`/services/${s === "design" ? "graphic-design" : s === "software" ? "software-development" : s}?lang=${lang}`}
-                >
-                  {s === "design"
-                    ? en
-                      ? "Graphic design"
-                      : "Grafisch design"
-                    : s === "software"
-                      ? en
-                        ? "Software development"
-                        : "Softwareontwikkeling"
-                      : s[0].toUpperCase() + s.slice(1)}
-                  <ArrowRight size={16} />
-                </a>
-              ))}
-          </div>
-        </section>
-      </main>
-      <Footer lang={lang} />
-    </div>
-  );
+  const item = content[service];
+  return <div id="top">
+    <a className="skip" href="#main">{en ? 'Skip to content' : 'Naar de inhoud'}</a>
+    <Header lang={lang} setLang={setLang}/>
+    <main id="main">
+      <section className={`service-hero service-hero-${service}`}>
+        <div className="container">
+          <a className="service-back" href={`/?lang=${lang}#services`}><ArrowLeft size={17} aria-hidden="true"/>{en ? 'Back to our offer' : 'Terug naar het aanbod'}</a>
+          <p className="eyebrow">{item.eyebrow[lang]}</p>
+          <h1>{item.title[lang]}</h1>
+          <p>{item.intro[lang]}</p>
+          <a className="button" href="#packages">{en ? 'See the approach & price' : 'Bekijk aanpak & prijs'}<ArrowRight size={18} aria-hidden="true"/></a>
+        </div>
+      </section>
+      <Packages lang={lang} service={service} standalone/>
+      {service === 'design' && <DesignShowcase lang={lang}/>}
+      {service === 'software' && <>
+        <div className="container package-category"><p className="eyebrow">{en ? 'ALSO FROM THE STUDIO' : 'OOK UIT DE STUDIO'}</p><h2>{en ? 'Our own game projects' : 'Onze eigen gameprojecten'}</h2><p>{en ? 'Creative development in practice: explore our playable games and prototypes.' : 'Creatieve ontwikkeling in de praktijk: bekijk onze speelbare games en prototypes.'}</p></div>
+        <GameShowcase lang={lang}/>
+      </>}
+      <section className="service-switch container">
+        <p>{en ? 'Looking for something else?' : 'Iets anders nodig?'}</p>
+        <div>{(['marketing', 'design', 'software', 'rebranding'] as Service[]).filter(key => key !== service).map(key => <a key={key} href={`/services/${key === 'design' ? 'graphic-design' : key === 'software' ? 'software-development' : key}?lang=${lang}`}>{serviceLabels[lang][key]}<ArrowRight size={16} aria-hidden="true"/></a>)}</div>
+      </section>
+    </main>
+    <Footer lang={lang}/>
+  </div>;
 }

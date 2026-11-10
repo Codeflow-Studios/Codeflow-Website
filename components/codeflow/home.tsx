@@ -1,41 +1,87 @@
 'use client';
-import { ArrowUpRight, Radio, Palette, Code2, Layers3, MessagesSquare, Store, Zap } from 'lucide-react';
-import { Header, Footer, CTA, useLanguage, shopUrl } from './shared';
-import type { Language } from './shared';
-import InquiryForm from './inquiry-form';
 
-export default function Home({initialLang='nl'}:{initialLang?:Language}){
- const {lang,setLang,en}=useLanguage(initialLang);
- const services=en?[
-  {key:'marketing',number:'01',title:'Marketing',kicker:'Real-time relevance',description:'Trend-driven strategy and automated marketing built around your company, audience and market.',href:'/services/marketing',Icon:Radio},
-  {key:'design',number:'02',title:'Graphic design',kicker:'A recognisable identity',description:'Logos, visual identities, digital artwork and web design with one consistent visual language.',href:'/services/graphic-design',Icon:Palette},
-  {key:'software',number:'03',title:'Software development',kicker:'Ideas made functional',description:'Websites, web applications and custom software — including Codeflow Tower, Skumic Fighters and Beatdown City.',href:'/services/software-development',Icon:Code2},
-  {key:'rebranding',number:'04',title:'Rebranding',kicker:'The complete package',description:'Marketing, graphic design and software development combined into one coordinated relaunch.',href:'/services/rebranding',Icon:Layers3}
- ]:[
-  {key:'marketing',number:'01',title:'Marketing',kicker:'Realtime relevantie',description:'Strategie op basis van trends en geautomatiseerde marketing, afgestemd op jouw bedrijf, publiek en markt.',href:'/services/marketing',Icon:Radio},
-  {key:'design',number:'02',title:'Grafisch design',kicker:'Een herkenbare identiteit',description:'Logo’s, visuele identiteiten, digitaal artwork en webdesign binnen één consequente beeldtaal.',href:'/services/graphic-design',Icon:Palette},
-  {key:'software',number:'03',title:'Softwareontwikkeling',kicker:'Ideeën die werken',description:'Websites, webapplicaties en software op maat — inclusief Codeflow Tower, Skumic Fighters en Beatdown City.',href:'/services/software-development',Icon:Code2},
-  {key:'rebranding',number:'04',title:'Rebranding',kicker:'Het totaalpakket',description:'Marketing, grafisch design en softwareontwikkeling gecombineerd in één afgestemde herlancering.',href:'/services/rebranding',Icon:Layers3}
- ];
- return <div id="top"><a className="skip" href="#main">{en?'Skip to content':'Naar de inhoud'}</a><Header lang={lang} setLang={setLang}/><main id="main"><a className="drop-one-announcement" href={`/drop-1/?lang=${lang}&utm_source=homepage&utm_medium=announcement&utm_campaign=drop1_launch`}><span>DROP 1 {en?'IS LIVE':'IS LIVE'} · GO WITH THE FLOW.</span><strong>{en?'Shop the five tees':'Shop de vijf tees'} <ArrowUpRight size={17}/></strong></a>
- <section className="hero container"><div className="hero-copy"><p className="eyebrow"><span className="accent-line"/> CREATIVE MINDS. TECHNICAL DNA.</p><h1>{en?<>One studio.<br/>Four ways to<br/><em>move forward.</em></>:<>Eén studio.<br/>Vier manieren<br/><em>vooruit.</em></>}</h1><p className="hero-description">{en?'Codeflow Studios connects marketing, design and technology. Choose one discipline, or combine all three through rebranding.':'Codeflow Studios verbindt marketing, design en technologie. Kies één discipline, of combineer ze alle drie via rebranding.'}</p><div className="hero-actions"><CTA href={`/free-audit?lang=${lang}`}>{en?'Get a free digital audit':'Gratis digitale audit'}</CTA><a className="text-link" href="#services">{en?'Choose a service':'Kies een dienst'} <ArrowUpRight size={18}/></a></div></div>
- <div className="hero-visual"><div className="visual-label"><span>CODEFLOW / 01</span><span>CREATIVE TECHNOLOGY STUDIO</span></div><img className="flow-art" src="/brand-flow.png" alt="" width="1254" height="1254"/><div className="signal-caption"><Radio size={19}/><span>{en?'Separate expertise. One creative flow.':'Aparte expertise. Eén creatieve flow.'}</span></div></div><div className="hero-foot"><span>{en?'INDEPENDENT STUDIO · BRUGES, BELGIUM':'ONAFHANKELIJKE STUDIO · BRUGGE, BELGIË'}</span><span>{en?'LOCAL ROOTS. NO BORDERS.':'LOKALE ROOTS. ZONDER GRENZEN.'}</span></div></section>
- <div className="word-strip" aria-hidden="true"><span>MARKETING</span><b>✳</b><span>GRAPHIC DESIGN</span><b>✳</b><span>SOFTWARE DEVELOPMENT</span><b>✳</b><span>REBRANDING</span></div>
- <section className="homepage-drop container" aria-labelledby="homepage-drop-title"><a className="homepage-drop-photo" href={`/drop-1/?lang=${lang}`}><img src="/drop-1/liquid-flow.webp" alt={en?'Liquid Flow back-print T-shirt mockup':'Liquid Flow T-shirt — mockup van de rugprint'} width="1024" height="1024" loading="lazy"/></a><div><p className="eyebrow">FLOW SHOP / DROP 1 / {en?'OUT NOW':'NU VERKRIJGBAAR'}</p><h2 id="homepage-drop-title">GO WITH<br/><em>THE FLOW.</em></h2><p>{en?'Five original graphic tees. Liquid, Orbit, Momentum, Breath and Current. Discover the first Codeflow Studios drop.':'Vijf originele graphic tees. Liquid, Orbit, Momentum, Breath en Current. Ontdek de eerste Codeflow Studios-drop.'}</p><a className="button" href={`/drop-1/?lang=${lang}&utm_source=homepage&utm_medium=feature&utm_campaign=drop1_launch`}>{en?'Explore Drop 1':'Ontdek Drop 1'}<ArrowUpRight size={18}/></a></div></section>
- <section className="homepage-audit container" id="audit" aria-labelledby="homepage-audit-title">
- <div className="homepage-audit-card"><div className="homepage-audit-copy">
- <p className="eyebrow"><span className="accent-line"/> {en?'FREE DIGITAL AUDIT':'GRATIS DIGITALE AUDIT'}</p>
- <h2 id="homepage-audit-title">{en?<>See your next<br/><em>step forward.</em></>:<>Ontdek jouw<br/><em>volgende stap.</em></>}</h2>
- <p>{en?'More enquiries, a stronger online presence or less repetitive work? We review your digital presence and show you where to start.':'Meer aanvragen, sterker zichtbaar online of minder repetitief werk? We bekijken je digitale aanwezigheid en tonen waar je kunt beginnen.'}</p>
- <CTA href={`/free-audit?lang=${lang}`}>{en?'Request my free audit':'Vraag mijn gratis audit'}</CTA>
- <span className="homepage-audit-note">{en?'Free. No obligation. Three concrete priorities.':'Gratis. Vrijblijvend. Drie concrete prioriteiten.'}</span>
- </div><div className="homepage-audit-review"><p className="eyebrow">{en?'WHAT WE LOOK AT':'WAT WE BEKIJKEN'}</p><ul>
- <li><Code2 size={24} aria-hidden="true"/><div><h3>{en?'Website & conversion':'Website & conversie'}</h3><p>{en?'How easily visitors find their way and take action, on desktop and mobile.':'Hoe vlot bezoekers hun weg vinden en actie ondernemen, op desktop en mobiel.'}</p></div></li>
- <li><Radio size={24} aria-hidden="true"/><div><h3>{en?'Visibility & marketing':'Zichtbaarheid & marketing'}</h3><p>{en?'Opportunities to reach your audience with a clear, consistent presence.':'Kansen om je doelgroep te bereiken met een helder, herkenbaar verhaal.'}</p></div></li>
- <li><Zap size={24} aria-hidden="true"/><div><h3>{en?'Smarter automation':'Slimmere automatisering'}</h3><p>{en?'Repetitive tasks that could take less of your time.':'Terugkerende taken die minder van je tijd kunnen vragen.'}</p></div></li>
- </ul></div></div></section>
- <section className="landing-services container" id="services"><div className="landing-services-heading"><p className="eyebrow">02 / {en?'CHOOSE YOUR ROUTE':'KIES JOUW ROUTE'}</p><h2>{en?<>Each service has<br/><span>its own page and packages.</span></>:<>Elke dienst heeft<br/><span>een eigen pagina en pakketten.</span></>}</h2><p>{en?'The three core disciplines are available separately. Rebranding is the full combination of all three.':'De drie kerndisciplines zijn apart beschikbaar. Rebranding is de volledige combinatie van alle drie.'}</p></div><div className="landing-service-grid">{services.map(({key,number,title,kicker,description,href,Icon})=><a className={`landing-service-card card-${key}`} href={`${href}?lang=${lang}`} key={key}><div className="landing-card-top"><Icon size={29} strokeWidth={1.5}/><span>{number}</span></div><p className="landing-card-kicker">{kicker}</p><h3>{title}</h3><p className="landing-card-description">{description}</p><span className="landing-card-link">{en?'Open service page':'Open dienstpagina'} <ArrowUpRight size={18}/></span></a>)}</div></section>
- <section className="studio-section community-teaser"><div className="container studio-grid"><div className="studio-title"><p className="eyebrow">03 / FLOW COMMUNITY</p><h2>{en?<>Build in public.<br/><em>Move together.</em></>:<>Bouw zichtbaar.<br/><em>Groei samen.</em></>}</h2><p>{en?'A searchable community forum plus a live Discord layer for developers, designers, founders and independent makers.':'Een vindbaar communityforum met een live Discord-laag voor developers, designers, founders en zelfstandige makers.'}</p><a className="text-link" href={`/flow-community?lang=${lang}`}>{en?'Explore Flow Community':'Ontdek Flow Community'} <ArrowUpRight size={18}/></a></div><div className="studio-services"><article><MessagesSquare size={24}/><div><h3>{en?'Forum knowledge that lasts':'Forumkennis die blijft'}</h3><p>{en?'Build logs, project reviews and useful answers remain searchable on the web.':'Buildlogs, projectreviews en bruikbare antwoorden blijven vindbaar op het web.'}</p></div><span>01</span></article><article><Zap size={24}/><div><h3>{en?'Live energy on Discord':'Live energie op Discord'}</h3><p>{en?'Focused coworking, quick feedback, roles and scheduled Build Nights.':'Gerichte coworking, snelle feedback, rollen en geplande Build Nights.'}</p></div><span>02</span></article><article><Store size={24}/><div><h3>Flow Shop</h3><p>{en?'Tools and products for builders, available separately from the community.':'Tools en producten voor bouwers, duidelijk gescheiden van de community.'} <a className="inline-shop-link" href={shopUrl} target="_blank" rel="noreferrer">codeflowstudios.be/shop <ArrowUpRight size={14}/></a></p></div><span>03</span></article></div></div></section>
- <section className="contact-section" id="contact"><div className="container"><div className="contact-top"><p className="eyebrow">04 / {en?'LET’S MAKE SOMETHING MOVE':'LATEN WE IETS IN BEWEGING ZETTEN'}</p><span>BRUGGE ↗ {en?'EVERYWHERE':'OVERAL'}</span></div><h2>{en?<>Got a spark?<br/>Let’s make it <em>flow.</em></>:<>Een idee?<br/>Tijd voor <em>flow.</em></>}</h2><div className="contact-bottom"><p className="contact-email">{en?'Tell us about your project.':'Vertel ons over je project.'}</p><div className="contact-links"><a href="tel:+32480667519">+32 480 66 75 19</a><a href="https://wa.me/32480667519" target="_blank" rel="noreferrer">WhatsApp <ArrowUpRight size={15}/></a><a href="https://www.instagram.com/codeflowstudios/" target="_blank" rel="noreferrer">Instagram <ArrowUpRight size={15}/></a><a href="https://www.facebook.com/people/Codeflow-Studios/61579077734047/" target="_blank" rel="noreferrer">Facebook <ArrowUpRight size={15}/></a></div></div><div className="homepage-contact-form"><InquiryForm lang={lang}/></div></div></section>
- </main><Footer lang={lang}/></div>;
+import { ArrowUpRight, Check, Search, PenTool, Send } from 'lucide-react';
+import { Header, Footer, CTA, useLanguage, type Language } from './shared';
+
+export default function Home({ initialLang = 'nl' }: { initialLang?: Language }) {
+  const { lang, setLang, en } = useLanguage(initialLang);
+  const auditUrl = `/free-audit?lang=${lang}`;
+  const features = en
+    ? ['Up to 5 pages, in one language', 'Clear copy and a design that fits your business', 'A quote-request form with automatic acknowledgement', 'Mobile layout and enquiry measurement', '2 revision rounds and a practical handover']
+    : ['Tot 5 pagina’s, in één taal', 'Heldere teksten en een ontwerp dat bij je bedrijf past', 'Een offerteformulier met automatische ontvangstbevestiging', 'Mobiele weergave en meting van aanvragen', '2 feedbackrondes en een praktische overdracht'];
+  const steps = en ? [
+    { title: 'First, a fresh look.', text: 'Share your website. You receive three concrete priorities to improve it.', Icon: Search },
+    { title: 'Then, a clear proposal.', text: 'We agree on the scope, price and timing before any work starts.', Icon: PenTool },
+    { title: 'Build, check, launch.', text: 'We design and build, review it together and show you how everything works.', Icon: Send },
+  ] : [
+    { title: 'Eerst een frisse blik.', text: 'Deel je website. Je krijgt drie concrete prioriteiten om ermee vooruit te gaan.', Icon: Search },
+    { title: 'Daarna een heldere offerte.', text: 'We spreken de inhoud, prijs en planning af vóór het werk begint.', Icon: PenTool },
+    { title: 'Bouwen, testen, lanceren.', text: 'We ontwerpen en bouwen, bekijken alles samen en tonen hoe het werkt.', Icon: Send },
+  ];
+
+  return <div id="top" className="client-home">
+    <a className="skip" href="#main">{en ? 'Skip to content' : 'Naar de inhoud'}</a>
+    <Header lang={lang} setLang={setLang} />
+    <main id="main">
+      <section className="hero container client-hero">
+        <div className="hero-copy">
+          <p className="eyebrow"><span className="accent-line" />{en ? 'WEBSITES & DESIGN · BRUGES' : 'WEBSITES & DESIGN · BRUGGE'}</p>
+          <h1>{en ? <>Good work.<br />A website that<br /><em>shows it.</em></> : <>Goed werk.<br />Een website die<br /><em>het laat zien.</em></>}</h1>
+          <p className="hero-description">{en
+            ? 'For independent businesses and SMEs in Bruges and West Flanders. We make your offer clear and help visitors take the next step: requesting a quote.'
+            : 'Voor zelfstandigen en kmo’s in Brugge en West-Vlaanderen. We maken je aanbod helder en helpen bezoekers de volgende stap zetten: een offerte aanvragen.'}</p>
+          <div className="hero-actions">
+            <CTA href={auditUrl}>{en ? 'Get my free website audit' : 'Vraag mijn gratis websitecheck'}</CTA>
+            <a className="text-link" href="#services">{en ? 'See the offer' : 'Bekijk het aanbod'} <ArrowUpRight size={18} aria-hidden="true" /></a>
+          </div>
+          <p className="client-hero-note">{en ? 'Three concrete improvements. Free, with no obligation.' : 'Drie concrete verbeterpunten. Gratis en vrijblijvend.'}</p>
+        </div>
+        <div className="hero-visual client-visual">
+          <div className="visual-label"><span>CREATIVE MINDS.</span><span>TECHNICAL DNA.</span></div>
+          <img className="flow-art" src="/brand-flow.webp" alt="" width="1254" height="1254" fetchPriority="high" />
+          <div className="client-visual-caption"><span>01 — 02 — 03</span><p>{en ? 'Show your work. Build trust. Make contact easy.' : 'Toon je werk. Wek vertrouwen. Maak contact eenvoudig.'}</p></div>
+        </div>
+      </section>
+
+      <section className="client-offer container" id="services" aria-labelledby="offer-title">
+        <div className="client-offer-copy">
+          <p className="eyebrow">01 / {en ? 'ONE CLEAR START' : 'ÉÉN HELDERE START'}</p>
+          <h2 id="offer-title">{en ? <>Your website.<br /><em>Your next enquiry.</em></> : <>Jouw website.<br /><em>Jouw volgende aanvraag.</em></>}</h2>
+          <p>{en ? 'Your work deserves more than a name and a phone number online. Show what you do, who you help and why someone should get in touch.' : 'Je werk verdient meer dan een naam en een telefoonnummer online. Laat zien wat je doet, voor wie je werkt en waarom iemand contact moet opnemen.'}</p>
+          <p>{en ? 'A focused starting point for service businesses, from renovation and installation firms to independent specialists.' : 'Een gerichte start voor dienstverleners: van renovatie- en installatiebedrijven tot zelfstandige specialisten.'}</p>
+          <a className="text-link" href={`/contact?lang=${lang}&service=${encodeURIComponent(en ? 'Website + enquiries' : 'Website + aanvragen')}`}>{en ? 'Discuss my project' : 'Bespreek mijn project'} <ArrowUpRight size={18} aria-hidden="true" /></a>
+        </div>
+        <article className="client-offer-card">
+          <p className="eyebrow">{en ? 'WEBSITE + ENQUIRIES' : 'WEBSITE + AANVRAGEN'}</p>
+          <p className="client-offer-price"><span>{en ? 'From' : 'Vanaf'}</span> € {en ? '2,450' : '2.450'} <small>{en ? 'excl. VAT / project' : 'excl. btw / project'}</small></p>
+          <ul>{features.map(feature => <li key={feature}><Check size={19} aria-hidden="true" /><span>{feature}</span></li>)}</ul>
+          <CTA href={auditUrl}>{en ? 'Start with a free audit' : 'Start met een gratis websitecheck'}</CTA>
+          <p className="client-offer-terms">{en ? 'You supply photos and project information. Final scope, timing, hosting and any licence costs are agreed in your quote. Custom apps and a full rebrand are quoted separately.' : 'Jij levert foto’s en projectinformatie. De precieze inhoud, planning, hosting en eventuele licentiekosten spreken we af in je offerte. Maatwerkapps en een volledige rebranding krijgen een aparte offerte.'}</p>
+        </article>
+      </section>
+
+      <section className="client-work" id="work" aria-labelledby="work-title">
+        <div className="container">
+          <div className="client-section-heading"><div><p className="eyebrow">02 / {en ? 'A LOOK AT OUR WORK' : 'EEN KIJK OP ONS WERK'}</p><h2 id="work-title">{en ? 'Design with a purpose.' : 'Ontwerp dat ergens voor staat.'}</h2></div><p>{en ? 'A recognisable identity, applied consistently.' : 'Een herkenbare identiteit, consequent toegepast.'}</p></div>
+          <article className="client-case">
+            <div className="client-case-image"><img src="/work/atn/business-card-front.png" alt={en ? 'ATN business card design in silver, black and blue' : 'ATN-visitekaartje in zilver, zwart en blauw'} width="2008" height="1299" loading="lazy" /></div>
+            <div className="client-case-copy"><p className="eyebrow">ATN BV / {en ? 'VISUAL IDENTITY' : 'VISUELE IDENTITEIT'}</p><h3>{en ? 'From logo to business card.' : 'Van beeldmerk tot visitekaartje.'}</h3><p>{en ? 'A technical identity in silver, black and blue. One visual language, carried through from the logo to printed material.' : 'Een technische identiteit in zilver, zwart en blauw. Eén beeldtaal, doorgetrokken van het logo tot het drukwerk.'}</p><a className="text-link" href={`/services/graphic-design?lang=${lang}#selected-work`}>{en ? 'View the design work' : 'Bekijk het ontwerpwerk'} <ArrowUpRight size={18} aria-hidden="true" /></a></div>
+          </article>
+          <p className="client-own-work">{en ? 'This website is also our own work: design, development and enquiry flow, brought together in one studio.' : 'Ook deze website is eigen werk: ontwerp, ontwikkeling en aanvraagflow, samengebracht in één studio.'}</p>
+        </div>
+      </section>
+
+      <section className="client-process container" aria-labelledby="process-title">
+        <div className="client-section-heading"><div><p className="eyebrow">03 / {en ? 'HOW WE WORK' : 'ZO WERKEN WE'}</p><h2 id="process-title">{en ? 'Clear from the start.' : 'Duidelijk vanaf de start.'}</h2></div></div>
+        <div className="process-grid">{steps.map(({ title, text, Icon }, index) => <article className="process" key={title}><div className="process-top"><Icon size={25} aria-hidden="true" /><span>0{index + 1}</span></div><h3>{title}</h3><p>{text}</p></article>)}</div>
+        <div className="client-extra"><p>{en ? 'Need a logo, a rebrand or custom software?' : 'Een logo, rebranding of software op maat nodig?'}</p><a className="text-link" href={`/contact?lang=${lang}`}>{en ? 'Tell us what you need' : 'Vertel wat je nodig hebt'} <ArrowUpRight size={17} aria-hidden="true" /></a></div>
+      </section>
+
+      <section className="client-contact" id="contact" aria-labelledby="contact-title"><div className="container client-contact-inner">
+        <div><p className="eyebrow">{en ? 'YOUR NEXT STEP' : 'JOUW VOLGENDE STAP'}</p><h2 id="contact-title">{en ? <>What could your<br />website do <em>better?</em></> : <>Wat kan jouw<br />website <em>beter?</em></>}</h2><p>{en ? 'Send us your website. We will look at your message, the mobile experience and the path to an enquiry. You receive three practical priorities.' : 'Stuur ons je website. We bekijken je verhaal, de mobiele ervaring en de weg naar een aanvraag. Je krijgt drie praktische prioriteiten.'}</p><CTA href={auditUrl}>{en ? 'Get my free website audit' : 'Vraag mijn gratis websitecheck'}</CTA><span className="client-contact-note">{en ? 'Free. No subscription. You decide what comes next.' : 'Gratis. Geen abonnement. Jij beslist over de volgende stap.'}</span></div>
+        <aside className="client-contact-direct"><p className="eyebrow">{en ? 'PREFER TO TALK FIRST?' : 'LIEVER EERST EVEN OVERLEGGEN?'}</p><a href="tel:+32480667519">+32 480 66 75 19</a><a href="https://wa.me/32480667519" target="_blank" rel="noreferrer">WhatsApp <ArrowUpRight size={18} aria-hidden="true" /></a><a href={`/contact?lang=${lang}`}>{en ? 'Send a message' : 'Stuur een bericht'} <ArrowUpRight size={18} aria-hidden="true" /></a><p>{en ? 'No website yet? Tell us about your business and what you want to build.' : 'Nog geen website? Vertel ons over je bedrijf en wat je wil opbouwen.'}</p></aside>
+      </div></section>
+    </main>
+    <Footer lang={lang} />
+  </div>;
 }
