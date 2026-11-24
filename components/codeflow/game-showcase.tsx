@@ -49,10 +49,10 @@ export default function GameShowcase({ lang }: { lang: Language }) {
         <div className="game-card-media"><img src="/games/skumic-meppn/showcase.png" alt={en ? 'Matar and Gauthier fighting in the purple Skumic arena' : 'Matar en Gauthier vechten in de paarse Skumic-arena'} width="1600" height="900" loading="lazy" /><span className="game-badge">UNITY C# · WEB · 32-BIT</span></div>
         <div className="game-card-copy">
           <div className="game-card-number">04</div><Swords size={24} />
-          <h3>Meppn, detsn &amp; dokkn met Skumic</h3>
+          <h3>Stage Fighters</h3>
           <p>{en ? 'Matar and Gauthier enter the arena in a Unity / C# fighting game with Skumic artwork and a 32-bit pixel style. Play against the CPU, train your moves or challenge a friend on one keyboard.' : 'Matar en Gauthier in een Unity / C#-vechtgame met Skumic-artwork en een 32-bit pixelstijl. Speel tegen de computer, oefen je moves of daag een vriend uit op één toetsenbord.'}</p>
           <div className="game-card-tags"><span>{en ? 'Browser game' : 'Browsergame'}</span><span>VS CPU / {en ? 'Local versus' : 'Lokale versus'}</span><span>{en ? 'Keyboard' : 'Toetsenbord'}</span></div>
-          <a className="button game-launch" href="https://skumic-meppn-production.up.railway.app/" target="_blank" rel="noopener noreferrer">{en ? 'Play Meppn' : 'Speel Meppn'}<ArrowUpRight size={18} /></a>
+          <a className="button game-launch" href="https://skumic-meppn-production.up.railway.app/" target="_blank" rel="noopener noreferrer">{en ? 'Play Stage Fighters' : 'Speel Stage Fighters'}<ArrowUpRight size={18} /></a>
         </div>
       </article>
       <article className="game-card bluvn-card">
