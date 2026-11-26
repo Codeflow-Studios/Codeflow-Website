@@ -1,5 +1,5 @@
-// Render the 2.5D scene on a fixed pixel grid, then composite the theatre lights
-// into full RGB colour. The final browser framebuffer uses eight bits per RGBA channel.
+// Composite the console-style scene at a fixed resolution. A three-sample
+// edge filter blends polygon silhouettes while flat areas keep their texture.
 export function createPixelRenderer(THREE, renderer) {
   const target = new THREE.WebGLRenderTarget(1, 1, {
     type: renderer.extensions.has('EXT_color_buffer_float') ? THREE.HalfFloatType : THREE.UnsignedByteType,
@@ -27,6 +27,11 @@ export function createPixelRenderer(THREE, renderer) {
       }
       void main() {
         vec3 hdr = texture2D(source, sampleUV).rgb;
+        vec3 left = texture2D(source, sampleUV - vec2(texel.x, 0.)).rgb;
+        vec3 right = texture2D(source, sampleUV + vec2(texel.x, 0.)).rgb;
+        vec3 edge = abs(left - right);
+        float coverage = .15 * smoothstep(.08, .60, max(edge.r, max(edge.g, edge.b)));
+        hdr = mix(hdr, (left + right) * .5, coverage);
         vec3 halo = bright(vec2(2., 0.)) + bright(vec2(-2., 0.))
                   + bright(vec2(0., 2.)) + bright(vec2(0., -2.));
         gl_FragColor = vec4(hdr + halo * .045, 1.);
@@ -45,7 +50,7 @@ export function createPixelRenderer(THREE, renderer) {
   renderer.domElement.style.imageRendering = 'pixelated';
   return {
     resize(width, height) {
-      const pixelSize = Math.max(1, Math.min(Math.floor(width / 215), Math.round(Math.max(width, height) / 680)));
+      const pixelSize = Math.max(1, Math.min(Math.floor(width / 200), Math.round(Math.max(width, height) / 630)));
       const w = Math.ceil(width / pixelSize), h = Math.ceil(height / pixelSize);
       target.setSize(w, h);
       texel.set(1 / w, 1 / h);

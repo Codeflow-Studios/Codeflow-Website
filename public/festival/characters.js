@@ -277,7 +277,7 @@ function createAtlas(THREE) {
 }
 
 function createAudience() {
-  const actors = [{ x: 0, z: 26, y: .067, heading: Math.PI, size: 2.95, outfit: 0, phase: 0 }];
+  const actors = [];
   let seed = 12176;
   const random = () => ((seed = (1664525 * seed + 1013904223) >>> 0) / 4294967296);
   function fans(x, z, rows, cols, offset) {
@@ -314,7 +314,7 @@ export function addCharacters(THREE, scene, reduceMotion) {
     geometry.setAttribute(name, buffer);
     return buffer;
   }
-  const centers = attribute('anchor', 3, true), sizes = attribute('actorSize', 1);
+  const centers = attribute('anchor', 3), sizes = attribute('actorSize', 1);
   const offsets = attribute('tileOrigin', 2, true);
   actors.forEach((a, i) => { centers.setXYZ(i, a.x, a.y, a.z); sizes.setX(i, a.size); });
   geometry.instanceCount = actors.length;
@@ -383,29 +383,16 @@ export function addCharacters(THREE, scene, reduceMotion) {
   }));
   halo.rotation.x = -Math.PI / 2;
   scene.add(halo);
-  let stride = 0;
   const prior = new Int16Array(actors.length).fill(-1);
 
   return function tick(player, dt, time, overview, camera) {
-    const main = actors[0];
-    main.x = player.x; main.z = player.z; main.heading = player.heading;
-    main.outfit = artistRows[player.artist] ?? artistRows.gauthier;
-    stride += dt * player.speed * .90;
-    centers.setXYZ(0, main.x, main.y, main.z);
-    centers.addUpdateRange(0, 3); centers.needsUpdate = true;
-    placeShadow(0);
-    shadows.instanceMatrix.addUpdateRange(0, 16); shadows.instanceMatrix.needsUpdate = true;
-    halo.position.set(main.x, main.y + .023, main.z);
+    halo.position.set(player.x, .086, player.z);
     halo.visible = overview;
     let changed = false;
     actors.forEach((a, i) => {
       const yaw = camera ? Math.atan2(camera.position.x - a.x, camera.position.z - a.z) : 0;
       const direction = (Math.round((a.heading - yaw) / (TAU / 4)) % 4 + 4) % 4;
-      let frame = 4;
-      if (!reduceMotion) {
-        if (i === 0 && player.speed > .12) frame = Math.floor(stride) % 4;
-        else if (i !== 0) frame = Math.floor(time * (a.outfit % 2 ? 3.24 : 4.0) + a.phase) % 4;
-      }
+      const frame = reduceMotion ? 4 : Math.floor(time * (a.outfit % 2 ? 3.24 : 4.0) + a.phase) % 4;
       const col = direction * FRAMES + frame;
       const pose = a.outfit * 4 * FRAMES + col;
       if (prior[i] === pose) return;

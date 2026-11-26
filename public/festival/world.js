@@ -9,6 +9,8 @@ import { addCharacters } from './characters.js';
 import { spruceCrown, festoonGlow } from './forest.js';
 import { createPixelRenderer } from './pixel-renderer.js';
 import { stageMural } from './stage-murals.js';
+import { createPerformer } from './performer-model.js';
+import { createFestivalAtmosphere } from './console-lighting.js';
 
 const up = new THREE.Vector3(0, 1, 0);
 const tau = Math.PI * 2;
@@ -41,8 +43,11 @@ export function createWorld(container, reduceMotion) {
   const pixelRenderer = createPixelRenderer(THREE, renderer);
 
   const scene = new THREE.Scene();
-  scene.fog = new THREE.FogExp2('#947686', .0045);
+  scene.fog = new THREE.FogExp2('#9b7f90', .006);
   scene.add(new THREE.HemisphereLight('#a8bdf4', '#74596d', .96));
+  const fill = new THREE.DirectionalLight('#b6dce8', .78);
+  fill.position.set(19,26,36);
+  scene.add(fill);
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
   renderer.toneMappingExposure = 1.16;
   renderer.shadowMap.enabled = true;
@@ -511,6 +516,8 @@ export function createWorld(container, reduceMotion) {
   const animateStage = addStageArt(THREE, scene, venues, reduceMotion);
   const animateScenery = addScenery(THREE, scene, reduceMotion);
   const animateCharacters = addCharacters(THREE, scene, reduceMotion);
+  const animatePlayer = createPerformer(THREE, scene);
+  const animateAtmosphere = createFestivalAtmosphere(THREE, scene, venues, reduceMotion);
   const gateRing = new THREE.Mesh(new THREE.RingGeometry(1.55, 1.68, 36),
     new THREE.MeshBasicMaterial({ color: '#edffae', transparent: true, depthWrite: false }));
   gateRing.rotation.x = -halfPi;
@@ -528,6 +535,8 @@ export function createWorld(container, reduceMotion) {
   function frame(player, elapsed, time, marked, nearby) {
     rig.update(player, elapsed);
     animateCharacters(player, elapsed, time, rig.overview, camera);
+    animatePlayer(player, elapsed, time, rig.overview, reduceMotion);
+    animateAtmosphere(time);
     animateScenery(time);
     animateStage(time);
     const gate = nearby || marked;

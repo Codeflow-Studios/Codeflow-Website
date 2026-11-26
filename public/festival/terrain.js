@@ -53,8 +53,8 @@ function asTexture(THREE, image, tile = false) {
   texture.flipY = true;
   texture.wrapS = THREE.RepeatWrapping;
   texture.wrapT = tile ? THREE.RepeatWrapping : THREE.ClampToEdgeWrapping;
-  texture.magFilter = THREE.NearestFilter;
-  texture.minFilter = tile ? THREE.NearestMipmapNearestFilter : THREE.NearestFilter;
+  texture.magFilter = THREE.LinearFilter;
+  texture.minFilter = tile ? THREE.LinearMipmapLinearFilter : THREE.LinearFilter;
   texture.generateMipmaps = tile;
   texture.needsUpdate = true;
   return texture;
