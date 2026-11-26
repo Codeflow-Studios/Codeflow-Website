@@ -41,7 +41,7 @@ export const sideStands = [
 
 export const benches = [
   [-17, -13], [-21, -17], [17, -13], [21, -17],
-  [-13, 22], [-16, 27], [13, 22], [15, 28],
+  [-13, 22], [13, 22],
 ];
 
 export const lanterns = [
