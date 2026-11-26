@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" class="game-page">
 <head>
   <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="theme-color" content="#020105"><meta name="description" content="Strap in. Turn it up. A Skumic pixel arcade runner. Drum & bass, transforming vehicles and four reactive worlds.">
@@ -15,6 +15,7 @@
   </header>
   <main>
     <div class="game-heading"><div><span class="live-dot"></span>SKUMIC RAVE RUSH <span class="version">VOL. 05</span></div><span class="heading-right">SKUMIC ON REPEAT. <span>↗</span></span></div>
+    <div class="flight-viewport">
     <section class="game-shell" id="game-shell" aria-label="Jetpack arcade game">
       <canvas id="game" width="1280" height="640" tabindex="0" aria-label="Game area. Hold Space, click or touch to rise. Release to fall. P pauses."></canvas>
       <div class="scanlines" aria-hidden="true"></div>
@@ -42,15 +43,22 @@
       <div id="results" class="center-overlay" hidden><div class="panel results-panel"><span class="eyebrow" id="result-label">THAT WAS LOUD.</span><h2>WHAT A RIDE.</h2><div class="result-distance"><b id="result-distance">0</b><span>METRES FLOWN</span></div><div class="result-stats"><span>GATES DODGED <b id="result-gates">0</b></span><span>BEST DISTANCE <b id="result-best">0 m</b></span></div><div class="result-scoreline"><span>ARCADE SCORE <b id="result-score">0</b></span><span>HAZARDS SMASHED <b id="result-breaks">0</b></span></div><p id="result-note"></p><button class="play-button" id="retry">CHOOSE AN ARTIST <span>↗</span></button></div></div>
       <div class="loading" id="loading">WARMING UP THE JETPACK…</div>
     </section>
+    </div>
     <div class="below-game"><span><span class="key-icon">↥</span> HOLD <kbd>SPACE</kbd> / CLICK / TOUCH</span><span><kbd>P</kbd> PAUSE <span class="divider">/</span> <kbd>M</kbd> SOUND <span class="divider">/</span> <kbd>SHIFT</kbd> PULSE</span><button id="fullscreen">GO FULLSCREEN <span>⛶</span></button></div>
     <div class="soundtrack-bar"><label for="track-select">♫ SKUMIC SOUNDTRACK</label><select id="track-select" aria-label="Choose Skumic track"></select><label class="volume-control" for="music-volume">VOLUME <input id="music-volume" aria-label="Music volume" type="range" min="0" max="100" value="50"><output id="volume-value">50%</output></label><button class="timing-toggle" id="timing-toggle" aria-expanded="false">DROP TIMING</button><span id="track-status" role="status">START A FLIGHT TO PLAY</span></div>
-<div id="timing-panel" class="timing-panel" hidden><label for="drop-times-input">DROP MOMENTEN <input id="drop-times-input" aria-label="Dropmomenten" placeholder="0:54, 1:38, 2:22"></label><button id="save-drop-times">OPSLAAN</button><button id="mark-drop">DIT IS DE DROP</button><small id="timing-status">Pas de momenten aan of tik op de knop als je de drop hoort. De muziek blijft gewoon doorspelen.</small></div>
     <audio id="soundtrack" preload="metadata" data-state="paused"></audio>
-    <section class="artists-section" aria-labelledby="artists-heading"><div class="section-label"><h2 id="artists-heading">CHOOSE YOUR ARTIST<span> YOUR FLIGHT. YOUR STAGE.</span></h2><span>ALL THREE READY TO FLY</span></div><div class="artist-picker" id="artist-picker"></div></section>
-    <section class="missions" aria-labelledby="missions-heading"><div class="section-label"><h2 id="missions-heading">SIDE QUESTS<span> A LITTLE EXTRA TROUBLE.</span></h2><span id="mission-count">0 / 6 COMPLETE</span></div><div class="mission-grid" id="missions"></div></section>
-    <footer><span>SKUMIC ARCADE <span class="footer-cross">✳</span> PLAY LOUD. FLY LOUDER.</span><a href="evidence.html">HOW IT WAS BUILT ↗</a><span class="local-save" id="save-status">PROGRESS SAVED ON THIS DEVICE <i></i></span></footer>
   </main>
-  <dialog id="modal"><div class="modal-header"><span class="eyebrow" id="modal-kicker">SKUMIC ARCADE</span><button class="icon-button" id="close-modal" aria-label="Close dialog">×</button></div><div id="modal-body"></div></dialog>
+  <dialog id="timing-panel" class="timing-panel" aria-label="Dropmomenten"><form method="dialog"><button aria-label="Close drop timing">×</button></form><label for="drop-times-input">DROP MOMENTEN <input id="drop-times-input" aria-label="Dropmomenten" placeholder="0:54, 1:38, 2:22"></label><button id="save-drop-times">OPSLAAN</button><button id="mark-drop">DIT IS DE DROP</button><small id="timing-status">Pas de momenten aan of tik op de knop als je de drop hoort. De muziek blijft gewoon doorspelen.</small></dialog>
+  <dialog id="studio-intro" aria-label="Codeflow Studios intro">
+    <video id="studio-film" playsinline preload="auto"></video>
+    <div class="intro-actions"><button type="button" id="intro-play" hidden>PLAY INTRO</button><button type="button" id="intro-skip">SKIP INTRO</button></div>
+  </dialog>
+  <dialog id="modal" aria-labelledby="modal-kicker">
+    <div class="modal-header"><span class="eyebrow" id="modal-kicker">SKUMIC ARCADE</span><button class="icon-button" id="close-modal" aria-label="Close dialog">×</button></div>
+    <div id="modal-body"></div>
+    <nav class="page-controls" aria-label="Pages" hidden><button id="page-back" aria-label="Previous page">←</button><output id="page-number"></output><button id="page-next" aria-label="Next page">→</button></nav>
+    <div class="game-meta"><a href="evidence.html">HOW IT WAS BUILT ↗</a><span id="save-status"></span></div>
+  </dialog>
   <script type="module" src="app.mjs"></script>
 </body>
 </html>

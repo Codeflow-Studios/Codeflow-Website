@@ -46,17 +46,11 @@ function updateProfile(){
   $('home-best').textContent=String(Math.floor(profile.best)).padStart(4,'0');
   const artist=artistById(profile.artist);
   if(mode==='home')renderer.setArtist(artist.id);
-  $('artist-picker').innerHTML=ARTISTS.map(artistMarkup).join('');bindArtists($('artist-picker'));
-  updateMissions();updateSound();
+  updateSound();
 }
 function missionMarkup(q){
   const complete=profile.missions.includes(q.id),v=Math.min(q.goal,Math.floor(q.value()));
   return `<article class="mission-card ${complete?'completed':''}"><div class="mission-symbol">${complete?'✓':q.symbol}</div><div class="mission-copy"><h3>${q.title}</h3><p>${q.text}</p><div class="mission-progress" role="progressbar" aria-label="${q.title}" aria-valuenow="${complete?q.goal:v}" aria-valuemin="0" aria-valuemax="${q.goal}"><span style="width:${complete?100:v/q.goal*100}%"></span></div><div class="mission-numbers"><span>${complete?'COMPLETE':`${v} / ${q.goal}`}</span><strong>${complete?'BADGE EARNED':'FLIGHT CHALLENGE'}</strong></div></div></article>`;
-}
-function updateMissions(){
-  const pending=quests.filter(q=>!profile.missions.includes(q.id));
-  $('missions').innerHTML=(pending.length?pending.slice(0,3):quests.slice(0,3)).map(missionMarkup).join('');
-  $('mission-count').textContent=`${profile.missions.length} / 6 COMPLETE`;
 }
 function setMode(next){
   mode=next;$('home').hidden=next!=='home';$('hud').hidden=next==='home';$('pause-panel').hidden=next!=='paused';$('results').hidden=next!=='over';
@@ -143,9 +137,44 @@ function openModal(kind){
   $('modal-kicker').textContent=kind==='artists'?'THE SKUMIC LINEUP':kind==='log'?'EVERY FLIGHT COUNTS':'A QUICK BRIEFING';
   if(kind==='artists')renderArtistsModal();
   else if(kind==='log')$('modal-body').innerHTML=`<h2 class="modal-title">FLIGHT LOG.</h2><p class="modal-intro">Your best bad ideas, saved on this device.</p><div class="flight-row"><span>Flights taken</span><strong>${profile.runs}</strong></div><div class="flight-row"><span>Total distance</span><strong>${profile.totalDistance.toLocaleString()} m</strong></div><div class="flight-row"><span>Best arcade score</span><strong>${profile.bestScore.toLocaleString()}</strong></div><div class="flight-row"><span>Notes / hazards smashed / drops</span><strong>${profile.totalNotes} / ${profile.totalBreaks} / ${profile.totalDrops}</strong></div><div class="flight-row"><span>Personal best</span><strong>${profile.best} m</strong></div><h3 class="eyebrow" style="margin-top:28px">RECENT FLIGHTS</h3>${profile.history.length?profile.history.map(h=>`<div class="flight-row"><span>${escapeText(h.date)} · ${artistById(h.artist).name}</span><strong>${Math.floor(h.distance)} m <span style="color:#b7a4c9;font-size:10px;margin-left:18px">${Math.floor(h.score||0).toLocaleString()} pts</span></strong></div>`).join(''):'<p class="modal-intro">Your first flight is waiting. Let’s make some noise.</p>'}<h3 class="eyebrow" style="margin-top:28px">ALL SIDE QUESTS</h3><div class="all-missions">${quests.map(missionMarkup).join('')}</div>`;
-  else $('modal-body').innerHTML=`<h2 class="modal-title">FLY. DODGE. REPEAT.</h2><p class="modal-intro">Choose your artist. Take the stage. You decide how high.</p><div class="help-grid"><div class="help-block"><h3>01 / TAKE CONTROL</h3><p>Hold <kbd>SPACE</kbd>, <kbd>↑</kbd>, your mouse or a finger on the game to rise. Release to fall. The floor and ceiling are safe.</p></div><div class="help-block"><h3>02 / STAY ALIVE</h3><p>Dodge straight and rotating zappers, laser lanes and missile volleys. A dashed laser line is safe until it fires. One unprotected hit ends the flight.</p></div><div class="help-block"><h3>03 / GET CHARGED</h3><p><b>◇ Shield:</b> one-hit protection.<br><b>≋ Raveboard:</b> speed and one hit.<br><b>▣ Bass Mech:</b> automatic fire and two armor hits.<br><b>ϟ THE DROP:</b> When the playing song reaches a marked drop, 10 seconds of speed, invincibility and extra score. The song keeps playing normally.</p></div><div class="help-block"><h3>04 / MAKE IT COUNT</h3><p>Collect music notes to build combos and HYPE. Fill it to supercharge the next drop in the song with a ×5 combo. Use <kbd>SHIFT</kbd>, <kbd>X</kbd> or the Pulse button to blast hazards away every 9 seconds. Complete live setlist goals for score and energy. <kbd>P</kbd> / <kbd>ESC</kbd> pauses, <kbd>M</kbd> toggles sound. Your illustrated studio or live-stage venue stays fixed throughout the run. Lights follow your flight and respond to the real Skumic soundtrack. Choose from four tracks below the game. Sonic Pulse lights up the scenery. Progress stays in this browser.</p></div></div>`;
+  else $('modal-body').innerHTML=`<h2 class="modal-title">FLY. DODGE. REPEAT.</h2><p class="modal-intro">Choose your artist. Take the stage. You decide how high.</p><div class="help-grid"><div class="help-block"><h3>01 / TAKE CONTROL</h3><p>Hold <kbd>SPACE</kbd>, <kbd>↑</kbd>, your mouse or a finger on the game to rise. Release to fall. The floor and ceiling are safe.</p></div><div class="help-block"><h3>02 / STAY ALIVE</h3><p>Dodge straight and rotating zappers, laser lanes and missile volleys. A dashed laser line is safe until it fires. One unprotected hit ends the flight.</p></div><div class="help-block"><h3>03 / GET CHARGED</h3><p><b>◇ Shield:</b> one-hit protection.<br><b>≋ Raveboard:</b> speed and one hit.<br><b>▣ Bass Mech:</b> automatic fire and two armor hits.<br><b>ϟ THE DROP:</b> When the playing song reaches a marked drop, 10 seconds of speed, invincibility and extra score. The song keeps playing normally.</p></div><div class="help-block"><h3>04 / MAKE IT COUNT</h3><p>Collect music notes to build combos and HYPE. Fill it to supercharge the next drop in the song with a ×5 combo. Use <kbd>SHIFT</kbd>, <kbd>X</kbd> or the Pulse button to blast hazards away every 9 seconds. Complete live setlist goals for score and energy. <kbd>P</kbd> / <kbd>ESC</kbd> pauses, <kbd>M</kbd> toggles sound. </p></div><div class="help-block"><h3>05 / YOUR SOUNDTRACK</h3><p>Your illustrated studio or live-stage venue stays fixed throughout the run. Lights follow your flight and respond to the real Skumic soundtrack. Choose from four tracks below the game. Sonic Pulse lights up the scenery. Progress stays in this browser.</p></div></div>`;
+  paginateModal(kind);
   $('modal').showModal();
 }
+
+let modalPages = [];
+let currentPage = 0;
+function paginateModal(kind) {
+  const body = $('modal-body');
+  modalPages = [];
+  if (kind === 'help') {
+    modalPages = [...body.querySelectorAll('.help-block')].map(block => block.outerHTML);
+  } else if (kind === 'log') {
+    const entries = [...body.querySelectorAll('.flight-row')];
+    const recent = entries.slice(5);
+    for (let i=0; i<5; i+=3) {
+      modalPages.push('<h2 class="modal-title">FLIGHT LOG.</h2>' + entries.slice(i,Math.min(i+3,5)).map(row => row.outerHTML).join(''));
+    }
+    if (!recent.length) modalPages.push('<h2 class="modal-title">RECENT FLIGHTS</h2><p>Your first flight is waiting.</p>');
+    for (let i=0; i<recent.length; i+=3) {
+      modalPages.push('<h2 class="modal-title">RECENT FLIGHTS</h2>' + recent.slice(i,i+3).map(row => row.outerHTML).join(''));
+    }
+    for (const quest of quests) {
+      modalPages.push(`<h2 class="modal-title">SIDE QUESTS · ${profile.missions.length}/${quests.length}</h2>` + missionMarkup(quest));
+    }
+  }
+  document.querySelector('.page-controls').hidden = modalPages.length < 2;
+  if (modalPages.length) showPage(0);
+}
+function showPage(index) {
+  currentPage = index;
+  $('modal-body').innerHTML = modalPages[index];
+  $('page-number').textContent = `${index + 1} / ${modalPages.length}`;
+  $('page-back').disabled = index === 0;
+  $('page-next').disabled = index === modalPages.length - 1;
+}
+$('page-back').onclick = () => showPage(currentPage - 1);
+$('page-next').onclick = () => showPage(currentPage + 1);
 $('retry').onclick=home;$('pause').onclick=pause;$('resume').onclick=resume;$('quit').onclick=finish;
 $('nav-play').onclick=()=>{if(mode==='home')focusLineup();else if(mode==='paused')resume();else if(mode==='over')home();else canvas.focus()};
 $('nav-artists').onclick=()=>openModal('artists');$('nav-log').onclick=()=>openModal('log');$('help').onclick=()=>openModal('help');
@@ -155,18 +184,19 @@ $('music-volume').value=Math.round(profile.musicVolume*100);$('volume-value').te
 for(const [id,times] of Object.entries(profile.dropTimings))sound.setDropTimes(id,times);
 function updateTiming(){ $('drop-times-input').value=sound.dropTimes().map(dropTimeLabel).join(', '); }
 function saveTiming(){try{const times=parseDropTimes($('drop-times-input').value);profile.dropTimings[profile.track]=times;sound.setDropTimes(profile.track,times);save();updateTiming();$('timing-status').textContent='BEWAARD · '+sound.track.title;return true;}catch(error){$('timing-status').textContent=error.message;return false;}}
-$('timing-toggle').onclick=()=>{$('timing-panel').hidden=!$('timing-panel').hidden;$('timing-toggle').setAttribute('aria-expanded',String(!$('timing-panel').hidden));updateTiming();};
+$('timing-toggle').onclick=()=>{$('timing-panel').showModal();$('timing-toggle').setAttribute('aria-expanded','true');updateTiming();};
+$('timing-panel').addEventListener('close',()=>{$('timing-toggle').setAttribute('aria-expanded','false');});
 $('save-drop-times').onclick=saveTiming;
 $('mark-drop').onclick=()=>{const audio=$('soundtrack');if(audio.paused){$('timing-status').textContent='Start eerst een vlucht om mee te luisteren.';return;}const time=audio.currentTime;$('drop-times-input').value+=( $('drop-times-input').value?', ':'')+dropTimeLabel(Math.round(time*10)/10);if(saveTiming()&&mode==='running'){triggerMusicDrop(run);receiveEvents();updateUI();}};
 $('track-select').onchange=()=>{profile.track=$('track-select').value;sound.setTrack(profile.track);if(run)run.dropDuration=sound.dropDuration();updateTiming();save();};
 $('sound').onclick=()=>{profile.sound=!profile.sound;sound.setEnabled(profile.sound);updateSound();save();tone('start')};$('close-modal').onclick=()=>$('modal').close();
 $('modal').addEventListener('close',()=>returnFocus?.focus({preventScroll:true}));
 $('pulse-action').onclick=usePulse;
-$('fullscreen').onclick=async()=>{try{if(document.fullscreenElement)await document.exitFullscreen();else if($('game-shell').requestFullscreen)await $('game-shell').requestFullscreen();else toast('FULLSCREEN IS NOT AVAILABLE IN THIS BROWSER')}catch{toast('FULLSCREEN IS NOT AVAILABLE HERE')}};
+$('fullscreen').onclick=async()=>{try{if(document.fullscreenElement)await document.exitFullscreen();else if(document.documentElement.requestFullscreen)await document.documentElement.requestFullscreen();else toast('FULLSCREEN IS NOT AVAILABLE IN THIS BROWSER')}catch{toast('FULLSCREEN IS NOT AVAILABLE HERE')}};
 canvas.addEventListener('pointerdown',e=>{if(mode!=='running')return;e.preventDefault();canvas.focus({preventScroll:true});canvas.setPointerCapture(e.pointerId);pointerHeld=true;tone('thrust')});
 for(const type of ['pointerup','pointercancel','lostpointercapture'])canvas.addEventListener(type,()=>pointerHeld=false);
 document.addEventListener('keydown',e=>{
-  if($('modal').open||e.target.matches('select,option,input'))return;
+  if(document.querySelector('dialog[open]')||e.target.matches('select,option,input'))return;
   if(['ShiftLeft','ShiftRight','KeyX'].includes(e.code)&&!e.repeat){e.preventDefault();usePulse();return;}
   if(e.code==='KeyM'&&!e.repeat){$('sound').click();return}
   if((e.code==='KeyP'||e.code==='Escape')&&!e.repeat){if(mode==='running')pause();else if(mode==='paused')resume();e.preventDefault();return}
@@ -177,6 +207,29 @@ document.addEventListener('keydown',e=>{
 });
 document.addEventListener('keyup',e=>{if(['Space','ArrowUp','KeyW'].includes(e.code))keyHeld=false});
 window.addEventListener('blur',pause);document.addEventListener('visibilitychange',()=>{if(document.hidden)pause()});
+const intro = $('studio-intro');
+const film = $('studio-film');
+film.muted = !profile.sound;
+film.volume = profile.musicVolume;
+const localFilm = '/skumic/assets/codeflow-intro.mp4';
+film.src = localFilm;
+film.addEventListener('error', () => {
+  const hostedFilm = 'https://codeflowstudios.be' + localFilm;
+  if (film.src !== hostedFilm && intro.open) {
+    film.src = hostedFilm;
+    playIntro();
+  }
+  else intro.close();
+});
+function playIntro() {
+  film.play().then(() => { $('intro-play').hidden=true; }, () => { $('intro-play').hidden=false; });
+}
+intro.addEventListener('close', () => { film.pause(); focusLineup(); });
+film.addEventListener('ended', () => intro.close());
+$('intro-play').onclick = playIntro;
+$('intro-skip').onclick = () => intro.close();
+intro.showModal();
+playIntro();
 sound.enabled=profile.sound;save();updateProfile();await renderer.load();
 const launchArtists=$('launch-artists');
 launchArtists.innerHTML=ARTISTS.map(artist =>

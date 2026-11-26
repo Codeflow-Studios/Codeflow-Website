@@ -46,3 +46,83 @@ body{font-family:ByteBounce,monospace;line-height:1.15}button{border-radius:0}h1
 #launch-artists canvas{display:block;width:clamp(44px,5.6vw,76px);height:auto;image-rendering:pixelated}
 #launch-artists button:hover,#launch-artists button:focus-visible{border-color:var(--yellow);color:var(--yellow);outline:2px solid transparent}
 @media(max-width:700px){.home-copy{top:5%}.launch-lineup legend{margin-bottom:5px}#launch-artists{gap:6px}#launch-artists button{min-width:58px;padding:2px 6px 4px}}
+
+/* Keep the game and its controls together, including inside the arcade player. */
+.game-page,.game-page body{width:100%;height:100%;margin:0;overflow:hidden;overscroll-behavior:none}
+.game-page body{height:100dvh;display:grid;grid-template-rows:auto minmax(0,1fr)}
+.header,main{box-sizing:border-box;width:100%;max-width:1512px;margin:0 auto;padding-inline:clamp(5px,2.5vw,32px)}
+.header{height:clamp(40px,7dvh,64px);min-width:0;gap:8px}
+.header .brand-logo{height:clamp(24px,4dvh,44px);width:auto}
+.header .brand{gap:8px}
+.header nav{align-items:stretch}
+.header-actions #help{display:inline-grid;place-items:center}
+main{position:relative;min-height:0;display:grid;grid-template-rows:minmax(0,1fr) auto auto;padding-block:4px;gap:2px}
+.game-heading{display:none}
+.flight-viewport{container-type:size;min-width:0;min-height:0;display:grid;place-items:center}
+.game-shell{box-sizing:border-box;container-type:size;width:min(100cqw,200cqh);height:min(100cqh,50cqw);aspect-ratio:auto}
+.game-shell #game{position:static;width:100%;height:100%;object-fit:contain}
+.below-game,.soundtrack-bar{min-width:0;min-height:32px;gap:clamp(5px,1.2vw,16px);padding:2px 0;margin:0}
+.soundtrack-bar{justify-content:center}
+.soundtrack-bar select{min-width:0;max-width:30vw}
+.soundtrack-bar #track-status{width:auto;flex:none}
+.below-game #fullscreen{margin-left:auto}
+dialog:not([open]){display:none}
+#studio-intro{box-sizing:border-box;width:100%;height:100%;max-height:none;max-width:none;margin:0;padding:0;inset:0;border:0;background:#020105;overflow:hidden}
+#studio-intro video{display:block;width:100%;height:100%;object-fit:contain}
+.intro-actions{position:absolute;right:max(8px,env(safe-area-inset-right));bottom:max(8px,env(safe-area-inset-bottom));display:flex;gap:8px}
+.intro-actions button,.page-controls button,.timing-panel form button{min-height:40px;padding:5px 14px;border:2px solid var(--purple);background:#13051e;color:var(--white);font:18px MotionControl,sans-serif}
+.intro-actions button:hover,.intro-actions button:focus-visible,.page-controls button:focus-visible{border-color:var(--yellow);color:var(--yellow)}
+#modal,.timing-panel{box-sizing:border-box;max-height:calc(100dvh - 8px);width:min(670px,calc(100% - 12px));padding:clamp(6px,2dvh,18px);margin:auto;overflow:hidden}
+#modal .modal-header{margin-bottom:8px}
+.page-controls{height:auto;display:flex;justify-content:center;align-items:center;gap:12px;margin-top:8px}
+.page-controls button{min-width:44px}.page-controls button:disabled{opacity:.35}
+.game-meta{display:flex;justify-content:space-between;gap:8px;align-items:center;margin-top:8px;font-size:12px;color:var(--muted)}
+.game-meta a{color:var(--pink)}.flight-row{padding:4px 0}
+.timing-panel form{width:100%;text-align:right;margin:0}
+.timing-panel form button{line-height:1;min-height:32px}
+.artist-modal-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin-top:6px}
+.artist-modal-grid .artist-card{min-width:0;min-height:0;flex-flow:column;align-items:center;text-align:center;gap:4px;padding:6px 2px}
+.artist-modal-grid .artist-card canvas{width:clamp(42px,12vw,110px);height:clamp(54px,18dvh,132px)}
+.artist-modal-grid .artist-copy strong{font-size:clamp(17px,3vw,27px)}.artist-modal-grid .artist-copy small,.artist-modal-grid .artist-copy em{font-size:11px}
+@media(max-width:700px) and (orientation:portrait){
+  .header .arcade{display:none}.header nav{gap:9px}.header .icon-button{width:32px;height:32px}
+  .soundtrack-bar{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:4px 8px}
+  .soundtrack-bar>label:first-child{display:none}.soundtrack-bar select{max-width:100%;width:100%}
+  .soundtrack-bar .volume-control{max-width:none;gap:4px}
+  .soundtrack-bar .volume-control input{width:clamp(44px,13vw,82px)}
+  .soundtrack-bar .timing-toggle{justify-self:start}.soundtrack-bar #track-status{justify-self:end}
+  .below-game>span:nth-child(2){display:none}
+}
+@media(max-height:490px){
+  .header{height:34px}.header .icon-button{width:30px;height:30px}.header .brand-logo{height:28px}
+  .below-game,.soundtrack-bar{min-height:26px;padding:1px 0}.below-game #fullscreen,.timing-toggle{padding:2px 6px}
+  .soundtrack-bar label,.soundtrack-bar select,.soundtrack-bar output{font-size:12px}.soundtrack-bar select{padding:2px}
+  .soundtrack-bar .volume-control{flex:none}.soundtrack-bar>label:first-child,.soundtrack-bar #track-status{display:none}
+  #modal .modal-title{font-size:24px;margin-bottom:4px}.modal-intro{font-size:14px;margin:3px 0;line-height:1.1}
+  #modal .modal-header{margin-bottom:3px}.page-controls,.game-meta{margin-top:3px}
+  .page-controls button{min-height:30px}.help-block,.mission-card{padding:7px}
+  #modal .help-block p{font-size:14px;line-height:1.15}
+}
+@media(max-height:330px){
+  #modal .artist-modal-grid .artist-card{gap:1px;padding:2px}
+  #modal .artist-modal-grid canvas{height:40px;width:36px}
+  #modal .modal-intro{margin:2px 0;font-size:12px}
+}
+@container (max-height:370px){
+  .home-copy{top:5%}.home-copy h1{font-size:clamp(26px,14cqh,55px);margin:3px 0 5px}
+  #launch-artists canvas{width:clamp(31px,16cqh,53px)}
+  .home-copy .control-hint,.hero-sticker,.home-copy>.eyebrow{display:none}
+  .home-bottom{bottom:3%}.home-bottom b{font-size:18px}
+  .panel{padding:8px 12px}.panel .eyebrow,.results-panel #result-note{display:none}
+  .panel h2{font-size:25px;margin:3px 0}.panel p{margin:4px 0}
+  .panel .play-button{height:auto;min-height:32px;padding:3px 9px;font-size:20px}
+  .result-distance b{font-size:28px}.results-panel .result-stats,.results-panel .result-scoreline{margin:4px 0;padding:3px 0}
+  .result-stats b{font-size:18px}.hud{height:40px;padding:4px 8px}
+  .arcade-hud{top:40px}.power-status{top:60px}.run-hint{display:none}
+}
+@container (max-height:220px){
+  .home-copy{inset:4px auto auto 4%}.home-copy h1{font-size:23px;margin:0 0 1px}
+  .home-copy h1 br{display:none}.home-copy h1 em{margin-left:5px}
+  .home-bottom{right:3%;left:auto}.launch-lineup legend{font-size:13px;margin-bottom:2px}
+  #launch-artists canvas{width:30px}.live-goal{font-size:11px;min-height:0}
+}
