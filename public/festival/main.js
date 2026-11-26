@@ -246,15 +246,17 @@ worldElement.addEventListener('lookunavailable', () => {
 });
 touchControls.addEventListener('change', updateLookHint);
 
-function walk(elapsed, yaw) {
+function walk(elapsed) {
   const pressed = keys => Number(keys.some(key => held.has(key)));
   const side = pressed(eastKeys) - pressed(westKeys) + stick.x;
   const forward = pressed(southKeys) - pressed(northKeys) + stick.z;
+  const length = Math.hypot(side, forward);
+  const moving = length >= .075;
+  const yaw = rig?.movementYaw(moving) ?? 0;
+  player.speed = 0;
+  if (!moving) return;
   const x = side * Math.cos(yaw) + forward * Math.sin(yaw);
   const z = forward * Math.cos(yaw) - side * Math.sin(yaw);
-  const length = Math.hypot(x, z);
-  player.speed = 0;
-  if (length < .075) return;
   const speed = (held.has('shift') ? 13.1 : 7.9) / Math.max(length, 1);
   const previousX = player.x;
   const previousZ = player.z;
@@ -327,7 +329,7 @@ async function start() {
     if (!gameDialog.open) {
       const steps = Math.max(1, Math.ceil(elapsed / .045));
       if (!artistDialog.open) {
-        for (let step = 0; step < steps; step++) walk(elapsed / steps, world.rig?.yaw || 0);
+        for (let step = 0; step < steps; step++) walk(elapsed / steps);
       }
       updateNearby();
       world.frame(player, elapsed, now / 1000, marked, nearby);

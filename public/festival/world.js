@@ -67,7 +67,7 @@ export function createWorld(container, reduceMotion) {
     scene.add(wash);
   }
 
-  const rig = createCameraRig(THREE, container);
+  const rig = createCameraRig(THREE, container, reduceMotion);
   const camera = rig.camera;
   let width = 1, height = 1;
   const point = new THREE.Vector3();

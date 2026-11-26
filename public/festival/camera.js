@@ -17,16 +17,21 @@ function boomLength(x, z, dx, dz, length) {
   return length;
 }
 
-export function createCameraRig(THREE, container) {
+export function createCameraRig(THREE, container, reduceMotion) {
   const camera = new THREE.PerspectiveCamera(55, 1, .08, 270);
   const focus = new THREE.Vector3();
   const aim = new THREE.Vector3();
   let yaw = 0, pitch = .225, zoom = 1, overview = false, first = true;
   let touch = null, lastX, lastY, wantsLock = false;
+  let steering = false, steeringYaw = yaw, followYaw = null, manualLookTime = 0;
   const locked = () => document.pointerLockElement === container;
   function look(dx, dy, sensitivity) {
+    if (!dx && !dy) return;
     yaw = THREE.MathUtils.euclideanModulo(yaw - dx * sensitivity, Math.PI * 2);
     pitch = THREE.MathUtils.clamp(pitch + dy * sensitivity, -.12, 1.16);
+    steeringYaw = yaw;
+    followYaw = null;
+    manualLookTime = .4;
   }
   function releaseLook() {
     wantsLock = false;
@@ -80,10 +85,23 @@ export function createCameraRig(THREE, container) {
 
   return {
     camera,
-    get yaw() { return overview ? 0 : yaw; },
     get overview() { return overview; },
+    movementYaw(moving) {
+      if (overview) return 0;
+      // Keep the start bearing while a direction is held so camera follow can't curve the walk.
+      if (moving && !steering) steeringYaw = followYaw ?? yaw;
+      steering = moving;
+      return steeringYaw;
+    },
     releaseLook,
-    toggle() { releaseLook(); overview = !overview; first = true; return overview; },
+    toggle() {
+      releaseLook();
+      steering = false;
+      followYaw = null;
+      overview = !overview;
+      first = true;
+      return overview;
+    },
     resize(aspect) {
       camera.aspect = aspect;
       camera.fov = aspect < .9 ? 67 : 55;
@@ -93,12 +111,21 @@ export function createCameraRig(THREE, container) {
       const blend = first ? 1 : 1 - Math.exp(-dt * 13);
       focus.x += (player.x - focus.x) * blend;
       focus.z += (player.z - focus.z) * blend;
+      if (first && !overview) yaw = THREE.MathUtils.euclideanModulo(player.heading + Math.PI, Math.PI * 2);
       first = false;
       if (overview) {
         const altitude = camera.aspect < .9 ? 125 : 82;
         camera.position.set(0, altitude, 49);
         camera.lookAt(0, 0, -4);
         return;
+      }
+      manualLookTime = Math.max(0, manualLookTime - dt);
+      if (steering && touch === null && manualLookTime === 0) followYaw = player.heading + Math.PI;
+      if (followYaw !== null) {
+        const delta = followYaw - yaw;
+        const turn = Math.atan2(Math.sin(delta), Math.cos(delta));
+        const follow = reduceMotion ? 1 : 1 - Math.exp(-9 * dt);
+        yaw = THREE.MathUtils.euclideanModulo(yaw + turn * follow, Math.PI * 2);
       }
       const dx = Math.sin(yaw), dz = Math.cos(yaw);
       const distance = boomLength(focus.x, focus.z, dx, dz, (camera.aspect < .9 ? 9.4 : 10.0) * zoom * Math.cos(pitch));
