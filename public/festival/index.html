@@ -7,12 +7,13 @@
   <meta name="description" content="Verken het Skumic-festival in pixelart en wandel naar Crowd Surfing, Stage Fighters en Skumic Rave Rush.">
   <link rel="canonical" href="https://codeflowstudios.be/festival/">
   <link rel="icon" href="/skumic/assets/logo.webp" type="image/webp">
-  <link rel="stylesheet" href="/festival/style.css?v=pixel-01">
+  <link rel="stylesheet" href="/festival/style.css?v=artists-01">
   <script type="importmap">
     { "imports": {
       "/festival/world.js": "/festival/world.js?v=pixel-01",
       "/festival/layout.js": "/festival/layout.js?v=pixel-01",
-      "/festival/flat-world.js": "/festival/flat-world.js?v=pixel-01"
+      "/festival/flat-world.js": "/festival/flat-world.js?v=artists-01",
+      "/festival/characters.js": "/festival/characters.js?v=artists-01"
     } }
   </script>
   <title>Skumic Festival</title>
@@ -30,6 +31,9 @@
         <span id="visit-dots" aria-hidden="true"><i></i><i></i><i></i></span>
         <span id="visit-count">0 van 3 stands bezocht</span>
       </div>
+      <button id="change-artist" class="change-artist" type="button" aria-haspopup="dialog" hidden>
+        <span id="artist-name"></span><span>Wisselen</span>
+      </button>
     </header>
 
     <aside class="map-panel" aria-label="Plattegrond van het festival">
@@ -62,6 +66,23 @@
     <noscript><p class="loading">Zet JavaScript aan om het festivalterrein te spelen.</p></noscript>
   </main>
 
+  <dialog id="artist-dialog" aria-labelledby="artist-heading">
+    <div class="artist-heading">
+      <h2 id="artist-heading">Kies je artiest</h2>
+      <button type="button" id="cancel-artist" aria-label="Sluiten" hidden>×</button>
+    </div>
+    <div class="artist-lineup">
+      <button type="button" class="artist-card" data-artist="gauthier">
+        <img src="/festival/avatars/gauthier.png" alt="" width="128" height="150">
+        <strong>Gauthier</strong>
+      </button>
+      <button type="button" class="artist-card" data-artist="matar">
+        <img src="/festival/avatars/matar.png" alt="" width="128" height="150">
+        <strong>Matar</strong>
+      </button>
+    </div>
+  </dialog>
+
   <dialog id="game-dialog" aria-labelledby="game-title">
     <div class="game-bar">
       <button type="button" id="back-to-festival">Terug naar festival</button>
@@ -73,6 +94,6 @@
     </div>
     <div id="game-view" class="game-view"></div>
   </dialog>
-  <script type="module" src="/festival/main.js?v=pixel-01"></script>
+  <script type="module" src="/festival/main.js?v=artists-01"></script>
 </body>
 </html>

@@ -13,7 +13,13 @@ const openSeparately = $('open-separately');
 const joystick = $('joystick');
 const joystickKnob = $('joystick-knob');
 const nearbyCard = $('nearby');
-const player = { ...entrance, heading: Math.PI, speed: 0 };
+const artistDialog = $('artist-dialog');
+const artistNames = { gauthier: 'Gauthier', matar: 'Matar' };
+const artistKey = 'skumic.festival.artist';
+let preferredArtist = null;
+try { preferredArtist = localStorage.getItem(artistKey); } catch { /* Private storage can be unavailable. */ }
+const player = { ...entrance, heading: Math.PI, speed: 0,
+  artist: Object.hasOwn(artistNames, preferredArtist) ? preferredArtist : null };
 const visited = new Set();
 const held = new Set();
 const signs = new Map();
@@ -48,6 +54,39 @@ function clearInput() {
   held.clear();
   clearStick();
 }
+
+function showArtistPicker() {
+  clearInput();
+  player.speed = 0;
+  $('cancel-artist').hidden = !player.artist;
+  artistDialog.showModal();
+  artistDialog.querySelector(`[data-artist="${player.artist || 'gauthier'}"]`).focus({ preventScroll: true });
+}
+
+function showArtistName() {
+  $('artist-name').textContent = artistNames[player.artist];
+  const changeButton = $('change-artist');
+  changeButton.hidden = false;
+  changeButton.setAttribute('aria-label', artistNames[player.artist] + ' · Wissel van artiest');
+  for (const button of artistDialog.querySelectorAll('[data-artist]')) {
+    button.setAttribute('aria-pressed', String(button.dataset.artist === player.artist));
+  }
+}
+
+for (const button of artistDialog.querySelectorAll('[data-artist]')) {
+  button.addEventListener('click', () => {
+    player.artist = button.dataset.artist;
+    try { localStorage.setItem(artistKey, player.artist); } catch { /* The selection works for this visit. */ }
+    showArtistName();
+    artistDialog.close();
+  });
+}
+$('change-artist').addEventListener('click', showArtistPicker);
+$('cancel-artist').addEventListener('click', () => artistDialog.close());
+artistDialog.addEventListener('cancel', event => { if (!player.artist) event.preventDefault(); });
+artistDialog.addEventListener('close', () => { clearInput(); worldElement.focus({ preventScroll: true }); });
+if (player.artist) showArtistName();
+else showArtistPicker();
 
 function updateStick(event) {
   if (event.pointerId !== stick.pointer) return;
@@ -122,7 +161,7 @@ for (const venue of venues) {
 refreshStops();
 
 function enterGame() {
-  if (!nearby || gameDialog.open) return;
+  if (!nearby || gameDialog.open || artistDialog.open) return;
   const game = nearby;
   $('game-title').textContent = game.title;
   $('game-input-note').hidden = !game.keyboard;
@@ -148,7 +187,7 @@ $('back-to-festival').addEventListener('click', () => gameDialog.close());
 $('enter-game').addEventListener('click', enterGame);
 
 window.addEventListener('keydown', event => {
-  if (gameDialog.open || event.altKey || event.ctrlKey || event.metaKey) return;
+  if (gameDialog.open || artistDialog.open || event.altKey || event.ctrlKey || event.metaKey) return;
   const key = event.key.toLowerCase();
   if (movementKeys.includes(key)) {
     event.preventDefault();
@@ -244,7 +283,9 @@ async function start() {
     lastFrame = now;
     if (!gameDialog.open) {
       const steps = Math.max(1, Math.ceil(elapsed / .045));
-      for (let step = 0; step < steps; step++) walk(elapsed / steps, world.rig?.yaw || 0);
+      if (!artistDialog.open) {
+        for (let step = 0; step < steps; step++) walk(elapsed / steps, world.rig?.yaw || 0);
+      }
       updateNearby();
       world.frame(player, elapsed, now / 1000, marked, nearby);
       positionSigns(world);

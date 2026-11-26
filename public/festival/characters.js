@@ -10,7 +10,7 @@ const skinTones = [
 ];
 const outfits = [
   // Base, shade and lit fabric, trousers, headwear, hat colour and skin palette.
-  ['#cae65e', '#75945b', '#edff99', '#374553', 'headset', '#d97050', 0],
+  ['#303346', '#232232', '#566072', '#323344', 'gauthier', '#513b3a', 0],
   ['#cf7570', '#864e61', '#edaa8e', '#413b51', 'beanie', '#bb9ad2', 2],
   ['#5f9da4', '#48737e', '#9ccac1', '#37435e', 'cap', '#d18e57', 0],
   ['#947aad', '#685a84', '#cab3d3', '#384f60', 'long', '#493d4c', 3],
@@ -21,7 +21,9 @@ const outfits = [
   ['#a3a56a', '#6d7b5c', '#d5d29b', '#3d4155', 'cap', '#656081', 0],
   ['#66c6bb', '#438b90', '#a5edde', '#34374c', 'mic', '#555076', 2],
   ['#dc8277', '#96596a', '#edbaa2', '#353d58', 'guitar', '#573e45', 3],
+  ['#2d303c', '#232330', '#525563', '#323440', 'matar', '#252733', 3],
 ];
+const artistRows = { gauthier: 0, matar: outfits.length - 1 };
 
 const palette = new Map();
 const littleEndian = new Uint8Array(new Uint32Array([1]).buffer)[0] === 1;
@@ -39,7 +41,7 @@ function drawCharacter(outfit, direction, frame, index) {
   const pixels = new Uint32Array(W * H);
   const [coat, shade, light, denim, hat, hatColor, skinIndex] = outfit;
   const [skinShade, skin, skinLight] = skinTones[skinIndex];
-  const hero = index === 0;
+  const artist = hat === 'gauthier' || hat === 'matar';
   const side = direction === 1 || direction === 3;
   const back = direction === 2;
   const moving = frame !== 4;
@@ -47,7 +49,7 @@ function drawCharacter(outfit, direction, frame, index) {
   const stride = moving ? [1, 0, -1, 0][frame] : 0;
   const passing = frame === 1 ? 1 : frame === 3 ? -1 : 0;
   const bounce = moving && frame % 2 === 1 ? -1 : 0;
-  const cheers = !hero && !stage && index % 3 === 1;
+  const cheers = !artist && !stage && index % 3 === 1;
   let oy = 0;
   function dot(x, y, color) {
     x = Math.round(x); y = Math.round(y) + oy;
@@ -78,10 +80,10 @@ function drawCharacter(outfit, direction, frame, index) {
   }
   function shoe(x, y, far) {
     const toe = side ? 5 : 3;
-    poly([[x - 3,y - 2],[x + 2,y - 2],[x + 3,y],[x + toe,y],[x + toe,y + 3],[x - 3,y + 3]], far ? '#686977' : boots[1]);
-    rect(x - 3, y + 2, toe + 4, 1, far ? '#85848a' : boots[2]);
-    rect(x - 2, y - 1, 3, 2, far ? '#4c515f' : '#738a86');
-    if (!far) dot(x + 1, y, '#f7eecd');
+    poly([[x - 3,y - 2],[x + 2,y - 2],[x + 3,y],[x + toe,y],[x + toe,y + 3],[x - 3,y + 3]], artist ? '#323443' : far ? '#686977' : boots[1]);
+    rect(x - 3, y + 2, toe + 4, 1, artist ? '#62626d' : far ? '#85848a' : boots[2]);
+    rect(x - 2, y - 1, 3, 2, artist ? '#454750' : far ? '#4c515f' : '#738a86');
+    if (!far) dot(x + 1, y, artist ? '#8c8290' : '#f7eecd');
   }
   function leg(sign, far) {
     const hip = side ? 17 + sign : 18 + sign * 4;
@@ -93,7 +95,7 @@ function drawCharacter(outfit, direction, frame, index) {
     line(hip - 1, 32, knee - 2, 38, far ? '#434857' : '#63717c');
     line(knee - 2, 40, foot - 2, footY - 3, '#535b68');
     rect(knee - 2, 37, 4, 1, '#3c4656');
-    if (hero) { rect(knee - 3, 34, 4, 3, '#55636e'); rect(knee - 3, 34, 4, 1, '#849187'); }
+    if (hat === 'gauthier') { rect(knee - 3, 34, 4, 3, '#39394a'); rect(knee - 3, 34, 4, 1, '#646477'); }
     shoe(foot, footY, far);
   }
   leg(-1, side || stride > 0);
@@ -111,10 +113,17 @@ function drawCharacter(outfit, direction, frame, index) {
     line(shoulderX - 2, 17, elbowX - 2, elbowY, far ? shade : coat, 5);
     line(elbowX - 2, elbowY, handX - 1, handY, far ? shade : coat, 4);
     if (!far) line(shoulderX - 2, 17, elbowX - 2, elbowY - 1, light);
-    if (hero) rect(elbowX - 2, elbowY, 4, 2, '#426068');
-    rect(handX - 1, handY, 4, 2, hero ? '#4c6a68' : shade);
+    rect(handX - 1, handY, 4, 2, shade);
     rect(handX, handY + (cheer ? -2 : 2), 3, 3, skin);
     dot(handX, handY + (cheer ? -2 : 2), skinLight);
+    if (hat === 'matar') {
+      line(elbowX - 2, elbowY - 2, handX - 1, handY + 1, skin, 4);
+      line(elbowX - 2, elbowY - 1, elbowX, elbowY + 1, '#574b55');
+      line(elbowX + 1, elbowY + 1, handX - 1, handY, '#654e55');
+      line(handX + 1, handY - 2, handX + 2, handY, '#4a424e');
+      dot(elbowX + 1, elbowY - 2, skinLight);
+    }
+    if (hat === 'gauthier') line(shoulderX - 2, 17, elbowX - 2, elbowY - 2, s < 0 ? '#9d555b' : '#508694');
     if (mic) { line(handX + 1, handY + 3, handX - 1, handY - 1, ink, 2); rect(handX - 2, handY - 2, 3, 2, '#c1cac4'); }
   }
   if (side) arm(-1, true);
@@ -127,24 +136,22 @@ function drawCharacter(outfit, direction, frame, index) {
   rect(l + 2, 30, r - l - 3, 1, '#384d55');
   rect(16, 14, side ? 5 : 6, 3, skinShade);
   if (back) {
-    poly([[12,17],[17,16],[22,16],[25,18],[22,20],[15,20]], hero ? '#46645e' : shade);
-    line(13, 17, 16, 19, hero ? '#a5b873' : coat);
+    poly([[12,17],[17,16],[22,16],[25,18],[22,20],[15,20]], shade);
+    line(13, 17, 16, 19, coat);
     line(14, 25, 17, 27, shade);
-    if (hero) {
-      line(22, 17, 13, 28, '#32484e', 2);
-      rect(15, 22, 8, 6, '#38525b'); rect(15, 22, 7, 2, '#54787a');
-      rect(16, 24, 5, 1, '#efb865'); dot(21, 24, '#bce5bf');
+    if (hat === 'gauthier') {
+      line(13, 17, 18, 20, '#636473'); line(18, 20, 23, 17, '#454e5c');
+      line(15, 25, 22, 23, '#48505e'); line(16, 27, 19, 26, '#383e4c');
     }
   } else {
     const zip = side ? 22 : 18;
     line(zip, 18, zip, 28, shade);
-    line(zip + 1, 18, zip + 1, 26, hero ? '#ecf6a6' : light);
-    if (hero) {
-      line(side ? 15 : 12, 17, side ? 21 : 23, 26, '#324954', 2);
-      rect(side ? 18 : 20, 23, 6, 5, '#334953');
-      rect(side ? 18 : 20, 23, 6, 1, '#80978a');
-      rect(side ? 19 : 21, 25, 4, 1, '#ffbf66');
-    } else {
+    if (!artist) line(zip + 1, 18, zip + 1, 26, light);
+    if (hat === 'gauthier') {
+      line(l + 2, 17, zip, 20, '#4c4e5e');
+      line(zip, 20, r, 17, '#636673');
+      line(l + 2, 24, r - 2, 26, '#444b5b');
+    } else if (!artist) {
       rect(l + 2, 21, 3, 1, light);
       dot(l + 3, 22, shade);
     }
@@ -170,7 +177,36 @@ function drawCharacter(outfit, direction, frame, index) {
     poly([[13,5],[16,3],[22,4],[24,6],[24,12],[21,14],[17,14],[13,12]], '#433746');
     rect(15, 13, 5, 1, '#57404a');
   }
-  if (hat === 'long' || hat === 'curls' || hat === 'guitar') {
+  if (hat === 'gauthier') {
+    // Fringe, close fade, beard and contrasting stage rims from Gauthier's portrait.
+    poly([[12,7],[12,4],[14,4],[14,2],[17,2],[18,1],[22,2],[24,3],[25,6],[24,9],[22,7],[20,6],[19,8],[18,6],[16,8],[15,6],[13,9]], '#48353b');
+    line(14, 4, 18, 2, '#8d6251'); line(19, 3, 21, 4, '#a47b5e');
+    line(20, 5, 22, 4, '#715044'); dot(13, 5, '#a45453');
+    if (back) {
+      rect(14, 7, 10, 3, '#654b48'); rect(15, 10, 8, 2, '#876657');
+      rect(17, 12, 5, 2, skinShade); dot(23, 8, '#a07a65');
+    } else {
+      line(side ? 15 : 14, 11, side ? 17 : 16, 14, '#674843', 2);
+      rect(17, 14, 5, 1, '#664541'); rect(18, 12, 3, 1, '#77514c');
+      if (!side) { dot(16, 9, '#9aced0'); dot(21, 9, '#9aced0'); }
+      else dot(22, 9, '#9aced0');
+    }
+  } else if (hat === 'matar') {
+    // Flat reverse peak, snapback strap and neck ink match Matar's stage outfit.
+    poly([[12,7],[13,4],[16,2],[21,2],[24,4],[25,7],[24,9],[13,9]], '#282a35');
+    line(14, 4, 18, 3, '#4e5059'); line(20, 3, 22, 4, '#3b3d48');
+    if (side) { rect(8, 7, 8, 2, '#262836'); rect(9, 7, 4, 1, '#50515d'); }
+    else if (back) { rect(11, 7, 15, 3, '#262836'); rect(13, 8, 11, 1, '#565963'); }
+    else { rect(14, 7, 9, 2, '#55545c'); rect(17, 7, 3, 1, '#a88b78'); dot(21, 8, '#a28e80'); }
+    if (!back) {
+      rect(side ? 21 : 15, 9, 2, 1, '#493c40');
+      if (!side) rect(21, 9, 2, 1, '#493c40');
+      dot(side ? 24 : 19, 11, skinLight);
+      rect(side ? 22 : 18, 12, 3, 1, '#916151');
+    }
+    rect(16, 14, 6, 3, skin); line(16, 14, 18, 16, '#51424d');
+    line(20, 14, 19, 16, '#674e55'); dot(21, 16, '#53444b');
+  } else if (hat === 'long' || hat === 'curls' || hat === 'guitar') {
     poly([[12,7],[14,4],[17,3],[21,3],[24,5],[25,8],[22,7],[19,6],[16,8],[14,11],[12,11]], hatColor);
     if (back || hat === 'long') {
       const x = side ? 12 : 13;
@@ -180,8 +216,8 @@ function drawCharacter(outfit, direction, frame, index) {
     rect(14, 5, 3, 1, '#75585e'); dot(19, 4, '#776261');
   } else {
     poly([[12,6],[13,4],[15,2],[20,2],[23,4],[24,7],[22,8],[13,8]], hatColor);
-    rect(15, 3, 4, 1, hero ? '#ffb474' : light);
-    rect(12, 7, 12, 2, hero ? '#824f4e' : shade);
+    rect(15, 3, 4, 1, light);
+    rect(12, 7, 12, 2, shade);
     if (hat === 'beanie') rect(17, 1, 3, 2, hatColor);
     else if (hat === 'bucket') { rect(11, 7, 15, 2, hatColor); rect(11, 8, 5, 1, light); }
     else if (!back) { rect(side ? 19 : 15, 7, side ? 8 : 10, 1, hatColor); rect(side ? 20 : 16, 8, side ? 7 : 8, 1, '#4e414a'); }
@@ -190,7 +226,6 @@ function drawCharacter(outfit, direction, frame, index) {
       const x = side ? 14 : 12;
       rect(x, 8, 3, 5, '#253643'); rect(x, 9, 2, 3, '#e4a858'); dot(x, 9, '#ffdb83');
       if (!side) { rect(23, 8, 2, 4, '#344e54'); dot(24, 9, '#efc563'); }
-      if (!back && hero) { rect(side ? 20 : 15, 9, side ? 4 : 8, 2, '#28404e'); rect(side ? 21 : 19, 9, 3, 1, '#8ae4db'); }
     }
   }
 
@@ -201,6 +236,19 @@ function drawCharacter(outfit, direction, frame, index) {
     if (!pixels[i] && (pixels[i - 1] || pixels[i + 1] || pixels[i - W] || pixels[i + W])) outlined[i] = rgba(ink);
   }
   return outlined;
+}
+
+export function createFlatArtistSprites() {
+  const result = {};
+  for (const [artist, index] of Object.entries(artistRows)) {
+    const canvas = Object.assign(document.createElement('canvas'), { width: W, height: H });
+    const ctx = canvas.getContext('2d');
+    const pose = ctx.createImageData(W, H);
+    new Uint32Array(pose.data.buffer).set(drawCharacter(outfits[index], 0, 4, index));
+    ctx.putImageData(pose, 0, 0);
+    result[artist] = canvas;
+  }
+  return result;
 }
 
 function createAtlas(THREE) {
@@ -341,6 +389,7 @@ export function addCharacters(THREE, scene, reduceMotion) {
   return function tick(player, dt, time, overview, camera) {
     const main = actors[0];
     main.x = player.x; main.z = player.z; main.heading = player.heading;
+    main.outfit = artistRows[player.artist] ?? artistRows.gauthier;
     stride += dt * player.speed * .90;
     centers.setXYZ(0, main.x, main.y, main.z);
     centers.addUpdateRange(0, 3); centers.needsUpdate = true;
@@ -358,9 +407,10 @@ export function addCharacters(THREE, scene, reduceMotion) {
         else if (i !== 0) frame = Math.floor(time * (a.outfit % 2 ? 3.24 : 4.0) + a.phase) % 4;
       }
       const col = direction * FRAMES + frame;
-      if (prior[i] === col) return;
+      const pose = a.outfit * 4 * FRAMES + col;
+      if (prior[i] === pose) return;
       offsets.setXY(i, (col * atlas.tw + GAP) / atlas.width, 1 - (a.outfit * atlas.th + GAP + H) / atlas.height);
-      prior[i] = col;
+      prior[i] = pose;
       changed = true;
     });
     if (changed) offsets.needsUpdate = true;

@@ -1,5 +1,6 @@
 import { benches, grounds, lanterns, paths, sideStands, trees, venues } from './layout.js';
 import { drawMarquee } from './stage-murals.js';
+import { createFlatArtistSprites } from './characters.js';
 
 export function createFlatWorld(container) {
   const canvas = document.createElement('canvas');
@@ -13,6 +14,7 @@ export function createFlatWorld(container) {
   let centerZ = 0;
   let ratio = 1;
   const covers = venues.map(venue => drawMarquee(venue.id));
+  const artists = createFlatArtistSprites();
   canvas.style.imageRendering = 'pixelated';
 
   function resize() {
@@ -102,14 +104,13 @@ export function createFlatWorld(container) {
 
     ctx.save();
     ctx.translate(player.x, player.z);
-    rectangle(0, .85, 1.85, 1.0, '#263042');
-    rectangle(-.45, 1.07, .55, .72, '#252033');
-    rectangle(.45, 1.07, .55, .72, '#252033');
-    rectangle(0, .15, 1.77, 1.2, '#d8e57e');
-    rectangle(-.54, .13, .34, 1.18, '#87af75');
-    rectangle(0, -.72, 1.25, .87, '#d39477');
-    rectangle(0, -1.15, 1.58, .55, '#383451');
-    rectangle(.16, -1.43, .95, .23, '#7bb3ad');
+    const sprite = artists[player.artist];
+    if (sprite) {
+      rectangle(0, .4, 2.35, .78, '#293c48');
+      const size = 4.8;
+      const width = size * sprite.width / sprite.height;
+      ctx.drawImage(sprite, -width / 2, .68 - size, width, size);
+    }
     ctx.restore();
   }
 

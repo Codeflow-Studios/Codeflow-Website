@@ -82,6 +82,42 @@ a:focus-visible, button:focus-visible { outline: 2px solid var(--lime); outline-
   display: inline-flex; align-items: center; gap: 8px; padding: 3px 7px;
   background: var(--ink); color: var(--paper); font: 600 14px/1.1 var(--pixel);
 }
+.change-artist {
+  display: flex; align-items: center; gap: 9px; width: fit-content; margin-top: 7px; padding: 5px 8px;
+  pointer-events: auto; background: var(--ink); color: var(--paper); border: 1px solid var(--line);
+  font: 600 14px/1.1 var(--pixel);
+}
+.change-artist span + span { color: var(--lime); }
+.change-artist:hover { border-color: var(--lime); }
+#artist-dialog {
+  padding: clamp(14px, 3vw, 24px); width: min(450px, calc(100vw - 32px));
+  max-height: calc(100dvh - 24px); overflow: auto; background: var(--surface);
+  color: var(--paper); border: 2px solid var(--line); box-shadow: var(--frame);
+}
+#artist-dialog::backdrop { background: #191527ad; }
+.artist-heading { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; min-height: 26px; }
+.artist-heading h2 { margin: 0; font: 400 clamp(13px, 3vw, 18px)/1.45 var(--display); }
+#cancel-artist {
+  min-width: 28px; min-height: 28px; background: var(--raised); border: 1px solid var(--line); color: var(--paper);
+  font: 700 20px/1 var(--pixel);
+}
+.artist-lineup { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.artist-card {
+  --artist-ink: #91d9ce; display: grid; justify-items: center; grid-template-rows: 1fr auto;
+  min-width: 0; padding: 0; border: 2px solid #60677a; background: #304850;
+  background-image: repeating-linear-gradient(0deg, transparent 0 8px, #21263935 8px 10px);
+  color: var(--paper); box-shadow: 3px 3px var(--shadow);
+}
+.artist-card[data-artist="matar"] { --artist-ink: #f0ba82; background-color: #57404a; }
+.artist-card img {
+  align-self: end; display: block; width: 100%; height: clamp(108px, 21vh, 175px);
+  margin-top: 8px; object-fit: contain; image-rendering: pixelated;
+}
+.artist-card strong {
+  display: block; width: 100%; padding: 9px 3px; background: var(--ink); color: var(--artist-ink);
+  font: 700 clamp(17px, 4vw, 23px)/1.15 var(--pixel); border-top: 2px solid var(--artist-ink);
+}
+.artist-card:hover, .artist-card:focus-visible, .artist-card[aria-pressed="true"] { border-color: var(--artist-ink); }
 #visit-dots { display: inline-flex; gap: 3px; }
 #visit-dots i { width: 7px; height: 7px; border: 1px solid var(--lime); }
 #visit-dots i.is-visited { background: var(--lime); }
