@@ -84,7 +84,7 @@ for (const button of artistDialog.querySelectorAll('[data-artist]')) {
 $('change-artist').addEventListener('click', showArtistPicker);
 $('cancel-artist').addEventListener('click', () => artistDialog.close());
 artistDialog.addEventListener('cancel', event => { if (!player.artist) event.preventDefault(); });
-artistDialog.addEventListener('close', () => { clearInput(); worldElement.focus({ preventScroll: true }); });
+artistDialog.addEventListener('close', () => worldElement.focus({ preventScroll: true }));
 if (player.artist) showArtistName();
 else showArtistPicker();
 

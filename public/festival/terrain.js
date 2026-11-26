@@ -132,7 +132,7 @@ function duskPanorama(THREE) {
   for (let s = 1; s < stops.length; s++) {
     const [y0,c0] = stops[s-1], [y1,c1] = stops[s];
     for (let y=y0; y < y1; y++) {
-      const t = Math.floor((y-y0)/(y1-y0)*6)/6;
+      const t = Math.floor((y-y0)/(y1-y0)*24)/24;
       let rgb = 0;
       for (const shift of [16,8,0]) {
         const a = (c0 >> shift) & 255, b = (c1 >> shift) & 255;
