@@ -18,7 +18,7 @@ export const venues = [
     id: 'rave', title: 'Skumic Rave Rush', type: 'Bluvn goan met Skumic',
     color: '#c4b0ff', cover: '/skumic/assets/bluvn.webp',
     x: 33, z: 0, width: 20, depth: 13, signHeight: 8.8,
-    doorX: 33, doorZ: 11, url: '/games/bluvn-goan/index.html',
+    doorX: 33, doorZ: 11, url: 'https://codeflow-studios-production.up.railway.app/games/bluvn-goan/',
   },
 ];
 
