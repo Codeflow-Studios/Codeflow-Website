@@ -1,4 +1,5 @@
 import { benches, grounds, lanterns, paths, sideStands, trees, venues } from './layout.js';
+import { drawMarquee } from './stage-murals.js';
 
 export function createFlatWorld(container) {
   const canvas = document.createElement('canvas');
@@ -11,14 +12,16 @@ export function createFlatWorld(container) {
   let centerX = 0;
   let centerZ = 0;
   let ratio = 1;
-  const covers = venues.map(venue => Object.assign(new Image(), { src: venue.cover }));
+  const covers = venues.map(venue => drawMarquee(venue.id));
+  canvas.style.imageRendering = 'pixelated';
 
   function resize() {
     width = container.clientWidth;
     height = container.clientHeight;
-    ratio = Math.min(devicePixelRatio, 1.75);
+    ratio = 1 / Math.max(1, Math.round(Math.max(width / 535, height / 330)));
     canvas.width = Math.round(width * ratio);
     canvas.height = Math.round(height * ratio);
+    ctx.imageSmoothingEnabled = false;
     scale = height / (width < height ? 77 : 108);
   }
 
@@ -43,34 +46,52 @@ export function createFlatWorld(container) {
     centerX = player.x * (compact ? .92 : .29);
     centerZ = compact ? player.z - 7 : player.z * .19 - 2;
     ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
-    ctx.fillStyle = '#152329';
+    ctx.fillStyle = '#25253c';
     ctx.fillRect(0, 0, width, height);
     ctx.translate(width / 2 - centerX * scale, height / 2 - centerZ * scale);
     ctx.scale(scale, scale);
-    ctx.fillStyle = '#283c3c';
+    ctx.fillStyle = '#31594f';
     ctx.strokeStyle = '#536660';
     ctx.lineWidth = .27;
     ctx.beginPath();
     ctx.roundRect(grounds.minX, grounds.minZ, grounds.maxX - grounds.minX, grounds.maxZ - grounds.minZ, 1);
     ctx.fill();
     ctx.stroke();
-    for (const path of paths) rectangle(path.x, path.z, path.width, path.depth, '#635852');
+    for (let i = 0; i < 560; i++) {
+      const x = grounds.minX + ((i * 337 + Math.floor(i / 11) * 57) % 1010) / 10;
+      const z = grounds.minZ + ((i * 179 + Math.floor(i / 5) * 31) % 850) / 10;
+      rectangle(x, z, .63, .27, i % 5 ? '#427061' : '#8a955e');
+    }
+    for (const path of paths) rectangle(path.x, path.z, path.width, path.depth, '#91635f');
     for (const [x, z, size] of trees) {
       disc(x + .4, z + .43, size * .38, '#223231');
-      disc(x, z, size * .33, '#447164');
+      rectangle(x, z + .5, .65, size * .74, '#523f4a');
+      for (let tier = 0; tier < 3; tier++) {
+        const span = size * (.78 - tier * .17);
+        const top = z - tier * .74;
+        rectangle(x, top, span, 1.2, '#294b50');
+        rectangle(x - .15, top - .48, span * .70, 1, '#477467');
+        rectangle(x - .32, top - .85, span * .39, .65, '#699378');
+      }
     }
     for (const [x, z] of benches) rectangle(x, z, 3.4, 1.5, '#9b7668');
     for (const [x, z] of lanterns) {
       disc(x, z, 2.0, '#b29b5f37');
       disc(x, z, .4, '#f9d69f');
     }
-    for (const stand of sideStands) rectangle(stand.x, stand.z, stand.width, stand.depth, stand.color);
+    for (const stand of sideStands) {
+      rectangle(stand.x, stand.z, stand.width, stand.depth, '#3b3449');
+      for (let i = 0; i < 7; i++) {
+        rectangle(stand.x - stand.width / 2 + (i + .5) * stand.width / 7, stand.z - .45,
+          stand.width / 7, stand.depth - .72, i % 2 ? '#efe1bd' : stand.color);
+      }
+    }
 
     for (const [i, zone] of venues.entries()) {
       rectangle(zone.x, zone.z, zone.width, zone.depth, zone.color);
       rectangle(zone.x, zone.z, zone.width - .55, zone.depth - .55, '#262936');
       const image = covers[i];
-      if (image.complete && image.naturalWidth) ctx.drawImage(image, zone.x - 6.5, zone.z - 3.0, 13, 6);
+      ctx.drawImage(image, zone.x - zone.width * .41, zone.z - zone.depth * .36, zone.width * .82, zone.depth * .67);
       rectangle(zone.doorX, zone.doorZ, 4.2, .24, zone.color);
     }
     const gate = nearby || marked;
@@ -81,15 +102,14 @@ export function createFlatWorld(container) {
 
     ctx.save();
     ctx.translate(player.x, player.z);
-    ctx.rotate(-player.heading);
-    disc(0, 0, 1.43, '#182529');
-    ctx.beginPath();
-    ctx.moveTo(0, 1.02);
-    ctx.lineTo(-.71, -.69);
-    ctx.lineTo(.71, -.69);
-    ctx.closePath();
-    ctx.fillStyle = '#dcfa82';
-    ctx.fill();
+    rectangle(0, .85, 1.85, 1.0, '#263042');
+    rectangle(-.45, 1.07, .55, .72, '#252033');
+    rectangle(.45, 1.07, .55, .72, '#252033');
+    rectangle(0, .15, 1.77, 1.2, '#d8e57e');
+    rectangle(-.54, .13, .34, 1.18, '#87af75');
+    rectangle(0, -.72, 1.25, .87, '#d39477');
+    rectangle(0, -1.15, 1.58, .55, '#383451');
+    rectangle(.16, -1.43, .95, .23, '#7bb3ad');
     ctx.restore();
   }
 

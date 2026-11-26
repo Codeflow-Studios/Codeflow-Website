@@ -163,10 +163,12 @@ window.addEventListener('keyup', event => held.delete(event.key.toLowerCase()));
 window.addEventListener('blur', clearInput);
 document.addEventListener('visibilitychange', clearInput);
 
-function walk(elapsed) {
+function walk(elapsed, yaw) {
   const pressed = keys => Number(keys.some(key => held.has(key)));
-  const x = pressed(eastKeys) - pressed(westKeys) + stick.x;
-  const z = pressed(southKeys) - pressed(northKeys) + stick.z;
+  const side = pressed(eastKeys) - pressed(westKeys) + stick.x;
+  const forward = pressed(southKeys) - pressed(northKeys) + stick.z;
+  const x = side * Math.cos(yaw) + forward * Math.sin(yaw);
+  const z = forward * Math.cos(yaw) - side * Math.sin(yaw);
   const length = Math.hypot(x, z);
   player.speed = 0;
   if (length < .075) return;
@@ -200,7 +202,8 @@ function positionSigns(world) {
   const height = worldElement.clientHeight;
   for (const [venue, sign] of signs) {
     const position = world.project(venue.x, venue.signHeight, venue.z + venue.depth / 2 - .6);
-    const visible = position.x > 76 && position.x < width - 76 && position.y > 70 && position.y < height - 125;
+    const show = !world.rig || world.rig.overview || marked === venue;
+    const visible = show && position.inFront !== false && position.x > 76 && position.x < width - 76 && position.y > 70 && position.y < height - 125;
     sign.hidden = !visible;
     if (visible) {
       sign.style.left = `${position.x.toFixed(1)}px`;
@@ -210,7 +213,10 @@ function positionSigns(world) {
 }
 
 async function start() {
-  await document.fonts.load('800 24px "Barlow Condensed"');
+  await Promise.all([
+    document.fonts.load('400 24px "Press Start 2P"'),
+    document.fonts.load('700 24px "Pixelify Sans"'),
+  ]);
   let world;
   try {
     world = createWorld(worldElement, reduceMotion);
@@ -222,13 +228,23 @@ async function start() {
     $('notice').hidden = false;
   }
   const drawMap = createMap($('minimap'));
+  if (world.rig) {
+    const cameraButton = $('camera-toggle');
+    cameraButton.hidden = false;
+    cameraButton.addEventListener('click', () => {
+      cameraButton.textContent = world.rig.toggle() ? 'Terug naar speler' : 'Vogelperspectief';
+      worldElement.focus({ preventScroll: true });
+    });
+    $('walk-hint').textContent = 'Loop naar een podium · Sleep om rond te kijken';
+  }
   new ResizeObserver(() => world.resize()).observe(worldElement);
 
   function animate(now) {
-    const elapsed = lastFrame ? Math.min((now - lastFrame) / 1000, .065) : 0;
+    const elapsed = lastFrame ? Math.min((now - lastFrame) / 1000, .25) : 0;
     lastFrame = now;
     if (!gameDialog.open) {
-      walk(elapsed);
+      const steps = Math.max(1, Math.ceil(elapsed / .045));
+      for (let step = 0; step < steps; step++) walk(elapsed / steps, world.rig?.yaw || 0);
       updateNearby();
       world.frame(player, elapsed, now / 1000, marked, nearby);
       positionSigns(world);

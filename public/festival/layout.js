@@ -1,5 +1,5 @@
 export const grounds = { minX: -51, maxX: 51, minZ: -43, maxZ: 43 };
-export const entrance = { x: 0, z: 33 };
+export const entrance = { x: -1.2, z: 26 };
 
 export const venues = [
   {
@@ -60,6 +60,7 @@ export const bounds = (x, z, width, depth) => ({
 });
 
 export const solids = [
+  bounds(-33, -17.8, 17.6, 6.4),
   ...venues.map(({ x, z, width, depth }) => bounds(x, z, width, depth)),
   ...sideStands.map(({ x, z, width, depth }) => bounds(x, z, width, depth)),
   ...benches.map(([x, z]) => bounds(x, z, 3.4, 1.5)),

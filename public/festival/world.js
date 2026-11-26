@@ -1,5 +1,14 @@
 import * as THREE from './vendor/three.module.min.js';
-import { benches, grounds, lanterns, paths, sideStands, trees, venues } from './layout.js';
+import { benches, lanterns, sideStands, trees, venues } from './layout.js';
+
+import { createCameraRig } from './camera.js';
+import { addTerrain } from './terrain.js';
+import { addStageArt } from './stage-art.js';
+import { addScenery } from './scenery.js';
+import { addCharacters } from './characters.js';
+import { spruceCrown, festoonGlow } from './forest.js';
+import { createPixelRenderer } from './pixel-renderer.js';
+import { stageMural } from './stage-murals.js';
 
 const up = new THREE.Vector3(0, 1, 0);
 const tau = Math.PI * 2;
@@ -19,73 +28,43 @@ function makeTexture(width, height, paint) {
   paint(canvas.getContext('2d'), width, height);
   const texture = new THREE.CanvasTexture(canvas);
   texture.colorSpace = THREE.SRGBColorSpace;
-  return texture;
-}
-
-function groundTexture(seed, soft) {
-  const random = seededRandom(seed);
-  const texture = makeTexture(384, 384, (ctx, w, h) => {
-    ctx.fillStyle = soft ? '#b8b9b1' : '#cdc0ad';
-    ctx.fillRect(0, 0, w, h);
-    for (let i = 0; i < 32; i++) {
-      const x = random() * w;
-      const y = random() * h;
-      const radius = 18 + random() * 55;
-      for (const dx of [-w, 0, w]) for (const dy of [-h, 0, h]) {
-        const px = x + dx;
-        const py = y + dy;
-        if (px + radius < 0 || px - radius > w || py + radius < 0 || py - radius > h) continue;
-        const shade = ctx.createRadialGradient(px, py, 0, px, py, radius);
-        shade.addColorStop(0, i % 2 ? '#f9eed047' : '#132c313c');
-        shade.addColorStop(1, '#ffffff00');
-        ctx.fillStyle = shade;
-        ctx.fillRect(px - radius, py - radius, radius * 2, radius * 2);
-      }
-    }
-    for (let i = 0; i < 5900; i++) {
-      ctx.fillStyle = random() > .5 ? '#e7e8c442' : '#0c172243';
-      const size = .45 + random() ** 4 * (soft ? 5 : 2.5);
-      ctx.fillRect(random() * w, random() * h, size * 1.65, size);
-    }
-    if (soft) {
-      for (let i = 0; i < 540; i++) {
-        const x = random() * w;
-        const y = random() * h;
-        ctx.strokeStyle = i % 3 ? '#e6ebba33' : '#20352c68';
-        ctx.beginPath();
-        ctx.moveTo(x, y);
-        ctx.lineTo(x + random() * 4 - 2, y - 1 - random() * 4.5);
-        ctx.stroke();
-      }
-    }
-  });
-  texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
   texture.anisotropy = 4;
   return texture;
 }
 
 export function createWorld(container, reduceMotion) {
-  const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance', alpha: false });
+  const renderer = new THREE.WebGLRenderer({ antialias: false, powerPreference: 'high-performance', alpha: false });
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.setClearColor('#121c28');
   renderer.domElement.setAttribute('aria-hidden', 'true');
   container.append(renderer.domElement);
+  const pixelRenderer = createPixelRenderer(THREE, renderer);
 
   const scene = new THREE.Scene();
-  scene.fog = new THREE.Fog('#182532', 112, 196);
-  scene.add(new THREE.HemisphereLight('#bbd7ff', '#82706e', 1.68));
-  const moon = new THREE.DirectionalLight('#e0ebff', 1.55);
-  moon.position.set(-36, 67, 22);
-  scene.add(moon);
+  scene.fog = new THREE.FogExp2('#947686', .0045);
+  scene.add(new THREE.HemisphereLight('#a8bdf4', '#74596d', .96));
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure = 1.16;
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  renderer.shadowMap.autoUpdate = false;
+  const sun = new THREE.DirectionalLight('#ffbf88', 1.5);
+  sun.position.set(-48, 27, -38);
+  sun.castShadow = true;
+  Object.assign(sun.shadow.camera, { left: -65, right: 65, top: 65, bottom: -65, near: .5, far: 162 });
+  sun.shadow.mapSize.set(2048, 2048);
+  sun.shadow.normalBias = .05;
+  sun.shadow.bias = -.00025;
+  scene.add(sun);
+  for (const stage of venues) {
+    const wash = new THREE.PointLight(stage.color, 185, 27, 2);
+    wash.position.set(stage.x, 3.6, stage.z + 3.5);
+    scene.add(wash);
+  }
 
-  const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, .1, 247);
-  const cameraCenter = new THREE.Vector2();
-  let width = 1;
-  let height = 1;
-  let aspect = 1;
-  let view = 76;
-  let compact = false;
-  let positioned = false;
+  const rig = createCameraRig(THREE, container);
+  const camera = rig.camera;
+  let width = 1, height = 1;
   const point = new THREE.Vector3();
   const transform = new THREE.Object3D();
   const random = seededRandom(204);
@@ -97,11 +76,13 @@ export function createWorld(container, reduceMotion) {
   const rock = new THREE.IcosahedronGeometry(.5, 0);
   const cone = new THREE.ConeGeometry(.5, 1, 8);
   const canopy = new THREE.ConeGeometry(Math.SQRT1_2, 1, 4).rotateY(Math.PI / 4);
-  const disk = new THREE.CircleGeometry(.5, 24);
+  const shaftShape = new THREE.CylinderGeometry(.012, .5, 1, 32, 1, true);
   const plate = new THREE.PlaneGeometry(1, 1);
   const fence = new THREE.CylinderGeometry(.5, .5, 1, 5);
-  const staticLit = new THREE.MeshLambertMaterial();
+  const staticLit = new THREE.MeshStandardMaterial({ roughness: .62, metalness: .18 });
   const staticGlow = new THREE.MeshBasicMaterial();
+  const evergreen = spruceCrown(THREE);
+  const needles = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: .93, side: THREE.DoubleSide });
   const batches = new Map();
   const movingLights = [];
   const beamDirection = new THREE.Vector3();
@@ -115,7 +96,7 @@ export function createWorld(container, reduceMotion) {
   });
 
   function register(geometry, color, light = false) {
-    const material = light ? staticGlow : staticLit;
+    const material = geometry === evergreen ? needles : light ? staticGlow : staticLit;
     if (!batches.has(geometry)) batches.set(geometry, new Map());
     const batch = batches.get(geometry);
     if (!batch.has(material)) batch.set(material, []);
@@ -189,14 +170,14 @@ export function createWorld(container, reduceMotion) {
         void main() {
           float edge = abs(dot(normalize(viewNormal), normalize(viewRay)));
           float fade = smoothstep(0.03, 0.45, heightInCone);
-          float alpha = 0.37 * fade * pow(edge, 0.7);
+          float alpha = 0.095 * fade * pow(edge, 1.2);
           gl_FragColor = vec4(tint, alpha);
           #include <colorspace_fragment>
         }
       `,
       blending: THREE.AdditiveBlending, transparent: true, depthWrite: false, side: THREE.DoubleSide,
     });
-    const shaft = new THREE.Mesh(cone, material);
+    const shaft = new THREE.Mesh(shaftShape, material);
     const pool = floorSpot(color, aim[0], aim[1], spread * 1.72, spread * 1.45, .23, true);
     pool.position.y = .054;
     scene.add(shaft);
@@ -227,54 +208,32 @@ export function createWorld(container, reduceMotion) {
   }
 
   function sign(text, x, y, z, w, h, background, foreground = '#141a23', ground = false) {
-    const texture = makeTexture(1024, 192, (ctx, width, height) => {
+    const texture = makeTexture(text.length * 8 + 12, 12, (ctx, width, height) => {
       if (background) {
         ctx.fillStyle = background;
         ctx.fillRect(0, 0, width, height);
         ctx.fillStyle = foreground;
-        for (const side of [0, width - 78]) {
-          ctx.beginPath();
-          ctx.moveTo(side + 15, height);
-          ctx.lineTo(side + 40, height);
-          ctx.lineTo(side + 78, 0);
-          ctx.lineTo(side + 53, 0);
-          ctx.closePath();
-          ctx.fill();
-        }
+        for (const side of [0, width - 5]) for (let row = 0; row < height; row++)
+          ctx.fillRect(side + 3 - Math.floor(row / 4), row, 2, 1);
       }
       ctx.fillStyle = foreground;
       ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.font = '800 148px "Barlow Condensed", Impact, sans-serif';
-      ctx.fillText(text, width / 2, height * .465, width * .81);
+      ctx.textBaseline = 'alphabetic';
+      ctx.font = '400 8px "Press Start 2P", monospace';
+      ctx.fillText(text, width / 2, 10);
     });
+    texture.magFilter = THREE.NearestFilter;
+    texture.minFilter = THREE.NearestMipmapNearestFilter;
     panel(texture, x, y, z, w, h, { ground });
   }
 
   function cover(venue, x, y, z, w, h) {
     box('#171e2c', x, y, z - .12, w + .6, h + .6, .48);
     box(venue.color, x, y - h / 2 - .27, z + .1, w + .7, .09, .12, true);
-    const tex = new THREE.TextureLoader().load(venue.cover);
-    tex.colorSpace = THREE.SRGBColorSpace;
-    tex.anisotropy = 4;
-    panel(tex, x, y, z + .16, w, h, { color: '#d2d6e1' });
+    panel(stageMural(THREE, venue.id), x, y, z + .16, w, h);
   }
 
-  const grass = new THREE.MeshLambertMaterial({ map: groundTexture(123, true), color: '#43706a' });
-  const pathMaterial = new THREE.MeshLambertMaterial({ map: groundTexture(111, false), color: '#94745d' });
-
-  function surface(mat, x, y, z, w, d, scale) {
-    const geometry = new THREE.PlaneGeometry(w, d);
-    const uv = geometry.attributes.uv;
-    for (let i = 0; i < uv.count; i++) uv.setXY(i, (x + uv.getX(i) * w) / scale, (z + uv.getY(i) * d) / scale);
-    const mesh = new THREE.Mesh(geometry, mat);
-    mesh.rotation.x = -halfPi;
-    mesh.position.set(x, y, z);
-    scene.add(mesh);
-  }
-
-  surface(grass, 0, 0, 0, 248, 221, 18);
-  paths.forEach(({ x, z, width: w, depth: d }, i) => surface(pathMaterial, x, .014 + .003 * i, z, w, d, 9));
+  addTerrain(THREE, scene);
 
   function strip(x, z, width, depth, color, light = true) {
     box(color, x, .056, z, width, .025, depth, light);
@@ -286,21 +245,9 @@ export function createWorld(container, reduceMotion) {
   for (const side of [-1, 1]) {
     for (let x = 6; x < 27; x += 2.5) strip(x * side, 13.95, 1.15, .075, '#c7ada0', false);
   }
-  for (let i = 0; i < 1050; i++) {
-    const x = -59 + random() * 118;
-    const z = -44 + random() * 91;
-    if (paths.some(p => Math.abs(x - p.x) < p.width / 2 && Math.abs(z - p.z) < p.depth / 2)) continue;
-    const length = .15 + random() ** 3 * .64;
-    const color = ['#3c5555', '#4c6559', '#51665e', '#2a4044', '#69695b'][Math.floor(random() * 5)];
-    prop(cube, color, x, .032, z, length, .038, length * .38, random() * tau);
-  }
-
   function pine(x, z, size, variant) {
     prop(post, '#343b3b', x, size * .18, z, size * .14, size * .36, size * .14);
-    const greens = variant < .51 ? ['#213b3c', '#2a4847', '#365651'] : ['#293b48', '#394b52', '#405961'];
-    for (let i = 0; i < 3; i++) {
-      prop(cone, greens[i], x, size * (.45 + i * .21), z, size * (.70 - i * .14), size * .48, size * (.70 - i * .14), variant * tau);
-    }
+    prop(evergreen, variant < .5 ? '#798b78' : '#697e75', x, 0, z, size, size, size, variant * tau);
   }
 
   for (const [x, z, size] of trees) {
@@ -344,7 +291,9 @@ export function createWorld(container, reduceMotion) {
   railing(-51, 43, -5, 43, '#7b827e', 12);
   railing(5, 43, 51, 43, '#7b827e', 12);
 
+  const bulbs = [];
   for (const [x, z] of lanterns) {
+    bulbs.push(x, 5.38, z);
     prop(tube, '#414b53', x, .18, z, .65, .36, .65);
     prop(post, '#5d6570', x, 2.74, z, .17, 5.3, .17);
     prop(tube, '#ffe1a5', x, 5.36, z, .36, .43, .36, 0, 0, true);
@@ -354,11 +303,13 @@ export function createWorld(container, reduceMotion) {
   for (const z of [-12, 3, 23, 39]) {
     const sag = x => 4.50 + (x / 8) ** 2 * .92;
     for (let x = -8; x < 8; x += 1) {
-      beam('#98877a', x, sag(x), z, x + 1, sag(x + 1), z, .047);
-      prop(round, x % 3 === 0 ? '#ffcf93' : '#ffedc3', x + .5, sag(x + .5) - .09, z, .20, .27, .20, 0, 0, true);
+      beam('#645a57', x, sag(x), z, x + 1, sag(x + 1), z, .027);
+      prop(round, x % 3 === 0 ? '#ffcf93' : '#ffedc3', x + .5, sag(x + .5) - .07, z, .102, .144, .102, 0, 0, true);
+      bulbs.push(x + .5, sag(x + .5) - .07, z);
     }
   }
 
+  const resizeGlow = festoonGlow(THREE, scene, bulbs);
   const pennant = new THREE.BufferGeometry();
   pennant.setAttribute('position', new THREE.Float32BufferAttribute([0, 0, 0, .52, -.89, 0, 1, 0, 0], 3));
   pennant.computeVertexNormals();
@@ -545,22 +496,6 @@ export function createWorld(container, reduceMotion) {
   fightingTent(venues[1]);
   raveClub(venues[2]);
 
-  const clothing = ['#d8ad80', '#a7bbb3', '#7784a5', '#9c8a9c', '#687d8c', '#994d69'];
-  for (const [baseX, baseZ, count] of [[-12, -16, 9], [13, -17, 8], [-27, 21, 7], [21, 22, 6]]) {
-    for (let i = 0; i < count; i++) {
-      const x = baseX + (random() - .5) * 7;
-      const z = baseZ + (random() - .5) * 5;
-      const r = random() * tau;
-      const h = .9 + random() * .34;
-      prop(disk, '#3a4246', x, .058, z, 1.2, 1, .71, 0, -halfPi);
-      for (const side of [-1, 1]) {
-        prop(post, '#323847', x + .16 * side, .35 * h, z, .24, .74 * h, .25, r);
-      }
-      prop(round, clothing[i % clothing.length], x, 1.05 * h, z, .84, .86 * h, .50, r);
-      prop(round, i % 3 === 0 ? '#aa7b69' : '#c69f89', x, 1.70 * h, z, .44, .49 * h, .47, r);
-    }
-  }
-
   for (const [geometry, materials] of batches) {
     for (const [material, instances] of materials) {
       const mesh = new THREE.InstancedMesh(geometry, material, instances.length);
@@ -568,111 +503,33 @@ export function createWorld(container, reduceMotion) {
         mesh.setMatrixAt(index, matrix);
         mesh.setColorAt(index, color);
       });
+      mesh.castShadow = mesh.receiveShadow = material !== staticGlow;
       scene.add(mesh);
     }
   }
 
-  const avatar = new THREE.Group();
-  const body = new THREE.Group();
-  body.scale.setScalar(1.13);
-  avatar.add(body);
-  scene.add(avatar);
-
-  function limb(parent, geometry, color, x, y, z, sx, sy, sz, light = false) {
-    const options = { color };
-    const material = light ? new THREE.MeshBasicMaterial(options) : new THREE.MeshLambertMaterial(options);
-    const mesh = new THREE.Mesh(geometry, material);
-    mesh.position.set(x, y, z);
-    mesh.scale.set(sx, sy, sz);
-    parent.add(mesh);
-    return mesh;
-  }
-
-  limb(body, round, '#c9ef76', 0, 1.30, 0, 1.04, 1.1, .66);
-  limb(body, round, '#a4c167', 0, 1.68, -.13, .77, .44, .62);
-  limb(body, round, '#cfa68b', 0, 1.99, .052, .61, .63, .62);
-  limb(body, round, '#1e2639', 0, 2.18, .01, .63, .35, .63);
-  limb(body, cube, '#2d3447', 0, 2.15, .32, .66, .09, .27);
-  limb(body, cube, '#ebf3cf', 0, 1.32, .336, .047, .56, .026, true);
-  limb(body, round, '#414d42', 0, 1.34, -.326, .7, .85, .34);
-
-  const arms = [];
-  const legs = [];
-  for (const side of [-1, 1]) {
-    const arm = new THREE.Group();
-    arm.position.set(side * .47, 1.52, 0);
-    arm.rotation.z = side * .13;
-    limb(arm, round, '#a2cc63', 0, -.31, 0, .37, .86, .4);
-    limb(arm, round, '#c39172', 0, -.69, 0, .235, .27, .24);
-    body.add(arm);
-    arms.push(arm);
-    const leg = new THREE.Group();
-    leg.position.set(side * .255, .97, 0);
-    limb(leg, round, '#35435d', 0, -.40, 0, .42, .91, .4);
-    limb(leg, round, '#f0ebd8', 0, -.88, .092, .43, .26, .66);
-    body.add(leg);
-    legs.push(leg);
-  }
-
-  const playerShadow = floorSpot('#0d1420', 0, 0, 3.6, 2.7, .75);
-  const playerRing = new THREE.Mesh(new THREE.RingGeometry(.88, .96, 28),
-    new THREE.MeshBasicMaterial({ color: '#ecfba8', transparent: true, opacity: .8, depthWrite: false }));
-  playerRing.rotation.x = -halfPi;
-  scene.add(playerRing);
-  const playerPin = limb(avatar, cone, '#edffae', 0, 2.98, 0, .54, .37, .54, true);
-  playerPin.rotation.z = Math.PI;
-
+  const animateStage = addStageArt(THREE, scene, venues, reduceMotion);
+  const animateScenery = addScenery(THREE, scene, reduceMotion);
+  const animateCharacters = addCharacters(THREE, scene, reduceMotion);
   const gateRing = new THREE.Mesh(new THREE.RingGeometry(1.55, 1.68, 36),
     new THREE.MeshBasicMaterial({ color: '#edffae', transparent: true, depthWrite: false }));
   gateRing.rotation.x = -halfPi;
   scene.add(gateRing);
-  let stride = 0;
-  let swing = 0;
+
+  let lastShadow = -Infinity;
 
   function resize() {
     width = Math.max(1, container.clientWidth);
     height = Math.max(1, container.clientHeight);
-    aspect = width / height;
-    compact = aspect < .95;
-    view = aspect < 1.38 ? 80 : 69;
-    camera.left = -view * aspect / 2;
-    camera.right = -camera.left;
-    camera.top = view / 2;
-    camera.bottom = -camera.top;
-    camera.updateProjectionMatrix();
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.55));
-    renderer.setSize(width, height, false);
-    positioned = false;
+    rig.resize(width / height);
+    resizeGlow(pixelRenderer.resize(width, height));
   }
 
   function frame(player, elapsed, time, marked, nearby) {
-    const xLimit = Math.max(0, grounds.maxX - view * aspect * .21);
-    const followX = THREE.MathUtils.clamp(player.x * (compact ? 1 : .38), -xLimit, xLimit);
-    const followZ = compact ? THREE.MathUtils.clamp(player.z - 26, -26, 15) : THREE.MathUtils.clamp(player.z * .26 - 5, -15, 9);
-    if (!positioned || reduceMotion) {
-      cameraCenter.set(followX, followZ);
-      positioned = true;
-    } else {
-      const smooth = 1 - Math.exp(-elapsed * 6.5);
-      cameraCenter.x += (followX - cameraCenter.x) * smooth;
-      cameraCenter.y += (followZ - cameraCenter.y) * smooth;
-    }
-    camera.position.set(cameraCenter.x + 11, 61, cameraCenter.y + 80);
-    camera.lookAt(cameraCenter.x, 0, cameraCenter.y);
-    avatar.position.set(player.x, .035, player.z);
-    avatar.rotation.y = player.heading;
-    stride += elapsed * player.speed * 2.65;
-    swing = THREE.MathUtils.lerp(swing, Math.min(player.speed / 7, .8), 1 - Math.exp(-elapsed * 22));
-    body.position.y = reduceMotion ? 0 : Math.abs(Math.sin(stride)) * swing * .21;
-    for (let i = 0; i < legs.length; i++) {
-      const turn = reduceMotion ? 0 : Math.sin(stride + i * Math.PI) * swing;
-      legs[i].rotation.x = turn;
-      arms[i].rotation.x = -turn * .8;
-    }
-    playerShadow.position.set(player.x, .065, player.z);
-    playerRing.position.set(player.x, .073, player.z);
-    playerPin.position.y = 2.92 + (reduceMotion ? 0 : Math.sin(time * 3.4) * .095);
-
+    rig.update(player, elapsed);
+    animateCharacters(player, elapsed, time, rig.overview, camera);
+    animateScenery(time);
+    animateStage(time);
     const gate = nearby || marked;
     gateRing.visible = Boolean(gate);
     if (gate) {
@@ -681,14 +538,18 @@ export function createWorld(container, reduceMotion) {
       gateRing.material.opacity = reduceMotion ? .88 : .75 + Math.sin(time * 3.6) * .2;
     }
     animateLights(reduceMotion ? 0 : time);
-    renderer.render(scene, camera);
+    if (time - lastShadow >= 1 / 18) {
+      renderer.shadowMap.needsUpdate = true;
+      lastShadow = time;
+    }
+    pixelRenderer.draw(scene, camera);
   }
 
   function project(x, y, z) {
     point.set(x, y, z).project(camera);
-    return { x: (point.x + 1) * width / 2, y: (1 - point.y) * height / 2 };
+    return { inFront: point.z >= -1 && point.z <= 1, x: (point.x + 1) * width / 2, y: (1 - point.y) * height / 2 };
   }
 
   resize();
-  return { resize, frame, project };
+  return { resize, frame, project, rig };
 }

@@ -4,10 +4,17 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#11151b">
-  <meta name="description" content="Verken het Skumic-festivalterrein en wandel naar Crowd Surfing, Stage Fighters en Skumic Rave Rush.">
+  <meta name="description" content="Verken het Skumic-festival in pixelart en wandel naar Crowd Surfing, Stage Fighters en Skumic Rave Rush.">
   <link rel="canonical" href="https://codeflowstudios.be/festival/">
   <link rel="icon" href="/skumic/assets/logo.webp" type="image/webp">
-  <link rel="stylesheet" href="/festival/style.css">
+  <link rel="stylesheet" href="/festival/style.css?v=pixel-01">
+  <script type="importmap">
+    { "imports": {
+      "/festival/world.js": "/festival/world.js?v=pixel-01",
+      "/festival/layout.js": "/festival/layout.js?v=pixel-01",
+      "/festival/flat-world.js": "/festival/flat-world.js?v=pixel-01"
+    } }
+  </script>
   <title>Skumic Festival</title>
 </head>
 <body>
@@ -33,6 +40,7 @@
         <div class="map-image"><canvas id="minimap" width="424" height="300" aria-label="Overzicht van de drie stands en je positie"></canvas><span class="north" aria-hidden="true">N</span></div>
         <div id="map-legend" aria-label="Kies een stand om aan te wijzen"></div>
       </div>
+      <button class="camera-toggle" id="camera-toggle" type="button" hidden>Vogelperspectief</button>
     </aside>
 
     <div class="bottom-ui">
@@ -40,7 +48,7 @@
         <div class="nearby-copy"><span id="nearby-type" class="eyebrow"></span><strong id="nearby-title"></strong></div>
         <button class="play-button" id="enter-game" type="button"><kbd>E</kbd><span>Speel</span></button>
       </div>
-      <div id="walk-hint" class="walk-hint">Loop naar een gamestand om te spelen</div>
+      <div id="walk-hint" class="walk-hint">Loop naar een podium om te spelen</div>
       <div class="keyboard" aria-label="Besturing">
         <span><kbd>ZQSD</kbd> <kbd>WASD</kbd> <kbd>↑↓←→</kbd> <span>Lopen</span></span>
         <span><kbd>Shift</kbd> <span>Rennen</span></span>
@@ -65,6 +73,6 @@
     </div>
     <div id="game-view" class="game-view"></div>
   </dialog>
-  <script type="module" src="/festival/main.js"></script>
+  <script type="module" src="/festival/main.js?v=pixel-01"></script>
 </body>
 </html>
