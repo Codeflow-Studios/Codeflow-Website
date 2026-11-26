@@ -56,9 +56,9 @@ export default function GameShowcase({ lang }: { lang: Language }) {
         </div>
       </article>
       <article className="game-card bluvn-card">
-        <div className="game-card-media"><img src="/games/bluvn-goan/assets/stage.png" alt={en ? 'Concert venue artwork from Skumic Rave Rush' : 'Concertomgeving uit Skumic Rave Rush'} width="1672" height="941" loading="lazy" /><span className="game-badge">WEB · SKUMIC SOUNDTRACK</span></div>
+        <div className="game-card-media"><img src="/games/bluvn-goan/assets/stage.png" alt={en ? 'Concert venue artwork from Rave Rush' : 'Concertomgeving uit Rave Rush'} width="1672" height="941" loading="lazy" /><span className="game-badge">WEB · SKUMIC SOUNDTRACK</span></div>
         <div className="game-card-copy">
-          <div className="game-card-number">05</div><Music2 size={24} /><h3>Skumic Rave Rush</h3>
+          <div className="game-card-number">05</div><Music2 size={24} /><h3>Rave Rush</h3>
           <p>{en ? 'Keep flying with Skumic, Gauthier or Matar. Dodge zappers and missiles, ride the Raveboard and power up the Bass Mech. Drops in the Skumic soundtrack trigger ten seconds of invincibility.' : 'Vlieg met Skumic, Gauthier of Matar. Ontwijk zappers en raketten, pak de Raveboard en stap in de Bass Mech. Drops in de Skumic-soundtrack geven tien seconden onverwoestbaarheid.'}</p>
           <div className="game-card-tags"><span>{en ? 'Browser game' : 'Browsergame'}</span><span>3 {en ? 'characters' : 'personages'}</span><span>{en ? 'Keyboard & touch' : 'Toetsenbord & touch'}</span></div>
           <a className="button game-launch" href="/bluvn-goan/">{en ? 'Play Rave Rush' : 'Speel Rave Rush'}<ArrowUpRight size={18} /></a>

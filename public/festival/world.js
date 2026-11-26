@@ -491,7 +491,7 @@ export function createWorld(container, reduceMotion) {
     const tunnel = new THREE.TorusGeometry(3.27, .16, 8, 12, Math.PI);
     for (let i = 0; i < 4; i++) prop(tunnel, i % 2 ? '#e1b8fa' : color, x, 1.0, z + 4.1 - i, 1.23, 1, 1, 0, 0, true);
     box(ink, x, 6.77, z + 4.03, 13.28, 1.03, .48);
-    sign('SKUMIC RAVE RUSH', x, 6.77, z + 4.29, 12.9, .93, color);
+    sign('RAVE RUSH', x, 6.77, z + 4.29, 12.9, .93, color);
     for (let i = -4; i <= 4; i++) strip(x + i * .74, z + 4.75, .37, 1.52, i % 2 ? '#aaa5fd' : '#e1b8fa');
     spotlight('#c6a2ff', [x - 7.1, 6.05, z + 4.63], [x + 3.6, z + 12.7], 4.05, 4.1);
     spotlight('#8c9bff', [x + 7.1, 6.05, z + 4.63], [x - 3.7, z + 12], 4.3, 2.1);
