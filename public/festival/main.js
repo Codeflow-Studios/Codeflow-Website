@@ -26,6 +26,7 @@ const signs = new Map();
 const legend = new Map();
 const stick = { x: 0, z: 0, pointer: null };
 const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const touchControls = matchMedia('(pointer: coarse)');
 const northKeys = ['arrowup', 'z', 'w'];
 const southKeys = ['arrowdown', 's'];
 const westKeys = ['arrowleft', 'q', 'a'];
@@ -34,8 +35,27 @@ const movementKeys = [...northKeys, ...southKeys, ...westKeys, ...eastKeys, 'shi
 let marked = null;
 let nearby = null;
 let lastFrame = 0;
+let rig;
+
+function updateLookHint() {
+  const hint=$('walk-hint');
+  if (!rig) return;
+  if (rig.overview) hint.textContent = 'Kies een podium op de plattegrond';
+  else if (document.pointerLockElement === worldElement) hint.textContent = 'Muis om rond te kijken · Scroll om te zoomen · Esc voor cursor';
+  else if (touchControls.matches) hint.textContent = 'Loop met de joystick · Veeg om rond te kijken';
+  else if (worldElement.requestPointerLock) hint.textContent = 'Klik op het terrein om rond te kijken · Scroll om te zoomen';
+  else hint.textContent = 'Loop naar een podium · Scroll om te zoomen';
+}
+function toggleOverview() {
+  if (!rig) return;
+  clearInput();
+  $('camera-toggle').textContent = rig.toggle() ? 'Terug naar speler' : 'Vogelperspectief';
+  updateLookHint();
+  worldElement.focus({preventScroll:true});
+}
 
 function setMap(open) {
+  rig?.releaseLook();
   mapToggle.setAttribute('aria-expanded', String(open));
   mapContent.hidden = !open;
 }
@@ -56,6 +76,7 @@ function clearInput() {
 }
 
 function showArtistPicker() {
+  rig?.releaseLook();
   clearInput();
   player.speed = 0;
   $('cancel-artist').hidden = !player.artist;
@@ -163,6 +184,7 @@ refreshStops();
 function enterGame() {
   if (!nearby || gameDialog.open || artistDialog.open) return;
   const game = nearby;
+  rig?.releaseLook();
   $('game-title').textContent = game.title;
   $('game-input-note').hidden = !game.keyboard;
   const frame = document.createElement('iframe');
@@ -189,6 +211,16 @@ $('enter-game').addEventListener('click', enterGame);
 window.addEventListener('keydown', event => {
   if (gameDialog.open || artistDialog.open || event.altKey || event.ctrlKey || event.metaKey) return;
   const key = event.key.toLowerCase();
+  if ((key === 'escape' || key === 'tab') && document.pointerLockElement === worldElement) {
+    rig?.releaseLook();
+    clearInput();
+    return;
+  }
+  if (key === 'm' && rig && !event.repeat) {
+    event.preventDefault();
+    toggleOverview();
+    return;
+  }
   if (movementKeys.includes(key)) {
     event.preventDefault();
     held.add(key);
@@ -199,8 +231,20 @@ window.addEventListener('keydown', event => {
   }
 });
 window.addEventListener('keyup', event => held.delete(event.key.toLowerCase()));
-window.addEventListener('blur', clearInput);
-document.addEventListener('visibilitychange', clearInput);
+function leaveWorld() {
+  clearInput();
+  rig?.releaseLook();
+}
+window.addEventListener('blur', leaveWorld);
+document.addEventListener('visibilitychange', () => { if (document.hidden) leaveWorld(); });
+document.addEventListener('pointerlockchange', () => {
+  if (!document.pointerLockElement) clearInput();
+  updateLookHint();
+});
+worldElement.addEventListener('lookunavailable', () => {
+  $('walk-hint').textContent = 'Vrij rondkijken niet actief · Klik opnieuw op het terrein';
+});
+touchControls.addEventListener('change', updateLookHint);
 
 function walk(elapsed, yaw) {
   const pressed = keys => Number(keys.some(key => held.has(key)));
@@ -267,14 +311,13 @@ async function start() {
     $('notice').hidden = false;
   }
   const drawMap = createMap($('minimap'));
-  if (world.rig) {
+  rig = world.rig;
+  if (rig) {
     const cameraButton = $('camera-toggle');
     cameraButton.hidden = false;
-    cameraButton.addEventListener('click', () => {
-      cameraButton.textContent = world.rig.toggle() ? 'Terug naar speler' : 'Vogelperspectief';
-      worldElement.focus({ preventScroll: true });
-    });
-    $('walk-hint').textContent = 'Loop naar een podium · Sleep om rond te kijken';
+    $('map-shortcut').hidden = false;
+    cameraButton.addEventListener('click', toggleOverview);
+    updateLookHint();
   }
   new ResizeObserver(() => world.resize()).observe(worldElement);
 

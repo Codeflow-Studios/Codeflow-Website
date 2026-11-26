@@ -111,7 +111,7 @@ a:focus-visible, button:focus-visible { outline: 2px solid var(--lime); outline-
 .artist-card[data-artist="matar"] { --artist-ink: #f0ba82; background-color: #57404a; }
 .artist-card img {
   align-self: end; display: block; width: 100%; height: clamp(108px, 21vh, 175px);
-  margin-top: 8px; object-fit: contain; image-rendering: pixelated;
+  margin-top: 8px; object-fit: contain;
 }
 .artist-card strong {
   display: block; width: 100%; padding: 9px 3px; background: var(--ink); color: var(--artist-ink);

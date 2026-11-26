@@ -7,15 +7,17 @@
   <meta name="description" content="Verken als Gauthier of Matar een 3D-festival in 128-bit-consolestijl en wandel naar de drie Skumic-games.">
   <link rel="canonical" href="https://codeflowstudios.be/festival/">
   <link rel="icon" href="/skumic/assets/logo.webp" type="image/webp">
-  <link rel="stylesheet" href="/festival/style.css?v=artists-01">
+  <link rel="stylesheet" href="/festival/style.css?v=festival-artists-02">
   <script type="importmap">
     { "imports": {
       "/festival/world.js": "/festival/world.js?v=console-128",
+      "/festival/camera.js": "/festival/camera.js?v=festival-artists-02",
+      "/festival/artist-head.js": "/festival/artist-head.js?v=festival-artists-02",
       "/festival/layout.js": "/festival/layout.js?v=open-paths",
       "/festival/flat-world.js": "/festival/flat-world.js?v=artists-01",
       "/festival/characters.js": "/festival/characters.js?v=console-128",
       "/festival/pixel-renderer.js": "/festival/pixel-renderer.js?v=console-128",
-      "/festival/performer-model.js": "/festival/performer-model.js?v=console-128",
+      "/festival/performer-model.js": "/festival/performer-model.js?v=festival-artists-02",
       "/festival/stage-art.js": "/festival/stage-art.js?v=console-128",
       "/festival/console-lighting.js": "/festival/console-lighting.js?v=console-128",
       "/festival/crowd-models.js": "/festival/crowd-models.js?v=console-128",
@@ -26,7 +28,7 @@
 </head>
 <body>
   <main id="festival">
-    <div id="world" tabindex="0" role="region" aria-label="Festivalterrein. Loop met de pijltjestoetsen, ZQSD of WASD en druk bij een stand op E."></div>
+    <div id="world" tabindex="0" role="region" aria-label="Festivalterrein" aria-describedby="walk-hint keyboard-help"></div>
     <div class="vignette" aria-hidden="true"></div>
     <div id="world-signs" aria-label="Gamestands"></div>
 
@@ -59,10 +61,11 @@
         <button class="play-button" id="enter-game" type="button"><kbd>E</kbd><span>Speel</span></button>
       </div>
       <div id="walk-hint" class="walk-hint">Loop naar een podium om te spelen</div>
-      <div class="keyboard" aria-label="Besturing">
+      <div class="keyboard" id="keyboard-help" aria-label="Besturing">
         <span><kbd>ZQSD</kbd> <kbd>WASD</kbd> <kbd>↑↓←→</kbd> <span>Lopen</span></span>
         <span><kbd>Shift</kbd> <span>Rennen</span></span>
         <span><kbd>E</kbd> <span>Spelen</span></span>
+        <span id="map-shortcut" hidden><kbd>M</kbd> <span>Kaart</span></span>
       </div>
     </div>
 
@@ -79,11 +82,11 @@
     </div>
     <div class="artist-lineup">
       <button type="button" class="artist-card" data-artist="gauthier">
-        <img src="/festival/avatars/gauthier.png" alt="" width="128" height="150">
+        <img src="/festival/avatars/gauthier-card.webp" alt="" width="400" height="430">
         <strong>Gauthier</strong>
       </button>
       <button type="button" class="artist-card" data-artist="matar">
-        <img src="/festival/avatars/matar.png" alt="" width="128" height="150">
+        <img src="/festival/avatars/matar-card.webp" alt="" width="400" height="430">
         <strong>Matar</strong>
       </button>
     </div>
@@ -100,6 +103,6 @@
     </div>
     <div id="game-view" class="game-view"></div>
   </dialog>
-  <script type="module" src="/festival/main.js?v=arcade-32"></script>
+  <script type="module" src="/festival/main.js?v=festival-artists-02"></script>
 </body>
 </html>

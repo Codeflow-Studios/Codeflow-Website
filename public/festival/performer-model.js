@@ -1,11 +1,24 @@
+import { addArtistHead } from './artist-head.js';
+
 // The sculpt is assembled in joint-local space. Every rigid section shares
 // one vertex-coloured surface for its fabric, skin, seams and accessories.
 export function createPerformer(THREE, scene) {
   const surface = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: .82, metalness: .035 });
   // Keep dark fabric and facial features readable in the long shadows across the midway.
   surface.onBeforeCompile = shader => {
-    shader.fragmentShader = shader.fragmentShader.replace('#include <opaque_fragment>',
-      'outgoingLight += diffuseColor.rgb * 0.35;\n#include <opaque_fragment>');
+    shader.vertexShader = shader.vertexShader
+      .replace('#include <common>', '#include <common>\nvarying vec3 garmentPosition;')
+      .replace('#include <begin_vertex>', '#include <begin_vertex>\ngarmentPosition = position;');
+    shader.fragmentShader = shader.fragmentShader
+      .replace('#include <common>', '#include <common>\nvarying vec3 garmentPosition;')
+      .replace('#include <opaque_fragment>', `
+        float pitch = length(fwidth(garmentPosition)) * 160.;
+        float weave = cos(garmentPosition.y*155. + garmentPosition.x*101.) *
+                      cos(garmentPosition.z*159. - garmentPosition.x*113.);
+        float grain = weave * (1. - smoothstep(.35,1.4,pitch));
+        float darkFabric = 1. - smoothstep(.105,.27,diffuseColor.r);
+        outgoingLight = (outgoingLight + diffuseColor.rgb * .35) * (1. + grain * darkFabric * .09);
+        #include <opaque_fragment>`);
   };
   const tau = Math.PI * 2;
   const position = new THREE.Vector3(), normal = new THREE.Vector3(), color = new THREE.Color();
@@ -78,6 +91,40 @@ export function createPerformer(THREE, scene) {
       }
       place(tube, tint, 0, 0, 0);
     }
+    // Tailored leather follows a series of cut edges. Narrow bevels catch the
+    // stage light, while a painted ridge gives even black cloth a readable fold.
+    function tailored(rows, outward, palette, relief = .012) {
+      const vertices = [], tints = [], indices = [];
+      const direction = new THREE.Vector3(...outward).normalize();
+      for (const [ax, ay, az, bx, by, bz] of rows) {
+        for (const [u, fold, shade] of [[0,0,0],[.12,.5,1],[.46,1,2],[.89,.38,1],[1,0,0]]) {
+          vertices.push(ax+(bx-ax)*u+direction.x*relief*fold,
+            ay+(by-ay)*u+direction.y*relief*fold,
+            az+(bz-az)*u+direction.z*relief*fold);
+          color.set(palette[shade]);
+          tints.push(color.r,color.g,color.b);
+        }
+      }
+      const across = new THREE.Vector3().fromArray(vertices,12).sub(new THREE.Vector3().fromArray(vertices));
+      const along = new THREE.Vector3().fromArray(vertices,15).sub(new THREE.Vector3().fromArray(vertices));
+      const reverse = across.cross(along).dot(direction) < 0;
+      for (let row=1; row<rows.length; row++) for (let col=0; col<4; col++) {
+        const a=(row-1)*5+col, b=a+1, c=a+5, d=c+1;
+        indices.push(...(reverse ? [a,c,b,b,c,d] : [a,b,c,b,d,c]));
+      }
+      const patch = new THREE.BufferGeometry();
+      patch.setAttribute('position',new THREE.Float32BufferAttribute(vertices,3));
+      patch.setIndex(indices);
+      patch.computeVertexNormals();
+      const axes = patch.getAttribute('normal');
+      for (const index of indices) {
+        const offset=index*3;
+        points.push(vertices[offset],vertices[offset+1],vertices[offset+2]);
+        normals.push(axes.getX(index),axes.getY(index),axes.getZ(index));
+        colors.push(tints[offset],tints[offset+1],tints[offset+2]);
+      }
+      patch.dispose();
+    }
     function finish() {
       const g=new THREE.BufferGeometry();
       for (const [name,data] of [['position',points],['normal',normals],['color',colors]]) {
@@ -87,93 +134,33 @@ export function createPerformer(THREE, scene) {
       node.add(mesh);
       return mesh;
     }
-    return { shell, slab, facet, seam, finish };
-  }
-
-  // Curved patches project the artist illustration onto the sculpted face and shirt.
-  function portrait(head, chest, fallback, matar) {
-    const rows = matar ? [
-      [-.017,.086,.111,.040,78,108,9], [.023,.147,.144,.036,74,108,14],
-      [.086,.172,.158,.029,66,108,17], [.155,.190,.170,.019,58,107,20],
-      [.215,.199,.173,.012,47,107,21], [.272,.202,.173,.004,38,107,22],
-      [.299,.198,.169,.001,33,107,21],
-    ] : [
-      [-.029,.091,.118,.041,90,111,8], [.013,.145,.142,.041,84,111,15],
-      [.079,.171,.154,.033,73,110,20], [.155,.191,.170,.020,59,109,22],
-      [.216,.199,.173,.013,46,109,23], [.275,.201,.172,.002,39,109,24],
-      [.329,.198,.169,-.006,32,109,23],
-    ];
-    const shirtRows = [
-      [.015,matar?.328:.295,.213,0,212,115,34], [.10,matar?.318:.285,.205,0,198,115,39],
-      [.33,matar?.304:.271,.191,0,166,115,40], [.56,.325,.209,0,133,114,42],
-      [.69,.373,.204,0,110,114,42], [.737,.356,.183,0,99,114,31],
-    ];
-    function projectArtwork(parent, rings, isFace) {
-      const coords=[], uvs=[], shades=[], triangles=[];
-      const columns=18;
-      for (let r=0; r<rings.length; r++) {
-        const [y,rx,rz,shift,imageY,imageX,span]=rings[r];
-        for (let c=0; c<=columns; c++) {
-          const u=c/columns, a=(2*u-1)*1.34;
-          const fold=isFace ? 1 : 1 + .039*(Math.cos(a*5+y*8)*.56 + Math.sin(a*3-y*6)*.44);
-          const x=Math.sin(a)*rx*fold;
-          const nose=Math.exp(-((x/.042)**2) - ((y-.154)/.082)**2)*.052;
-          const cheek=Math.exp(-(((Math.abs(x)-.11)/.048)**2) - ((y-.156)/.056)**2)*.012;
-          const relief=isFace ? nose+cheek : 0;
-          coords.push(x,y,shift+Math.cos(a)*rz*fold+.006+relief);
-          const width=isFace ? span : span*.89;
-          uvs.push((imageX+width*Math.sin(a)/Math.sin(1.34))/240,1-imageY/240);
-          const edge=Math.min(1,c/2,(columns-c)/2);
-          const border=isFace ? (r===0?.28:r===rings.length-1?.65:1)
-            : Math.min(.78, r*.44, (rings.length-1-r)*.44);
-          const alpha=edge*border;
-          shades.push(1,1,1,alpha);
-          if (r && c) {
-            const n=r*(columns+1)+c;
-            triangles.push(n-columns-2,n-columns-1,n,n-columns-2,n,n-1);
-          }
-        }
-      }
-      const geo=new THREE.BufferGeometry();
-      geo.setAttribute('position',new THREE.Float32BufferAttribute(coords,3));
-      geo.setAttribute('uv',new THREE.Float32BufferAttribute(uvs,2));
-      geo.setAttribute('color',new THREE.Float32BufferAttribute(shades,4));
-      geo.setIndex(triangles);geo.computeVertexNormals();
-      const mat=new THREE.MeshStandardMaterial({vertexColors:true,transparent:true,roughness:.88,metalness:0,
-        emissive:0xffffff,emissiveIntensity:.25,depthWrite:false});
-      const mesh=new THREE.Mesh(geo,mat);
-      parent.add(mesh);
-      mesh.visible=false;
-      return mesh;
-    }
-    const face=projectArtwork(head, rows, true);
-    const clothing=projectArtwork(chest, shirtRows, false);
-    const file=matar?'matar.png':'gauthier.png';
-    const map=new THREE.TextureLoader().load('/festival/avatars/'+file,()=>{
-      map.colorSpace=THREE.SRGBColorSpace;
-      for (const mesh of [face,clothing]) {
-        mesh.material.map=mesh.material.emissiveMap=map;
-        mesh.material.needsUpdate=true;
-        mesh.visible=true;
-      }
-      fallback.visible=false;
-    });
+    return { shell, slab, facet, seam, tailored, finish };
   }
 
   function build(matar) {
     const root=joint(scene,0,0,0), pelvis=joint(root,0,1.20,0), chest=joint(pelvis,0,.04,0);
     const head=joint(chest,0,.91,.01);
     const skin=matar?'#df986e':'#d58e68', skinLight=matar?'#efad81':'#e3a478';
-    const hair=matar?'#222430':'#503b36', eye='#33303b', shirt=matar?'#34343d':'#343847';
+    const shirt=matar?'#34343d':'#343847';
+    const leather = matar ? ['#342b35','#594349','#79564e'] : ['#242d39','#35434e','#4c5d66'];
+    const steel = matar ? ['#534047','#886950','#c39a69'] : ['#374450','#687880','#9baba8'];
+    const lining = matar ? '#8a504a' : '#4f7780';
     let s=sculpt(pelvis);
     s.shell([[-.18,.265,.185],[.00,.29,.194],[.14,.255,.177]],'#373849');
-    s.slab('#292b38',0,.07,.025,.54,.075,.33);
-    s.slab('#85818a',0,.065,.187,.088,.046,.02);
+    s.shell([[-.093,.281,.202],[-.074,.293,.211],[-.010,.302,.215],[.008,.291,.208]],leather[1],20);
+    s.shell([[-.075,.295,.214],[-.062,.297,.216]],leather[2],20);
+    s.slab(steel[1],0,-.035,.216,.121,.079,.023);
+    s.slab(leather[0],0,-.035,.231,.084,.045,.012);
+    s.slab(steel[2],-.002,-.031,.240,.064,.011,.009);
+    for (const side of [-1,1]) {
+      s.slab(steel[1],side*.182,-.031,-.170,.036,.080,.018,0,side*.55);
+      s.slab(leather[2],side*.199,-.038,.158,.035,.081,.028,0,side*.65);
+    }
     s.finish();
     s=sculpt(chest);
     const hem=matar?.318:.285;
     s.shell([[-.046,hem,.202],[.01,hem+.011,.209],[.10,hem,.203],[.33,hem-.014,.189],[.56,.325,.207],[.69,.373,.202],[.747,.356,.180],[.79,.257,.146],[.816,.177,.127]],shirt,24,.039);
-    s.shell([[.77,.16,.130],[.85,.149,.119],[.96,.134,.116]],skin);
+    if (!matar) s.shell([[.77,.16,.130],[.85,.149,.119],[.96,.134,.116]],skin);
     s.shell([[-.046,hem+.004,.204],[-.024,hem+.01,.211]],'#292d38',24,.039);
     if (!matar) {
       s.shell([[.63,.263,.183,-.015],[.69,.261,.197,-.022],[.74,.232,.185,-.013],[.82,.183,.154],[.868,.148,.13]],'#2d303d',24,.054);
@@ -192,57 +179,80 @@ export function createPerformer(THREE, scene) {
     for(const side of [-1,1]) {
       s.seam('#484a55',[[side*.134,.777,-.10],[side*.218,.764,-.105],[side*.318,.719,-.086]],.011);
     }
-    s.finish();
-    s=sculpt(head);
-    s.shell([[-.045,.093,.11,.035],[.005,.145,.133,.040],[.12,.185,.159,.015],[.27,.194,.161],[.36,.185,.159],[.426,.127,.119]],skin,20);
-    for (const side of [-1,1]) {
-      s.facet(skinLight,side*.184,.185,-.01,.038,.064,.039,side*.11,1);
-      s.slab('#ad6d58',side*.191,.189,.013,.025,.048,.014);
-    }
-    s.finish();
-    s=sculpt(head);
-    for (const side of [-1,1]) {
-      s.slab(hair,side*.082,.251,.159,.085,.025,.018,side*.12);
-      s.slab('#d6b8aa',side*.082,.220,.168,.068,.025,.013,side*.06);
-      s.slab(eye,side*.078,.220,.177,.025,.028,.012);
-      s.slab('#dddfcd',side*.078-.004,.228,.185,.009,.009,.005);
-    }
-    s.facet(skinLight,0,.161,.168,.047,.067,.065);
-    s.slab('#975e55',.001,.079,.177,.078,.014,.010);
-    const fallbackFace=s.finish();
-    s=sculpt(head);
     if (matar) {
-      s.shell([[.265,.218,.188,-.005],[.31,.222,.19,-.005],[.389,.205,.183,-.017],[.441,.164,.151,-.021],[.472,.115,.115,-.025],[.487,.029,.034,-.022]],'#292b38',24);
-      s.shell([[.262,.224,.193,-.005],[.289,.225,.193,-.005]],'#41414c',24);
-      s.facet('#353844',0,.281,-.206,.211,.029,.148,0,1);
-      s.facet('#383944',0,.487,-.024,.029,.012,.029,0,1);
-      for(const side of [-1,1]) {
-        s.seam('#50515b',[[side*.014,.484,-.023],[side*.125,.454,-.085],[side*.174,.392,-.120],[side*.183,.295,-.113]],.008);
+      // A broad crossed harness sits over the tour shirt and follows the spine.
+      for (const side of [-1,1]) {
+        s.tailored([
+          [side*.215,.757,-.134, side*.307,.712,-.125],
+          [side*.123,.597,-.205, side*.204,.574,-.178],
+          [side*.012,.427,-.216, side*.084,.410,-.209],
+          [-side*.096,.278,-.196, -side*.032,.245,-.203],
+          [-side*.201,.113,-.159, -side*.132,.086,-.190],
+        ],[0,0,-1],leather,.013);
+        s.tailored([
+          [side*.307,.712,-.125, side*.338,.679,-.073],
+          [side*.298,.768,-.047, side*.349,.727,-.014],
+          [side*.283,.763,.063, side*.332,.726,.094],
+          [side*.237,.688,.149, side*.303,.663,.123],
+          [side*.233,.61,.158, side*.285,.602,.137],
+        ],[side,.75,0],leather,.009);
+        s.slab(steel[1],side*.176,.59,-.198,.095,.029,.026,-side*.55,-side*.30);
+        s.slab(steel[2],side*.230,.685,.151,.053,.017,.013,-side*.24,side*.45);
       }
-      s.slab('#1c202a',0,.285,.184,.114,.027,.014);
-      for (const x of [-.035,0,.035]) s.slab('#848084',x,.287,.195,.009,.008,.004);
-      s.slab('#aeb0af',-.158,.335,-.118,.035,.046,.01,0,.85);
+      s.facet(steel[2],0,.403,-.238,.070,.061,.021,.78);
+      s.facet(leather[0],0,.403,-.253,.038,.033,.010,.78);
+      s.tailored([[-.227,.141,-.140,.227,.141,-.140],
+        [-.235,.089,-.139,.235,.089,-.139],
+        [-.183,.014,-.174,.183,.014,-.174]], [0,0,-1],leather,.085);
+      s.tailored([[.177,.732,.173,.249,.701,.158],[.094,.632,.200,.175,.603,.185],
+        [-.026,.491,.219,.045,.461,.217],[-.140,.354,.178,-.069,.326,.204],
+        [-.225,.198,.144,-.168,.161,.175],[-.266,.079,.122,-.201,.048,.163]],
+        [0,0,1],leather,.016);
+      s.slab(steel[1],.079,.566,.220,.081,.055,.019,.76);
+      s.slab(leather[0],.079,.566,.230,.050,.030,.010,.76);
+      for (const side of [-1,1]) {
+        s.tailored([[side*.270,.640,.154,side*.320,.648,.105],
+          [side*.255,.452,.133,side*.310,.463,.082],
+          [side*.236,.267,.139,side*.295,.248,.073],
+          [side*.251,.075,.148,side*.302,.066,.095]], [side*.55,0,1],leather,.012);
+      }
     } else {
-      s.facet('#453631',0,.222,-.107,.182,.129,.082,0,1);
-      s.shell([[.254,.203,.169,-.010],[.301,.211,.173,-.007],[.386,.195,.165,-.009],[.444,.126,.119],[.451,.045,.051]],hair,20);
-      for(let strand=-3;strand<=3;strand++) {
-        const x=strand*.044, rear=-.16+Math.abs(strand)*.013;
-        s.seam(strand%2?'#674b3d':'#594138',[[x*.84-.015,.223,rear],[x,.311,rear-.012],[x*.9+.02,.39,rear+.029],[x*.67+.023,.423,rear+.068]],.012);
+      // A short storm mantle parts around the hood and drapes over the shoulder blades.
+      for (const side of [-1,1]) {
+        s.tailored([
+          [side*.106,.791,-.131, side*.246,.773,-.115],
+          [side*.096,.735,-.222, side*.335,.704,-.108],
+          [side*.035,.645,-.223, side*.304,.642,-.139],
+          [side*.021,.578,-.215, side*.209,.604,-.177],
+          [side*.044,.527,-.209, side*.126,.543,-.200],
+        ],[side*.22,.2,-1],leather,.019);
+        s.seam(lining,[[side*.046,.529,-.218],[side*.125,.549,-.209],
+          [side*.206,.608,-.185],[side*.298,.641,-.145]],.014);
+        s.tailored([[side*.024,.511,-.210,side*.199,.541,-.181],
+          [side*.023,.311,-.193,side*.177,.344,-.161],
+          [side*.037,.047,-.208,side*.190,.073,-.168],
+          [side*.091,-.017,-.203,side*.174,.024,-.177]], [side*.22,0,-1],
+          ['#232933','#303d48','#404f5a'],.011);
+        s.facet(steel[1],side*.255,.655,-.179,.024,.018,.012);
+        s.tailored([[side*.153,.789,.122,side*.273,.753,.112],
+          [side*.177,.700,.189,side*.330,.671,.103],
+          [side*.220,.581,.162,side*.294,.577,.120],
+          [side*.193,.435,.158,side*.271,.441,.094],
+          [side*.194,.273,.152,side*.262,.282,.092],
+          [side*.128,.047,.193,side*.253,.069,.124],
+          [side*.145,-.029,.191,side*.233,.004,.142]],
+          [side*.32,0,1],leather,.019);
+        s.seam(lining,[[side*.185,.691,.196],[side*.221,.580,.172],
+          [side*.199,.449,.167]],.010);
+        for (const [y,z] of [[.386,.159],[.329,.158]]) {
+          s.slab(steel[1],side*.219,y,z,.044,.014,.014,side*.20,side*.58);
+        }
       }
-      for(let i=0;i<7;i++){
-        const x=(i-3)*.045;
-        s.facet(i%2?'#644638':'#75513d',x,.354+Math.cos(i)*.011,.117-Math.abs(x)*.38,.055,.088,.067,-.30,0);
-      }
-      s.facet('#634738',.08,.43,-.038,.116,.043,.119,-.17);
-      for(const side of [-1,1]){
-        s.slab('#805a48',side*.154,.08,.075,.048,.105,.084,side*-.25);
-        s.slab('#735144',side*.099,.034,.142,.076,.048,.027,side*.23);
-      }
-      s.facet('#735044',0,.017,.142,.093,.038,.031);
-      s.slab('#805442',0,.098,.175,.069,.012,.009);
+      s.slab(steel[1],0,.619,-.237,.056,.060,.017,.78);
+      s.slab(lining,0,.619,-.248,.034,.038,.009,.78);
     }
     s.finish();
-    portrait(head,chest,fallbackFace,matar);
+    addArtistHead(THREE,head,matar,sculpt);
     const arms=[],legs=[];
     for (const side of [-1,1]) {
       const shoulder=joint(chest,side*.343,.68,.0), elbow=joint(shoulder,side*.045,-.34,0);
@@ -250,6 +260,23 @@ export function createPerformer(THREE, scene) {
       const cuff=matar?.122:.098;
       s.shell([[-.362,cuff,cuff+.006,0,side*.046],[-.316,cuff+.006,cuff+.010,0,side*.043],[-.213,.122,.125,0,side*.03],[-.074,.139,.132,0,side*.012],[.026,.119,.111],[.072,.061,.064]],shirt,16,.04);
       s.shell([[-.363,cuff+.002,cuff+.008,0,side*.047],[-.342,cuff+.006,cuff+.011,0,side*.044]],'#42434f',16,.036);
+      if (side === (matar ? 1 : -1)) {
+        // Floating lames telescope down the sleeve when the arm swings.
+        for (let i=0; i<3; i++) {
+          const y=.037-i*.065, x=side*(.026+i*.007), r=.147+i*.007;
+          s.shell([[y-.044,r,.145,0,x],[y-.024,r+.012,.152,0,x],
+            [y+.028,r-.014,.134,0,x],[y+.056,r*.64,.091,0,x]],leather[i===0?2:1],12);
+          s.shell([[y-.043,r+.002,.147,0,x],[y-.031,r+.011,.153,0,x]],steel[0],12);
+        }
+        for (const z of [-.072,.072]) s.facet(steel[2],side*.183,-.059,z,.019,.019,.015);
+      } else {
+        s.shell([[-.279,.137,.132,0,side*.035],[-.262,.140,.138,0,side*.035],
+          [-.239,.134,.131,0,side*.034]],leather[1],16);
+        s.tailored([[side*.129,-.002,-.026,side*.123,-.002,.046],
+          [side*.159,-.117,-.055,side*.159,-.117,.061],
+          [side*.158,-.219,-.031,side*.163,-.206,.027]],
+          [side,0,0],leather);
+      }
       s.finish();
       s=sculpt(elbow);
       const forearm=matar?skin:shirt;
@@ -269,6 +296,23 @@ export function createPerformer(THREE, scene) {
         s.shell([[-.316,.067,.077,.056],[-.276,.078,.086,.05]],'#292d38');
         s.slab(side<0?'#834e54':'#48808a',side*.10,-.106,.012,.015,.092,.029);
       }
+      // The open inner edge leaves Matar's sleeve tattoos visible.
+      if (!matar || side>0) {
+        s.tailored([[side*.050,-.052,-.063, side*.100,-.067,.062],
+          [side*.047,-.119,-.066, side*.102,-.121,.065],
+          [side*.041,-.235,-.035, side*.080,-.246,.087],
+          [side*.026,-.282,-.023, side*.065,-.271,.076]],
+          [side,0,-.29],leather,.025);
+        for (const [y,r,z] of [[-.115,.101,.026],[-.252,.083,.047]]) {
+          s.shell([[y-.013,r,r+.006,z],[y+.014,r+.003,r+.009,z]],leather[1],14);
+          s.slab(steel[1],side*(r+.005),y,z-.012,.016,.026,.052);
+        }
+        s.seam(steel[1],[[side*.086,-.078,-.042],[side*.086,-.15,-.047],
+          [side*.069,-.232,-.021]],.008);
+      } else {
+        s.shell([[-.307,.071,.075,.053],[-.273,.078,.082,.05]],leather[0],14);
+        s.shell([[-.287,.076,.081,.052],[-.279,.079,.084,.052]],steel[1],14);
+      }
       s.facet(skinLight,0,-.353,.063,.061,.078,.067,0,1);
       s.facet(skin,-side*.045,-.356,.107,.028,.048,.029,side*.31,1);
       for(let finger=0;finger<4;finger++) {
@@ -285,15 +329,50 @@ export function createPerformer(THREE, scene) {
       }
       s.seam('#51525d',[[side*.10,-.037,-.101],[side*.136,-.120,-.073],[side*.15,-.20,-.044]],.009);
       s.seam('#494b57',[[side*.107,-.451,-.069],[side*.076,-.423,-.121],[-side*.038,-.396,-.144]],.012);
+      if (!matar) {
+        // The split coat skirts ride with their respective hip, clear of the knee joint.
+        s.tailored([[-side*.140,.08,-.210,side*.115,.055,-.143],
+          [-side*.118,-.076,-.207,side*.148,-.069,-.122],
+          [-side*.094,-.214,-.195,side*.155,-.237,-.101],
+          [-side*.030,-.379,-.184,side*.103,-.315,-.144]],
+          [side*.24,0,-1],leather,.023);
+        s.seam(lining,[[-side*.030,-.376,-.189],[side*.031,-.349,-.177],
+          [side*.105,-.310,-.150]],.012);
+      } else if (side<0) {
+        s.shell([[-.237,.151,.164],[-.215,.154,.168]],leather[1],16);
+        s.tailored([[side*.074,-.065,-.150,side*.130,-.060,-.088],
+          [side*.090,-.117,-.158,side*.154,-.102,-.081],
+          [side*.093,-.248,-.154,side*.156,-.236,-.073],
+          [side*.085,-.276,-.145,side*.143,-.263,-.080]], [side,0,-.75],leather,.030);
+        s.slab(steel[1],side*.123,-.135,-.154,.037,.029,.023,0,side*.65);
+      }
       s.finish();
       s=sculpt(knee);
       s.shell([[-.439,.102,.117,-.018],[-.358,.116,.125,-.024],[-.307,.112,.126,-.031],[-.174,.128,.132,-.021],[-.072,.119,.126],[.012,.12,.137,.007]],'#323541',16,.044);
-      s.shell([[-.418,.108,.120,-.016],[-.386,.112,.124,-.016]],'#464854');s.finish();
+      s.shell([[-.418,.108,.120,-.016],[-.386,.112,.124,-.016]],'#464854');
+      s.shell([[-.430,.104,.123,-.018],[-.375,.119,.136,-.022],
+        [-.286,.120,.138,-.027],[-.197,.132,.143,-.021]],leather[0],16);
+      s.shell([[-.226,.135,.146,-.022],[-.198,.136,.149,-.021]],leather[1],16);
+      s.tailored([[-.077,-.155,-.136,.079,-.155,-.136],
+        [-.115,-.201,-.105,.116,-.201,-.109],
+        [-.082,-.300,-.143,.086,-.296,-.140],
+        [-.048,-.401,-.143,.053,-.397,-.140]], [0,0,-1],leather,.064);
+      s.tailored([[-.073,-.143,.097,.075,-.143,.097],
+        [-.104,-.193,.081,.103,-.193,.082],
+        [-.063,-.284,.094,.066,-.279,.094],
+        [-.039,-.342,.106,.040,-.337,.105]], [0,0,1],leather,.045);
+      s.seam(lining,[[side*.071,-.169,-.149],[side*.088,-.214,-.145],
+        [side*.057,-.308,-.171]],.010);
+      s.slab(steel[1],side*.121,-.219,-.043,.021,.035,.066);
+      s.finish();
       s=sculpt(foot);
       s.shell([[-.109,.119,.214,.055],[-.074,.127,.219,.056],[-.033,.122,.213,.057],[.028,.104,.172,.030],[.071,.087,.105,-.015]],'#323641',18);
       s.shell([[-.115,.119,.214,.055],[-.098,.124,.219,.055],[-.086,.125,.22,.055]],'#797982',18);
       s.seam('#5b5d66',[[side*.108,-.043,.159],[side*.122,-.036,.059],[side*.107,-.008,-.029],[side*.08,-.001,-.085]],.013);
       s.seam('#5c5c69',[[-.052,.019,-.108],[0,.012,-.126],[.052,.019,-.108]],.011);
+      s.tailored([[-.069,.013,-.101,.069,.013,-.101],
+        [-.099,-.049,-.116,.099,-.049,-.116],
+        [-.103,-.084,-.116,.103,-.084,-.116]], [0,0,-1],leather,.048);
       for(let lace=0;lace<3;lace++) {
         const y=.020+lace*.014,z=.161-lace*.032;
         s.seam('#72717c',[[-.048,y-.009,z-.008],[0,y+.005,z],[.048,y-.009,z+.008]],.006);
