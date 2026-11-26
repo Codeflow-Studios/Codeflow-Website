@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="nl-BE">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#0a0710">
+  <meta name="description" content="Speel Crowd Surfing, Stage Fighters en Skumic Rave Rush.">
+  <meta property="og:title" content="SKUMIC Arcade — Speel alle Skumic-games">
+  <meta property="og:description" content="Speel Crowd Surfing, Stage Fighters en Skumic Rave Rush.">
+  <title>SKUMIC Arcade — Speel alle Skumic-games</title>
+  <link rel="icon" href="/skumic/assets/logo.webp" type="image/webp">
+  <link rel="stylesheet" href="/skumic/style.css?v=9bfa6a525c32">
+  <script src="/skumic/player.js?v=0d8d9014c37e" defer></script>
+<link rel="canonical" href="https://codeflowstudios.be/skumic/arcade/">
+<meta property="og:url" content="https://codeflowstudios.be/skumic/arcade/">
+</head>
+<body>
+<a class="skip" href="#main">Naar de inhoud</a>
+<header class="site-header">
+  <div class="wrap header-row">
+    <a class="brand" href="/skumic/" aria-label="Skumic startpagina"><img src="/skumic/assets/logo.webp" alt="" width="117" height="49"></a>
+    <nav aria-label="Hoofdnavigatie">
+      <a href="/skumic/#game">Game</a><a href="/skumic/#shop">Merch</a><a href="/skumic/arcade/" aria-current="page">Arcade</a><a href="/skumic/#music">Muziek</a><a href="/skumic/#video">Video</a><a href="/skumic/#story">Story</a>
+    </nav>
+    <a class="header-play" href="/skumic/#game"><span class="play-icon" aria-hidden="true"></span> Speel nu</a>
+  </div>
+</header>
+
+<main id="main">
+<section class="arcade-intro">
+  <div class="wrap"><p class="eyebrow"><span aria-hidden="true"></span> Games van Codeflow Studios</p><h1>Skumic<span> Arcade</span></h1><p>Drie originele browsergames. Kies je game en start.</p></div>
+</section>
+<section class="section wrap arcade-catalog" aria-label="Skumic-games"><div class="game-grid">
+<article class="game-card" id="crowd-surfing">
+    <div class="game-cover"><img src="/skumic/assets/crowd-surfing.webp" alt="" loading="lazy"></div>
+    <div class="game-copy">
+      <p class="genre">CROWDSURF ARCADE</p>
+      <h3>Crowd Surfing</h3>
+      <p>Spring van het podium, ontwijk moshpits en crowdsurfers en breek je highscore.</p>
+      <p class="game-input">Toetsenbord en touch</p>
+      <a class="game-play" href="/skumic/games/crowd-surfing/" data-embed="/skumic/games/crowd-surfing/" data-kind="game" data-title="Crowd Surfing"><span class="play-icon" aria-hidden="true"></span> Speel<span class="sr-only"> Crowd Surfing</span></a>
+    </div>
+  </article>
+<article class="game-card" id="skumic-fighters">
+    <div class="game-cover"><img src="/skumic/assets/meppn.webp" alt="" loading="lazy"></div>
+    <div class="game-copy">
+      <p class="genre">UNITY FIGHTER</p>
+      <h3>Stage Fighters</h3>
+      <p>Train, vecht tegen de computer of speel met twee op één toetsenbord.</p>
+      <p class="game-input">Toetsenbord</p>
+      <a class="game-play" href="/skumic/stage-fighters/" data-embed="https://skumic-meppn-production.up.railway.app/" data-kind="game" data-title="Stage Fighters"><span class="play-icon" aria-hidden="true"></span> Speel<span class="sr-only"> Stage Fighters</span></a>
+    </div>
+  </article>
+<article class="game-card" id="bluvn-goan">
+    <div class="game-cover"><img src="/skumic/assets/bluvn.webp" alt="" loading="lazy"></div>
+    <div class="game-copy">
+      <p class="genre">MUSIC RUNNER</p>
+      <h3>Skumic Rave Rush</h3>
+      <p>Vlieg door het publiek, ontwijk zappers en ga los op de Skumic-soundtrack.</p>
+      <p class="game-input">Toetsenbord en touch</p>
+      <a class="game-play" href="/skumic/rave-rush/" data-embed="https://codeflow-studios-production.up.railway.app/games/bluvn-goan/" data-kind="game" data-title="Skumic Rave Rush"><span class="play-icon" aria-hidden="true"></span> Speel<span class="sr-only"> Skumic Rave Rush</span></a>
+    </div>
+  </article>
+</div></section>
+</main>
+
+<footer class="site-footer" id="contact">
+  <div class="wrap footer-grid">
+    <div><a class="brand" href="/skumic/" aria-label="Skumic startpagina"><img src="/skumic/assets/logo.webp" alt="" loading="lazy" width="128" height="54"></a><p>Officiële site van Skumic</p></div>
+    <div><h2>Contact</h2><a href="mailto:bookings@kurious.be">Bookings</a><a href="mailto:jordy@vandals.be">Management</a></div>
+    <div><h2>Volg Skumic</h2><a href="https://www.instagram.com/skumican/">Instagram</a><a href="https://www.youtube.com/channel/UCC0QdX5mWlercF3Xx6qRQvQ">YouTube</a><a href="https://www.facebook.com/Skumican">Facebook</a><a href="https://open.spotify.com/artist/3iG6zyXOqRQOiRfTKPvDJq">Spotify</a></div>
+  </div>
+</footer>
+<dialog id="media-player" aria-labelledby="player-title">
+  <div class="player-head">
+    <h2 id="player-title"></h2>
+    <div class="player-controls">
+      <a id="player-original" target="_blank" rel="noopener noreferrer">Open in nieuw tabblad</a>
+      <form method="dialog"><button aria-label="Speler sluiten" autofocus>✕</button></form>
+    </div>
+  </div>
+  <div id="player-stage"></div>
+</dialog>
+</body>
+</html>
