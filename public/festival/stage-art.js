@@ -54,8 +54,40 @@ export function addStageArt(THREE, scene, venues, reduceMotion) {
     for (let i = 0; i < 3; i++) skinColors.push(tint.r, tint.g, tint.b);
   }
 
-  // Keep the LED pitch and scanlines consistent in world space and soften them at long distances.
-  function screen(x, y, z, width, height, tint, secondary, phase, angle = 0) {
+  // Each stage runs its own video loop. The LED mask fades out when individual diodes
+  // become smaller than a screen pixel, so the overview stays legible as well.
+  const videoLoops = {
+    levels: `
+      float column = floor(coord.x * max(8., size.x * 3.5));
+      float wave = .52 + .21 * sin(column * .62 + t * 1.9 + phase)
+                        + .14 * sin(column * .19 - t * 2.2 + phase);
+      float height = floor(wave * 15.) / 15.;
+      float fill = 1. - smoothstep(height - .015, height + .015, coord.y);
+      float peak = 1. - smoothstep(.008, .037, abs(coord.y - height - .072));
+      color += mix(primaryTint, accent, coord.y) * (fill * .77 + peak * .90);`,
+    corner: `
+      vec2 p = coord * 2. - 1.;
+      float rise = p.y - .51 * abs(p.x);
+      float band = abs(fract(rise * 1.75 - t * .30 + phase) - .5);
+      float trim = max(.015, fwidth(rise) * 1.75);
+      float arrows = 1. - smoothstep(.16 - trim, .16 + trim, band);
+      float core = 1. - smoothstep(.025, .085 + trim, band);
+      color += primaryTint * (.12 + .67 * arrows) + accent * .72 * core;`,
+    highway: `
+      float horizon = 1. - coord.y;
+      float center = .50 + .12 * sin(.55 * t + phase + coord.y * 2.4);
+      float lateral = abs(coord.x - center);
+      float width = .06 + .48 * horizon * horizon;
+      float aa = max(.012, fwidth(lateral) * .8);
+      float shoulder = 1. - smoothstep(.009, .018 + aa, abs(lateral - width));
+      float road = 1. - smoothstep(width, width + aa, lateral);
+      float marker = 1. - smoothstep(.005, .010 + aa, lateral);
+      float stripes = .5 + .5 * sin(12. / (.50 + horizon) + t * 3.2);
+      color += primaryTint * (.14 * road + .80 * shoulder)
+             + accent * marker * smoothstep(.22, .66, stripes);`,
+  };
+
+  function screen(x, y, z, width, height, tint, secondary, phase, angle = 0, loop = 'levels') {
     const material = new THREE.ShaderMaterial({
       uniforms: {
         t: displayClock, phase: { value: phase }, primaryTint: { value: new THREE.Color(tint) },
@@ -74,17 +106,12 @@ export function addStageArt(THREE, scene, venues, reduceMotion) {
         uniform vec3 primaryTint, accent;
         varying vec2 coord;
         void main() {
-          float column = floor(coord.x * max(8., size.x * 3.5));
-          float wave = .53 + .20 * sin(column * .62 + t * 1.9 + phase)
-                            + .13 * sin(column * .19 - t * 2.2 + phase);
-          float height = floor(wave * 15.) / 15.;
-          float fill = 1. - smoothstep(height - .015, height + .015, coord.y);
-          float peak = 1. - smoothstep(.008, .037, abs(coord.y - height - .072));
+          vec3 color = primaryTint * .032;
+          ${videoLoops[loop]}
           vec2 uvPx = coord * size * 6.;
           vec2 grid = abs(fract(uvPx) - .5);
           float pixel = 1. - smoothstep(.34, .50, max(grid.x, grid.y));
           float detail = 1. - smoothstep(.16, .72, max(fwidth(uvPx.x), fwidth(uvPx.y)));
-          vec3 color = primaryTint * .032 + mix(primaryTint, accent, coord.y) * (fill * .77 + peak * .90);
           gl_FragColor = vec4(color * mix(1., .45 + .55 * pixel, detail), 1.);
           #include <colorspace_fragment>
         }
@@ -96,6 +123,7 @@ export function addStageArt(THREE, scene, venues, reduceMotion) {
     mesh.scale.set(width, height, 1);
     mesh.rotation.y = angle;
     group.add(mesh);
+    return mesh;
   }
 
   function flightCase(x, z, width, height, yaw = 0) {
@@ -169,6 +197,20 @@ export function addStageArt(THREE, scene, venues, reduceMotion) {
       }
       beam([x + s * 9.55, 7.32, z + 1.84], ridge, .082, silver);
       flightCase(x + s * 6.78, z - 1.31, 1.05, .89, s * .20);
+      // Shell-shaped acoustic reflectors fan out above the backline. A deep return
+      // on each panel lets the lit face and the shadowed edge read from overhead.
+      for (let i = 0; i < 3; i++) {
+        const foot = [x + s * (1.06 + i * 1.39), 8.12, z - 3.88];
+        const lip = [x + s * (2.09 + i * 1.65), 10.01 + i * .47, z - 4.91];
+        const tip = [x + s * (3.01 + i * 1.66), 10.22 + i * .51, z - 5.19];
+        const fold = [tip[0], tip[1] - .25, tip[2] - .32];
+        panel(foot, lip, tip, ['#4a9895', '#61a69c', '#87ba9d'][i]);
+        panel(foot, tip, fold, '#31535b');
+        beam(foot, lip, .10, '#a6edc1', true);
+        beam(lip, tip, .12, silver);
+      }
+      // The original cabinets form the bezel for these side fills.
+      screen(x + s * 8.1, 4.75, z - 3.86, 3.02, 4.20, '#5ed7c9', '#e5ffad', 1.2 * s);
     }
     const consoleZ = z - .40;
     shape(box, '#202b35', x + 2, 1.52, consoleZ, 4.02, 1.32, 1.35);
@@ -254,7 +296,17 @@ export function addStageArt(THREE, scene, venues, reduceMotion) {
         shape(box, '#30323a', railX, yy, z - 1.35 - i * 1.05, 2.4, .27, 1.21);
         shape(box, '#d99373', railX, yy + .12, z - .71 - i * 1.05, 2.42, .09, .095);
       }
-      screen(x + s * 6.91, 4.59, z - 3.85, 1.71, 2.71, '#e36a50', '#ffcd7c', s + 1.7, -s * .13);
+      screen(x + s * 6.91, 4.59, z - 3.85, 1.71, 2.71, '#e36a50', '#ffcd7c', .2, -s * .13, 'corner');
+      // Each ringside lighting gantry carries three warm barn-door floodlights.
+      const trussX = x + s * 7.7;
+      beam([trussX, 6.93, z - 3.73], [trussX, 6.93, z + 2.85], .20, dark);
+      for (const depth of [-2.65, -.47, 1.71]) {
+        const lampZ = z + depth;
+        shape(box, '#343440', trussX, 6.52, lampZ, .88, .67, .83, -.14, 0, -s * .24);
+        shape(box, '#ffcb94', trussX - s * .10, 6.48, lampZ + .43, .64, .46, .06, -.14, 0, -s * .24, true);
+        shape(box, '#423843', trussX, 6.84, lampZ + .48, 1.06, .10, .45, -.21, 0, -s * .24);
+        shape(box, '#5e4a4a', trussX, 6.21, lampZ + .44, .99, .09, .32, .18, 0, -s * .24);
+      }
     }
     for (let i = 0; i < 8; i++) {
       const angle = Math.PI * (i + .5) / 4;
@@ -286,7 +338,12 @@ export function addStageArt(THREE, scene, venues, reduceMotion) {
         const zz = z + 4.15 - i * 1.55;
         shape(box, '#d6a9ff', x + s * 4.92, .858, zz, .115, .025, .70, 0, 0, 0, true);
       }
-      screen(x + s * 5.94, 4.36, z - 2.58, 1.22, 3.84, '#8582fa', '#ffadea', s * 2, -s * .28);
+      screen(x + s * 5.94, 4.36, z - 2.58, 1.22, 3.84, '#a79bff', '#ffc5ed', .16 * s, -s * .28, 'highway');
+    }
+    const runway = screen(x, .873, z + 1.29, 6.79, 5.44, '#856ee0', '#9ed9fa', 0, 0, 'highway');
+    runway.rotation.x = -Math.PI / 2;
+    for (const s of [-1, 1]) {
+      shape(box, '#4b4e70', x + s * 3.48, .875, z + 1.29, .14, .08, 5.58);
     }
     const orbit = new THREE.Group();
     orbit.position.set(x, 8.35, z - 2.52);

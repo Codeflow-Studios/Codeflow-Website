@@ -43,9 +43,9 @@ export function createWorld(container, reduceMotion) {
   const pixelRenderer = createPixelRenderer(THREE, renderer);
 
   const scene = new THREE.Scene();
-  scene.fog = new THREE.FogExp2('#9b7f90', .006);
-  scene.add(new THREE.HemisphereLight('#a8bdf4', '#74596d', .96));
-  const fill = new THREE.DirectionalLight('#b6dce8', .78);
+  scene.fog = new THREE.FogExp2('#998a9e', .0047);
+  scene.add(new THREE.HemisphereLight('#b5c6ef', '#74596d', 1.04));
+  const fill = new THREE.DirectionalLight('#b6dce8', .90);
   fill.position.set(19,26,36);
   scene.add(fill);
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
@@ -90,6 +90,9 @@ export function createWorld(container, reduceMotion) {
   const needles = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: .93, side: THREE.DoubleSide });
   const batches = new Map();
   const movingLights = [];
+  // One moving spot lights the nearest audience and player as its visible beam sweeps past.
+  const followSpot = new THREE.SpotLight('#ffffff', 0, 32, .35, .72, 2);
+  scene.add(followSpot, followSpot.target);
   const beamDirection = new THREE.Vector3();
   const shadowTexture = makeTexture(64, 64, (ctx, w, h) => {
     const gradient = ctx.createRadialGradient(w / 2, h / 2, w * .1, w / 2, h / 2, w / 2);
@@ -189,7 +192,8 @@ export function createWorld(container, reduceMotion) {
     movingLights.push({ origin: new THREE.Vector3(...origin), aim, spread, phase, shaft, pool });
   }
 
-  function animateLights(time) {
+  function animateLights(time, player) {
+    let nearest = Infinity;
     for (const { origin, aim, spread, phase, shaft, pool } of movingLights) {
       const endX = aim[0] + Math.sin(time * .67 + phase) * 2.8;
       const endZ = aim[1] + Math.cos(time * .48 + phase) * 1.65;
@@ -199,7 +203,15 @@ export function createWorld(container, reduceMotion) {
       shaft.quaternion.setFromUnitVectors(up, beamDirection.normalize());
       pool.position.x = endX;
       pool.position.z = endZ;
+      const distance = Math.hypot(endX - player.x, endZ - player.z);
+      if (distance < nearest) {
+        nearest = distance;
+        followSpot.color.copy(shaft.material.uniforms.tint.value);
+        followSpot.position.copy(origin);
+        followSpot.target.position.set(endX, .15, endZ);
+      }
     }
+    followSpot.intensity = 210 * (1 - THREE.MathUtils.smoothstep(nearest, 4, 10));
   }
 
   function panel(texture, x, y, z, w, h, { ground = false, color = '#fff' } = {}) {
@@ -534,7 +546,7 @@ export function createWorld(container, reduceMotion) {
 
   function frame(player, elapsed, time, marked, nearby) {
     rig.update(player, elapsed);
-    animateCharacters(player, elapsed, time, rig.overview, camera);
+    animateCharacters(player, elapsed, time, rig.overview);
     animatePlayer(player, elapsed, time, rig.overview, reduceMotion);
     animateAtmosphere(time);
     animateScenery(time);
@@ -546,7 +558,7 @@ export function createWorld(container, reduceMotion) {
       gateRing.material.color.set(gate.color);
       gateRing.material.opacity = reduceMotion ? .88 : .75 + Math.sin(time * 3.6) * .2;
     }
-    animateLights(reduceMotion ? 0 : time);
+    animateLights(reduceMotion ? 0 : time, player);
     if (time - lastShadow >= 1 / 18) {
       renderer.shadowMap.needsUpdate = true;
       lastShadow = time;

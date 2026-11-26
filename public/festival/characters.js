@@ -1,5 +1,6 @@
-const W = 36, H = 52, GAP = 2, FRAMES = 5;
-const TAU = Math.PI * 2;
+import { createCrowd } from './crowd-models.js';
+
+const W = 36, H = 52;
 const ink = '#202334';
 const boots = ['#454651', '#bcbaab', '#f0e5c6'];
 const skinTones = [
@@ -251,31 +252,6 @@ export function createFlatArtistSprites() {
   return result;
 }
 
-function createAtlas(THREE) {
-  const cols = 20;
-  const tw = W + GAP * 2, th = H + GAP * 2;
-  const width = cols * tw, height = outfits.length * th;
-  const canvas = Object.assign(document.createElement('canvas'), { width, height });
-  const ctx = canvas.getContext('2d');
-  const sheet = ctx.createImageData(width, height);
-  const dst = new Uint32Array(sheet.data.buffer);
-  outfits.forEach((outfit, index) => {
-    for (let direction = 0; direction < 4; direction++) for (let frame = 0; frame < FRAMES; frame++) {
-      const tile = drawCharacter(outfit, direction, frame, index);
-      const ox = (direction * FRAMES + frame) * tw + GAP, oy = index * th + GAP;
-      for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
-        dst[(oy + y) * width + ox + x] = tile[y * W + (direction === 3 ? W - x - 1 : x)];
-      }
-    }
-  });
-  ctx.putImageData(sheet, 0, 0);
-  const tex = new THREE.CanvasTexture(canvas);
-  tex.colorSpace = THREE.SRGBColorSpace;
-  tex.magFilter = tex.minFilter = THREE.NearestFilter;
-  tex.generateMipmaps = false;
-  return { tex, width, height, tw, th };
-}
-
 function createAudience() {
   const actors = [];
   let seed = 12176;
@@ -301,61 +277,9 @@ function createAudience() {
 }
 
 export function addCharacters(THREE, scene, reduceMotion) {
-  const atlas = createAtlas(THREE);
   const actors = createAudience();
+  const animateCrowd = createCrowd(THREE, scene, actors, outfits, skinTones, reduceMotion);
   const plane = new THREE.PlaneGeometry(1, 1);
-  const geometry = new THREE.InstancedBufferGeometry();
-  geometry.index = plane.index;
-  geometry.setAttribute('position', plane.attributes.position);
-  geometry.setAttribute('uv', plane.attributes.uv);
-  function attribute(name, dimensions, dynamic = false) {
-    const buffer = new THREE.InstancedBufferAttribute(new Float32Array(actors.length * dimensions), dimensions);
-    if (dynamic) buffer.setUsage(THREE.DynamicDrawUsage);
-    geometry.setAttribute(name, buffer);
-    return buffer;
-  }
-  const centers = attribute('anchor', 3), sizes = attribute('actorSize', 1);
-  const offsets = attribute('tileOrigin', 2, true);
-  actors.forEach((a, i) => { centers.setXYZ(i, a.x, a.y, a.z); sizes.setX(i, a.size); });
-  geometry.instanceCount = actors.length;
-  const material = new THREE.ShaderMaterial({
-    uniforms: THREE.UniformsUtils.merge([THREE.UniformsLib.fog, {
-      sheet: { value: null }, tileSize: { value: new THREE.Vector2(W / atlas.width, H / atlas.height) },
-    }]),
-    fog: true,
-    vertexShader: `
-      attribute vec3 anchor;
-      attribute float actorSize;
-      attribute vec2 tileOrigin;
-      uniform vec2 tileSize;
-      varying vec2 tileUv;
-      #include <fog_pars_vertex>
-      void main() {
-        tileUv = tileOrigin + uv * tileSize;
-        vec4 mvPosition = modelViewMatrix * vec4(anchor, 1.0);
-        mvPosition.xy += vec2(position.x * 0.6923077, position.y + 0.5) * actorSize;
-        gl_Position = projectionMatrix * mvPosition;
-        #include <fog_vertex>
-      }
-    `,
-    fragmentShader: `
-      uniform sampler2D sheet;
-      varying vec2 tileUv;
-      #include <fog_pars_fragment>
-      void main() {
-        vec4 color = texture2D(sheet, tileUv);
-        if (color.a < 0.5) discard;
-        gl_FragColor = vec4(color.rgb, 1.0);
-        #include <fog_fragment>
-        #include <colorspace_fragment>
-      }
-    `,
-  });
-  material.uniforms.sheet.value = atlas.tex;
-  const sprites = new THREE.Mesh(geometry, material);
-  sprites.frustumCulled = false;
-  scene.add(sprites);
-
   const shadowTex = new Uint8Array(20 * 14 * 4);
   for (let y = 0; y < 14; y++) for (let x = 0; x < 20; x++) {
     const radius = ((x - 9.5) / 9.5) ** 2 + ((y - 6.5) / 6.5) ** 2;
@@ -383,23 +307,10 @@ export function addCharacters(THREE, scene, reduceMotion) {
   }));
   halo.rotation.x = -Math.PI / 2;
   scene.add(halo);
-  const prior = new Int16Array(actors.length).fill(-1);
 
-  return function tick(player, dt, time, overview, camera) {
+  return function tick(player, dt, time, overview) {
     halo.position.set(player.x, .086, player.z);
     halo.visible = overview;
-    let changed = false;
-    actors.forEach((a, i) => {
-      const yaw = camera ? Math.atan2(camera.position.x - a.x, camera.position.z - a.z) : 0;
-      const direction = (Math.round((a.heading - yaw) / (TAU / 4)) % 4 + 4) % 4;
-      const frame = reduceMotion ? 4 : Math.floor(time * (a.outfit % 2 ? 3.24 : 4.0) + a.phase) % 4;
-      const col = direction * FRAMES + frame;
-      const pose = a.outfit * 4 * FRAMES + col;
-      if (prior[i] === pose) return;
-      offsets.setXY(i, (col * atlas.tw + GAP) / atlas.width, 1 - (a.outfit * atlas.th + GAP + H) / atlas.height);
-      prior[i] = pose;
-      changed = true;
-    });
-    if (changed) offsets.needsUpdate = true;
+    animateCrowd(time);
   };
 }

@@ -11,6 +11,25 @@ function randomSource(seed) {
   };
 }
 
+const clamp = (v, lo = 0, hi = 1) => Math.min(hi, Math.max(lo, v));
+const smooth = t => t*t*(3-2*t);
+const mix = (a,b,t) => a+(b-a)*t;
+function blendRGB(a,b,t) {
+  return (Math.round(mix(a>>16,b>>16,t))<<16) |
+    (Math.round(mix((a>>8)&255,(b>>8)&255,t))<<8) | Math.round(mix(a&255,b&255,t));
+}
+
+// Periodic value noise keeps both the panoramic horizon and ground tiles seamless.
+function noiseField(seed) {
+  const random = randomSource(seed);
+  const field = Float32Array.from({length:4096},random);
+  return (x,y,period=64) => {
+    const ix=Math.floor(x), iy=Math.floor(y), u=smooth(x-ix), v=smooth(y-iy);
+    const a=wrap(ix,period), b=(a+1)%period, row=(iy&63)*64, next=((iy+1)&63)*64;
+    return mix(mix(field[row+a],field[row+b],u),mix(field[next+a],field[next+b],u),v);
+  };
+}
+
 // Draw into a wrapped integer grid so a stroke can cross a tile's seam.
 function raster(width, height, repeatY = false) {
   const bytes = new Uint8Array(width * height * 4);
@@ -55,6 +74,7 @@ function asTexture(THREE, image, tile = false) {
   texture.wrapT = tile ? THREE.RepeatWrapping : THREE.ClampToEdgeWrapping;
   texture.magFilter = THREE.LinearFilter;
   texture.minFilter = tile ? THREE.LinearMipmapLinearFilter : THREE.LinearFilter;
+  texture.anisotropy = tile ? 4 : 1;
   texture.generateMipmaps = tile;
   texture.needsUpdate = true;
   return texture;
@@ -64,16 +84,23 @@ function groundTiles(THREE) {
   const random = randomSource(0x434f4153);
   const grass = raster(112, 112, true);
   const track = raster(112, 112, true);
-  grass.rect(0, 0, 112, 112, 0x447467);
-  track.rect(0, 0, 112, 112, 0xb08670);
+  const turf = noiseField(0x35616d65);
+  for (let y=0;y<112;y++) for (let x=0;x<112;x++) {
+    const u=x/112, v=y/112;
+    // Whole wave periods keep the rolling colour variation continuous across the edges.
+    const swale=(Math.sin(tau*(u+v)+1.3)+Math.cos(tau*(u-v*2)))*.09;
+    const grain=random();
+    grass.pixel(x,y,blendRGB(0x385d51,0x638b67,clamp(.34+swale+grain*.30)));
+    track.pixel(x,y,blendRGB(0x997862,0xc4a282,clamp(.3+swale+grain*.36)));
+  }
 
   // Flat islands of nearby shades form larger connected masses beneath the small details.
   for (let i = 0; i < 47; i++) {
     const x = Math.floor(random() * 112), y = Math.floor(random() * 112);
     const w = 4 + Math.floor(random() * 15), h = 2 + Math.floor(random() * 5);
     const patch = [[x,y+1],[x+3,y],[x+w-3,y],[x+w,y+2],[x+w-2,y+h],[x+4,y+h+1],[x,y+h-1]];
-    grass.polygon(patch, i % 3 ? 0x48786b : 0x3f6e63);
-    track.polygon(patch, i % 3 ? 0xb78d75 : 0xa9816d);
+    grass.polygon(patch, i % 3 ? 0x4b755d : 0x426952);
+    track.polygon(patch, i % 3 ? 0xaf9176 : 0xa88870);
   }
   for (let i = 0; i < 74; i++) {
     const x = Math.floor(random() * 112), y = Math.floor(random() * 112);
@@ -104,81 +131,78 @@ function groundTiles(THREE) {
       track.pixel(x + w,y,0xb1917e);
     }
   }
+  for (let n=0;n<120;n++) {
+    const x=random()*112,y=random()*112,length=2+Math.floor(turf(x*.1,y*.1)*5);
+    grass.rect(x,y,length,1,n%4 ? 0x547a5d : 0x70906b);
+    track.rect(x,y,length+1,1,n%4 ? 0xab8b70 : 0xbb9a7d);
+  }
   return { grass: asTexture(THREE,grass,true), earth: asTexture(THREE,track,true) };
 }
 
-function drawCloud(sky, x, y, width, depth, distant = false) {
-  const outline = [[0,.72],[.10,.69],[.16,.51],[.30,.50],[.36,.24],[.44,.28],[.50,0],
-    [.62,.05],[.68,.31],[.77,.34],[.81,.52],[.92,.55],[1,.78],[.87,.83],[.77,.96],[.44,.90],[.31,1],[.07,.91]];
-  const crown = [[.12,.70],[.30,.49],[.36,.24],[.44,.28],[.50,0],[.62,.05],[.68,.31],
-    [.77,.34],[.79,.46],[.64,.42],[.56,.28],[.46,.43],[.36,.44],[.31,.60]];
-  const under = [[.24,.84],[.43,.70],[.58,.76],[.71,.66],[.84,.71],[.92,.63],[1,.78],[.86,.83],[.77,.96],[.46,.89]];
-  function shape(vertices, color) {
-    sky.polygon(vertices.map(([u,v])=>[x+u*width,y+v*depth]), color);
-  }
-  shape(outline, distant ? 0xb68899 : 0x877d9f);
-  shape(crown, distant ? 0xf6b59e : 0xd69da5);
-  shape(under, distant ? 0x9e7e97 : 0x716c94);
-  sky.rect(x+width*.12,y+depth*.83,Math.max(3,Math.floor(width*.19)),1,distant ? 0xe9a69a : 0xb98ca0);
-}
-
 function duskPanorama(THREE) {
-  const sky = raster(768,384);
+  const sky = raster(1024,512);
   const random = randomSource(0x5457494c);
-  const stops = [
-    [0,0x202747],[69,0x36385f],[109,0x53507b],[134,0x76628d],[153,0xa27b9c],
-    [165,0xc68b9f],[177,0xeaa798],[186,0xffc298],[197,0xd8a4a4],[215,0x7a7288],[384,0x384554],
-  ];
-  for (let s = 1; s < stops.length; s++) {
-    const [y0,c0] = stops[s-1], [y1,c1] = stops[s];
-    for (let y=y0; y < y1; y++) {
-      const t = Math.floor((y-y0)/(y1-y0)*24)/24;
-      let rgb = 0;
-      for (const shift of [16,8,0]) {
-        const a = (c0 >> shift) & 255, b = (c1 >> shift) & 255;
-        rgb |= Math.round(a+(b-a)*t) << shift;
+  const noise = noiseField(0x62616e6b);
+  const stops = [[0,0x182540],[.21,0x344064],[.32,0x655f8d],[.39,0xa387aa],
+    [.445,0xe4aaac],[.485,0xffc8a0],[.54,0xb494a0],[.63,0x6d7487],[1,0x384554]];
+  const sunX=.798, sunY=.434;
+  let band=1;
+  for(let y=0;y<sky.height;y++) {
+    const v=y/sky.height;
+    while (v>stops[band][0]) band++;
+    const [y0,c0]=stops[band-1], [y1,c1]=stops[band];
+    const base=blendRGB(c0,c1,(v-y0)/(y1-y0));
+    const cloudBand=smooth(clamp((v-.23)*14))*smooth(clamp((.49-v)*29));
+    for(let x=0;x<sky.width;x++) {
+      const u=x/sky.width, dx=Math.min(Math.abs(u-sunX),1-Math.abs(u-sunX))*2;
+      const dy=v-sunY, radius=dx*dx+dy*dy;
+      const glow=.63/(1+radius*88);
+      let color=blendRGB(base,0xffc490,glow*smooth(clamp((v-.2)*4.1)));
+      if(radius<.007) color=blendRGB(color,0xffdf9e,.56/(1+radius*900));
+      if(radius<.00044) color=blendRGB(0xffe6ac,0xfff3cc,clamp(.5-dy*25));
+      if(cloudBand>0) {
+        // Sheared shelves of vapour catch the light on their lower edges.
+        const shear=.78*Math.sin(u*tau*2+.7)+.35*Math.cos(u*tau*3);
+        const a=noise(u*16,v*59+shear,16);
+        const b=noise(u*32+2,v*134+shear*2,32);
+        const c=noise(u*64+4,v*271+shear*4,64);
+        const cloud=a*.61+b*.28+c*.11;
+        const opacity=smooth(clamp((cloud-.49)*4.9))*cloudBand;
+        if(opacity>.003) {
+          const edge=noise(u*16,(v+.006)*59+shear,16)-a;
+          const light=clamp(.38-edge*3.2+c*.15+glow*.21);
+          let cloudColor=blendRGB(0x66628a,0xd99da8,light);
+          cloudColor=blendRGB(cloudColor,0xffcea2,clamp(-edge*5.4)*glow*1.25);
+          color=blendRGB(color,cloudColor,opacity*.87);
+        }
       }
-      sky.rect(0,y,sky.width,1,rgb);
+      sky.pixel(x,y,color);
     }
   }
-  for (let i=0; i<110; i++) {
-    const x = Math.floor(random()*sky.width), y = 54+Math.floor(random()*83);
-    sky.pixel(x,y, i % 4 ? 0x9c93b2 : 0xe2c7b9);
-    if (i % 27 === 0) {
-      sky.rect(x-1,y,3,1,0xb9a4ba);
-      sky.rect(x,y-1,1,3,0xd5bcc3);
+  for(let i=0;i<105;i++) {
+    const x=random()*sky.width,y=(.095+random()*.235)*sky.height;
+    sky.pixel(x,y,i%7 ? 0x9493b2 : 0xd6c2c6);
+  }
+  function ridge(base, amplitude, color, shade, horizontal, offset) {
+    for(let x=0;x<sky.width;x++) {
+      const u=x/sky.width;
+      const heightAt=q=>noise(q*horizontal+offset,11.1,horizontal)*.54+
+        noise(q*horizontal*2+offset*2,21.8,horizontal*2)*.3+
+        noise(q*horizontal*4,12.5,horizontal*4)*.16;
+      const h=heightAt(u), silhouette=Math.round(sky.height*(base-h*amplitude));
+      const southernFace=clamp(.50+(h-heightAt(u-.005))*4.8);
+      sky.rect(x,silhouette,1,sky.height-silhouette,blendRGB(shade,color,southernFace));
     }
   }
-  // The sunset is west of the main stage. Three thin atmospheric bands clip the lower disk.
-  const sunX = 613, sunY = 168;
-  for (let y = -10; y <= 10; y++) {
-    const half = Math.floor(Math.sqrt(10.4**2 - y*y));
-    if (y === 6 || y === 9) continue;
-    sky.rect(sunX-half,sunY+y,half*2+1,1,y < 0 ? 0xffebbb : y < 5 ? 0xffdb9d : 0xffca92);
+  ridge(.51,.068,0xcfa2a7,0xb591a3,8,3);
+  ridge(.522,.055,0xaa91a1,0x957f97,12,7);
+  ridge(.534,.044,0x897e93,0x756e87,16,11);
+  for(let x=0;x<sky.width;x+=2+Math.floor(random()*4)) {
+    const y=sky.height*(.525+Math.sin(x/sky.width*tau*6)*.004);
+    const h=2+random()*6;
+    sky.polygon([[x-2,y+3],[x,y-h],[x+2,y+3]],0x6d6e82);
   }
-  for (const [x,y,w,h] of [[535,153,48,8],[633,157,62,9],[671,144,41,8],[489,166,23,4],
-    [714,169,44,6],[21,152,64,9],[131,163,53,7],[234,147,76,11],[341,160,48,7],[412,168,69,7],
-    [73,127,40,7],[315,137,31,6],[466,142,26,5]]) drawCloud(sky,x,y,w,h,y>=158);
-  sky.polygon([[550,148],[573,143],[580,142],[563,147],[552,149]],0xdfa6af);
-  sky.polygon([[556,150],[574,146],[562,150]],0xc397a8);
-  sky.polygon([[170,148],[193,141],[198,140],[177,147]],0xd9a2ab);
-
-  function ridge(base, color, first, second, phase) {
-    for (let x=0; x<sky.width; x++) {
-      const a=x/sky.width*tau;
-      const y=Math.floor(base+Math.sin(a*first+phase)*3.4+Math.sin(a*second+.9)*2.2+Math.cos(a*19+phase)*.9);
-      sky.rect(x,y,1,sky.height-y,color);
-    }
-  }
-  ridge(186,0xb38c9f,4,11,1.7);
-  ridge(191,0x948197,6,13,1.1);
-  ridge(195,0x776f88,3,9,2.4);
-  for(let x=0; x<sky.width; x+=2+Math.floor(random()*4)) {
-    const y=197+Math.floor(Math.sin(x/sky.width*tau*7)*1.7);
-    const h=2+Math.floor(random()*5);
-    sky.polygon([[x-2,y+2],[x,y-h],[x+2,y+2]],0x6b697e);
-  }
-  ridge(199,0x626475,5,12,.2);
+  ridge(.55,.036,0x687081,0x5c6477,13,5);
   return asTexture(THREE,sky);
 }
 
@@ -197,21 +221,72 @@ function pathMask(THREE) {
       const u=Math.abs(x-path.x)-path.width/2+rounding, v=Math.abs(z-path.z)-path.depth/2+rounding;
       const edge=Math.sin(z*1.12+x*.72)*.13+Math.cos(x*2.7-z*1.8)*.09;
       const distance=Math.hypot(Math.max(u,0),Math.max(v,0))+Math.min(Math.max(u,v),0)-rounding+edge;
-      const coverage=distance<-.2 ? 255 : distance<.07 ? 158 : distance<.29 ? 67 : 0;
+      const coverage=Math.round(255*smooth(clamp((.39-distance)/.84)));
       const i=row*size+col;
       pixels[i]=Math.max(pixels[i],coverage);
     }
   }
   const texture=new THREE.DataTexture(pixels,size,size,THREE.RedFormat);
-  texture.minFilter = texture.magFilter = THREE.NearestFilter;
+  texture.minFilter = texture.magFilter = THREE.LinearFilter;
   texture.needsUpdate=true;
   return texture;
+}
+
+function meadowSurface(THREE) {
+  const plane=new THREE.PlaneGeometry(extent,extent,72,72);
+  const pos=plane.attributes.position;
+  const colors=[], noise=noiseField(0x416d6265);
+  for(let i=0;i<pos.count;i++) {
+    const x=pos.getX(i), z=-pos.getY(i);
+    const n=noise(x*.058,z*.058)*.65+noise(x*.15,z*.15)*.35;
+    colors.push(.79+n*.29,.83+n*.22,.84+n*.19);
+  }
+  plane.setAttribute('color',new THREE.Float32BufferAttribute(colors,3));
+  return plane;
+}
+
+// Opaque folded leaves keep the verge dimensional without per-plant draw calls or overdraw.
+function meadowClumps(THREE,trails) {
+  const random=randomSource(0x416d6265);
+  const foliage=[], tints=[], swatches=[0x4e805b,0x659263,0x719563,0x809f6e];
+  const color=new THREE.Color();
+  const {width,data}=trails.image;
+  const trackAt=(x,z)=>data[Math.floor((.5-z/extent)*width)*width+Math.floor((.5+x/extent)*width)];
+  function triangle(vertices, tint, shade) {
+    foliage.push(...vertices);
+    color.setHex(tint).multiplyScalar(shade);
+    for(let v=0;v<3;v++) tints.push(color.r,color.g,color.b);
+  }
+  for(let i=0;i<920;i++) {
+    const x=(random()-.5)*104, z=(random()-.5)*88;
+    if(trackAt(x,z)>0) continue;
+    const besideTrail=trackAt(x-1.6,z)||trackAt(x+1.6,z)||trackAt(x,z-1.6)||trackAt(x,z+1.6);
+    if(!besideTrail && random()>.39) continue;
+    const bladeCount=4+Math.floor(random()*4);
+    const tint=swatches[Math.floor(random()*swatches.length)];
+    for(let b=0;b<bladeCount;b++) {
+      const a=random()*tau, spread=.48*random();
+      const bx=x+Math.cos(a)*spread,bz=z+Math.sin(a)*spread;
+      const span=.038+random()*.073,h=.15+random()*.30, lean=h*(.35+random()*.63);
+      const dx=Math.cos(a)*span,dz=Math.sin(a)*span;
+      const tipX=bx+Math.sin(a)*lean,tipZ=bz-Math.cos(a)*lean;
+      const ridgeX=bx+Math.sin(a)*span*.53,ridgeZ=bz-Math.cos(a)*span*.53;
+      triangle([bx-dx,.012,bz-dz,ridgeX,.06,ridgeZ,tipX,h,tipZ],tint,.72);
+      triangle([ridgeX,.06,ridgeZ,bx+dx,.012,bz+dz,tipX,h,tipZ],tint,1.08);
+    }
+  }
+  const geo=new THREE.BufferGeometry();
+  geo.setAttribute('position',new THREE.Float32BufferAttribute(foliage,3));
+  geo.setAttribute('color',new THREE.Float32BufferAttribute(tints,3));
+  const plants=new THREE.Mesh(geo,new THREE.MeshBasicMaterial({vertexColors:true,side:THREE.DoubleSide}));
+  plants.name='Grass at the verge';
+  return plants;
 }
 
 export function addTerrain(THREE, scene) {
   const {grass,earth}=groundTiles(THREE);
   const trails=pathMask(THREE);
-  const material=new THREE.MeshLambertMaterial({ map:grass });
+  const material=new THREE.MeshStandardMaterial({map:grass,vertexColors:true,roughness:.96,metalness:0});
   material.onBeforeCompile=shader=>{
     shader.uniforms.festivalEarth={value:earth};
     shader.uniforms.festivalTrail={value:trails};
@@ -220,27 +295,27 @@ export function addTerrain(THREE, scene) {
         uniform sampler2D festivalEarth;
         uniform sampler2D festivalTrail;`)
       .replace('#include <map_fragment>',`
-        vec3 meadow = texture2D(map,vMapUv*17.0).rgb;
-        vec3 earth = texture2D(festivalEarth,vMapUv*21.0).rgb;
+        vec3 meadow = texture2D(map,vMapUv*22.0).rgb;
+        vec3 earth = texture2D(festivalEarth,vMapUv*25.0).rgb;
         float mask = texture2D(festivalTrail,vMapUv).r;
-        vec3 shade = mix(meadow, meadow*0.72, step(0.15,mask));
-        shade = mix(shade, earth*vec3(0.78,0.79,0.82),step(0.45,mask));
-        diffuseColor.rgb *= mix(shade,earth,step(0.85,mask));`)
+        float edge = smoothstep(.05,.97,mask + (meadow.g - .16)*.55);
+        vec3 shade = mix(meadow,earth,edge);
+        diffuseColor.rgb *= shade*(1.0-.21*(4.0*edge*(1.0-edge)));`)
       .replace('#include <opaque_fragment>',`
-        outgoingLight += diffuseColor.rgb * 0.23;
+        outgoingLight += diffuseColor.rgb * 0.19;
         #include <opaque_fragment>`);
   };
-  const ground=new THREE.Mesh(new THREE.PlaneGeometry(extent,extent),material);
+  const ground=new THREE.Mesh(meadowSurface(THREE),material);
   ground.rotation.x=-Math.PI/2;
   ground.receiveShadow=true;
-  scene.add(ground);
+  scene.add(ground,meadowClumps(THREE,trails));
 
   // Use the panorama directly on the dome. A reflection conversion would soften pixel edges.
   const sky=duskPanorama(THREE);
   const dome=new THREE.Mesh(new THREE.SphereGeometry(145,64,32),new THREE.MeshBasicMaterial({
     map:sky,side:THREE.BackSide,depthTest:false,depthWrite:false,fog:false,toneMapped:false,
   }));
-  dome.name='Pixel dusk';
+  dome.name='Festival sunset';
   dome.renderOrder=-100;
   dome.frustumCulled=false;
   dome.onBeforeRender=(_renderer,_scene,camera)=>{
