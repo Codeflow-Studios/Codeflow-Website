@@ -39,3 +39,10 @@ body{font-family:ByteBounce,monospace;line-height:1.15}button{border-radius:0}h1
 @media(max-width:700px){.timing-toggle{font-size:10px;padding:7px}.timing-panel input{min-width:0;max-width:100%}.timing-panel label{width:100%}.timing-panel small{font-size:12px}.soundtrack-bar>span{white-space:normal}.timing-panel button{font-size:12px}}
 .home-copy h1{font-size:clamp(40px,6vw,90px);line-height:.92}
 @media(max-width:700px){.home-copy h1{font-size:clamp(38px,11.3vw,70px);line-height:.94}}
+.launch-lineup{border:0;margin:0;padding:0}
+.launch-lineup legend{margin-bottom:8px;padding:0;font:clamp(14px,2vw,22px) MotionControl,Impact,sans-serif;letter-spacing:1px;color:var(--yellow)}
+#launch-artists{display:flex;gap:8px}
+#launch-artists button{display:grid;justify-items:center;min-width:64px;padding:3px 9px 5px;background:#13051ef0;border:2px solid var(--purple);color:var(--white);font:clamp(16px,2vw,23px) MotionControl,Impact,sans-serif;line-height:1}
+#launch-artists canvas{display:block;width:clamp(44px,5.6vw,76px);height:auto;image-rendering:pixelated}
+#launch-artists button:hover,#launch-artists button:focus-visible{border-color:var(--yellow);color:var(--yellow);outline:2px solid transparent}
+@media(max-width:700px){.home-copy{top:5%}.launch-lineup legend{margin-bottom:5px}#launch-artists{gap:6px}#launch-artists button{min-width:58px;padding:2px 6px 4px}}

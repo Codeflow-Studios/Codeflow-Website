@@ -2,7 +2,7 @@ import {trackById} from './tracks.mjs';
 // Real Skumic recordings for music; original short synthesised arcade effects.
 export class ArcadeSound {
   constructor(audio){
-    this.customDrops={};this.pendingDrops=[];this.lastMusicTime=0;this.dropIndex=0;this.volume=.04;this.audio=audio;this.enabled=false;this.context=null;this.voices=new Set();this.beat=0;this.playing=false;this.lastNote=0;this.pendingPlay=false;this.blocked=false;
+    this.customDrops={};this.pendingDrops=[];this.lastMusicTime=0;this.dropIndex=0;this.volume=.5;this.audio=audio;this.enabled=false;this.context=null;this.voices=new Set();this.beat=0;this.playing=false;this.lastNote=0;this.pendingPlay=false;this.blocked=false;
     audio.loop=true;audio.volume=this.volume*.2;audio.muted=true;
     audio.addEventListener('playing',()=>{audio.dataset.state='playing';});
     audio.addEventListener('pause',()=>{audio.dataset.state=this.enabled?'paused':'muted';});
@@ -24,7 +24,7 @@ export class ArcadeSound {
     try{
       if(!this.context){
         const Audio=window.AudioContext||window.webkitAudioContext;this.context=new Audio();
-        this.master=this.context.createGain();this.master.gain.value=.02;this.master.connect(this.context.destination);
+        this.master=this.context.createGain();this.master.gain.value=.02*this.volume;this.master.connect(this.context.destination);
         const buffer=this.context.createBuffer(1,this.context.sampleRate*.3,this.context.sampleRate),data=buffer.getChannelData(0);
         for(let i=0;i<data.length;i++)data[i]=Math.random()*2-1;this.noise=buffer;
       }
@@ -69,6 +69,7 @@ export class ArcadeSound {
   }
   setVolume(value){
     this.volume=Math.max(0,Math.min(1,Number(value)||0));
+    if(this.master)this.master.gain.setTargetAtTime(.02*this.volume,this.context.currentTime,.04);
     if(this.musicGain)this.musicGain.gain.setTargetAtTime(this.volume*.2,this.context.currentTime,.04);
     else this.audio.volume=this.volume*.2;
   }

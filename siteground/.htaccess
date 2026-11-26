@@ -1,5 +1,9 @@
 DirectoryIndex index.html index.php
 
+<IfModule mod_mime.c>
+  AddType text/javascript .mjs
+</IfModule>
+
 # Keep contact details and mail links current after static deployments.
 # SiteGround requires a one-time Dynamic Cache flush for existing entries.
 <IfModule mod_headers.c>

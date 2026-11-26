@@ -28,10 +28,14 @@ function save(){
 }
 function tone(kind){sound.effect(kind)}
 function toast(text){$('toast').textContent=text;$('toast').hidden=false;toastUntil=performance.now()+2200}
-function updateSound(){const b=$('sound');b.setAttribute('aria-label',profile.sound?'Turn sound off':'Turn sound on');b.querySelector('.mute-slash').hidden=profile.sound}
+function updateSound(){const b=$('sound');b.setAttribute('aria-label',profile.sound?'Turn sound off':'Turn sound on');b.setAttribute('aria-pressed',String(profile.sound));b.querySelector('.mute-slash').hidden=profile.sound}
 function artistMarkup(a){return `<button class="artist-card ${profile.artist===a.id?'selected':''}" data-artist="${a.id}" aria-label="Play as ${a.name}" aria-pressed="${profile.artist===a.id}" style="--artist-color:${a.color}"><canvas width="160" height="190" data-portrait="${a.id}" aria-hidden="true"></canvas><span class="artist-copy"><strong>${a.name}</strong><small>${a.subtitle}</small><em>${a.scene}</em></span><span class="artist-check" aria-hidden="true">${profile.artist===a.id?'✓':'↗'}</span></button>`}
 function bindArtists(container){
   for(const b of container.querySelectorAll('[data-artist]'))b.onclick=()=>{
+    if (mode === 'home') {
+      if ($('loading').hidden) start(b.dataset.artist);
+      return;
+    }
     profile.artist=b.dataset.artist;save();updateProfile();
     if($('modal').open&&$('modal-body').querySelector('.artist-modal'))renderArtistsModal();
     if(mode!=='home')toast(`${artistById(profile.artist).name} SELECTED FOR YOUR NEXT FLIGHT`);
@@ -42,7 +46,6 @@ function updateProfile(){
   $('home-best').textContent=String(Math.floor(profile.best)).padStart(4,'0');
   const artist=artistById(profile.artist);
   if(mode==='home')renderer.setArtist(artist.id);
-  $('choose-artist').textContent=artist.name+' ▾';$('selected-name').textContent=artist.name;$('selected-scene').textContent=artist.scene;
   $('artist-picker').innerHTML=ARTISTS.map(artistMarkup).join('');bindArtists($('artist-picker'));
   updateMissions();updateSound();
 }
@@ -60,9 +63,15 @@ function setMode(next){
   $('power-status').hidden=next!=='running';$('run-hint').hidden=next!=='running';$('arcade-hud').hidden=next==='home';$('live-goal').hidden=next!=='running';$('pulse-action').hidden=next==='home'||next==='over';$('pulse-action').disabled=next!=='running';
   keyHeld=pointerHeld=false;accumulator=0;last=performance.now();
 }
-function start(){
-  run=createRun(crypto.getRandomValues(new Uint32Array(1))[0]);activeArtist=profile.artist;renderer.setArtist(activeArtist);
-  settled=false;renderer.fx=[];renderer.motion=null;renderer.hitUntil=0;renderer.floaters=[];renderer.ripples=[];crashStarted=0;sound.unlock();setMode('running');sound.update(true);$('start').blur();canvas.focus({preventScroll:true});tone('start');updateUI();
+function start(artistId){
+  if (mode !== 'home') return;
+  if ($('modal').open) {
+    returnFocus = canvas;
+    $('modal').close();
+  }
+  profile.artist=artistId;save();
+  run=createRun(crypto.getRandomValues(new Uint32Array(1))[0]);activeArtist=artistId;renderer.setArtist(activeArtist);
+  settled=false;renderer.fx=[];renderer.motion=null;renderer.hitUntil=0;renderer.floaters=[];renderer.ripples=[];crashStarted=0;sound.unlock();setMode('running');sound.update(true);canvas.focus({preventScroll:true});tone('start');updateUI();
 }
 function finish(){
   if(settled||!run)return;
@@ -81,7 +90,8 @@ function finish(){
 }
 function pause(){if(mode==='running'){setMode('paused');$('resume').focus({preventScroll:true})}}
 function resume(){if(mode==='paused'){setMode('running');canvas.focus({preventScroll:true})}}
-function home(){if(run&&!settled)finish();setMode('home');run=null;updateProfile();$('start').focus({preventScroll:true})}
+function focusLineup(){ $('launch-artists').querySelector(`[data-artist="${profile.artist}"]`)?.focus({preventScroll:true}); }
+function home(){if(run&&!settled)finish();setMode('home');run=null;updateProfile();focusLineup()}
 function updateUI(){
   if(!run)return;
   const artist=artistById(activeArtist);
@@ -120,7 +130,7 @@ function frame(now){
   }
   if(mode==='crashing'&&now-crashStarted>=600)finish();
   renderer.beatTime=sound.visualBeat(run?.t||renderer.time);renderer.musicEnergy=sound.energy();renderer.draw(run,dt,mode==='home',keyHeld||pointerHeld,mode==='paused');
-  if(now-lastUi>100){updateUI();const audioState=$('soundtrack').dataset.state;$('track-status').textContent=audioState==='playing'?'NOW PLAYING':audioState==='error'?'TRACK UNAVAILABLE':audioState==='blocked'?'TAP ♪ TO PLAY':!profile.sound?'MUTED · M TO PLAY':mode==='paused'?'PAUSED':'START A FLIGHT TO PLAY';lastUi=now}
+  if(now-lastUi>100){updateUI();const audioState=$('soundtrack').dataset.state;$('track-status').textContent=!profile.sound?'MUTED · M TO PLAY':audioState==='playing'?'NOW PLAYING':audioState==='error'?'TRACK UNAVAILABLE':audioState==='blocked'?'TAP ♪ TO PLAY':mode==='paused'?'PAUSED':'START A FLIGHT TO PLAY';lastUi=now}
   if(now>toastUntil)$('toast').hidden=true;requestAnimationFrame(frame);
 }
 function escapeText(value){return String(value??'').replace(/[&<>"']/g,s=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[s]))}
@@ -136,9 +146,9 @@ function openModal(kind){
   else $('modal-body').innerHTML=`<h2 class="modal-title">FLY. DODGE. REPEAT.</h2><p class="modal-intro">Choose your artist. Take the stage. You decide how high.</p><div class="help-grid"><div class="help-block"><h3>01 / TAKE CONTROL</h3><p>Hold <kbd>SPACE</kbd>, <kbd>↑</kbd>, your mouse or a finger on the game to rise. Release to fall. The floor and ceiling are safe.</p></div><div class="help-block"><h3>02 / STAY ALIVE</h3><p>Dodge straight and rotating zappers, laser lanes and missile volleys. A dashed laser line is safe until it fires. One unprotected hit ends the flight.</p></div><div class="help-block"><h3>03 / GET CHARGED</h3><p><b>◇ Shield:</b> one-hit protection.<br><b>≋ Raveboard:</b> speed and one hit.<br><b>▣ Bass Mech:</b> automatic fire and two armor hits.<br><b>ϟ THE DROP:</b> When the playing song reaches a marked drop, 10 seconds of speed, invincibility and extra score. The song keeps playing normally.</p></div><div class="help-block"><h3>04 / MAKE IT COUNT</h3><p>Collect music notes to build combos and HYPE. Fill it to supercharge the next drop in the song with a ×5 combo. Use <kbd>SHIFT</kbd>, <kbd>X</kbd> or the Pulse button to blast hazards away every 9 seconds. Complete live setlist goals for score and energy. <kbd>P</kbd> / <kbd>ESC</kbd> pauses, <kbd>M</kbd> toggles sound. Your illustrated studio or live-stage venue stays fixed throughout the run. Lights follow your flight and respond to the real Skumic soundtrack. Choose from four tracks below the game. Sonic Pulse lights up the scenery. Progress stays in this browser.</p></div></div>`;
   $('modal').showModal();
 }
-$('start').onclick=start;$('retry').onclick=start;$('pause').onclick=pause;$('resume').onclick=resume;$('quit').onclick=finish;$('home-button').onclick=home;
-$('nav-play').onclick=()=>{if(mode==='home')$('start').focus();else if(mode==='paused')resume();else if(mode==='over')home();else canvas.focus()};
-$('choose-artist').onclick=()=>openModal('artists');$('nav-artists').onclick=()=>openModal('artists');$('nav-log').onclick=()=>openModal('log');$('help').onclick=()=>openModal('help');
+$('retry').onclick=home;$('pause').onclick=pause;$('resume').onclick=resume;$('quit').onclick=finish;
+$('nav-play').onclick=()=>{if(mode==='home')focusLineup();else if(mode==='paused')resume();else if(mode==='over')home();else canvas.focus()};
+$('nav-artists').onclick=()=>openModal('artists');$('nav-log').onclick=()=>openModal('log');$('help').onclick=()=>openModal('help');
 document.querySelector('.brand').onclick=e=>{e.preventDefault();if(mode==='running')pause();else if(mode==='over')home()};
 $('track-select').innerHTML=TRACKS.map(t=>`<option value="${t.id}">${t.title}</option>`).join('');$('track-select').value=profile.track;sound.setTrack(profile.track);
 $('music-volume').value=Math.round(profile.musicVolume*100);$('volume-value').textContent=Math.round(profile.musicVolume*100)+'%';sound.setVolume(profile.musicVolume);$('music-volume').oninput=()=>{profile.musicVolume=Number($('music-volume').value)/100;sound.setVolume(profile.musicVolume);$('volume-value').textContent=Math.round(profile.musicVolume*100)+'%';save();};
@@ -162,9 +172,14 @@ document.addEventListener('keydown',e=>{
   if((e.code==='KeyP'||e.code==='Escape')&&!e.repeat){if(mode==='running')pause();else if(mode==='paused')resume();e.preventDefault();return}
   if(['Space','ArrowUp','KeyW'].includes(e.code)){
     if(mode==='running'){e.preventDefault();keyHeld=true}
-    else if(mode==='home'&&document.activeElement===canvas){e.preventDefault();start();keyHeld=true}
+    else if(mode==='home'&&document.activeElement===canvas){e.preventDefault();focusLineup()}
   }
 });
 document.addEventListener('keyup',e=>{if(['Space','ArrowUp','KeyW'].includes(e.code))keyHeld=false});
 window.addEventListener('blur',pause);document.addEventListener('visibilitychange',()=>{if(document.hidden)pause()});
-sound.enabled=profile.sound;save();updateProfile();await renderer.load();updateProfile();$('loading').hidden=true;requestAnimationFrame(frame);
+sound.enabled=profile.sound;save();updateProfile();await renderer.load();
+const launchArtists=$('launch-artists');
+launchArtists.innerHTML=ARTISTS.map(artist =>
+  `<button type="button" data-artist="${artist.id}" aria-label="Fly as ${artist.name}"><canvas width="160" height="190" data-portrait="${artist.id}" aria-hidden="true"></canvas><span>${artist.name}</span></button>`
+).join('');
+bindArtists(launchArtists);updateProfile();$('loading').hidden=true;requestAnimationFrame(frame);
