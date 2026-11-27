@@ -1,5 +1,6 @@
 import { venues, sideStands } from './layout.js';
 import { limitPaintElevation } from './paintball.js';
+import { backstageSolids } from './backstage-layout.js';
 
 function cameraObstacles(THREE) {
   const obstacles = [];
@@ -22,6 +23,9 @@ function cameraObstacles(THREE) {
   add(-33, -17.8, 17.6, 6.4, 14);
   add(0, 41.42, 13, .74, 5.54, 4.30);
   for (const x of [-6, 6]) add(x, 41, 1.55, 1.28, 4.88);
+  for (const { left, right, back, front, top } of backstageSolids) {
+    add((left + right) / 2, (back + front) / 2, right - left, front - back, top);
+  }
   return obstacles;
 }
 

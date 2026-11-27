@@ -1,3 +1,5 @@
+import { backstageSolids, onBackstageGround } from './backstage-layout.js';
+
 export const grounds = { minX: -51, maxX: 51, minZ: -43, maxZ: 43 };
 export const entrance = { x: -1.2, z: 26 };
 
@@ -74,12 +76,14 @@ export const solids = [
   ...lanterns.map(([x, z]) => bounds(x, z, 0.65, 0.65, 5.74)),
   ...trees.map(([x, z, size]) => bounds(x, z, size * .21, size * .21, size)),
   bounds(-6, 41, 1.25, 1.25, 4.88), bounds(6, 41, 1.25, 1.25, 4.88),
+  ...backstageSolids,
 ];
 
-export function canWalk(x, z) {
+export function canWalk(x, z, allowBackstage = false) {
   const radius = 0.62;
-  return x > grounds.minX + radius && x < grounds.maxX - radius &&
-    z > grounds.minZ + radius && z < grounds.maxZ - radius &&
-    !solids.some(({ left, right, back, front }) =>
+  const insideFestival = x > grounds.minX + radius && x < grounds.maxX - radius &&
+    z > grounds.minZ + radius && z < grounds.maxZ - radius;
+  if (!insideFestival && (!allowBackstage || !onBackstageGround(x, z))) return false;
+  return !solids.some(({ left, right, back, front }) =>
       x + radius > left && x - radius < right && z + radius > back && z - radius < front);
 }

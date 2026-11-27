@@ -1,4 +1,5 @@
 import { canWalk, grounds, paths, sideStands, venues } from './layout.js';
+import { inBackstage } from './backstage-layout.js';
 
 const step = 2;
 const gridX = Math.ceil((grounds.maxX - grounds.minX) / step);
@@ -113,7 +114,8 @@ export function createMap(canvas) {
   let way = [];
   return (player, marked, visited) => {
     ctx.drawImage(terrain, 0, 0);
-    if (marked) {
+    const hiddenPlayer = inBackstage(player.x, player.z);
+    if (marked && !hiddenPlayer) {
       const start = closestCell(player.x, player.z);
       if (start !== from || marked !== to) {
         from = start;
@@ -147,6 +149,7 @@ export function createMap(canvas) {
       ctx.restore();
     }
 
+    if (hiddenPlayer) return;
     ctx.save();
     ctx.translate(xAt(player.x), zAt(player.z));
     ctx.rotate(-player.heading);

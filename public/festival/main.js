@@ -3,6 +3,7 @@ import { createWorld } from './world.js';
 import { createFlatWorld } from './flat-world.js';
 import { createMap } from './map.js';
 import { createPaintball, limitPaintElevation, paintballPickup } from './paintball.js';
+import { inBackstage } from './backstage-layout.js';
 
 const $ = id => document.getElementById(id);
 const worldElement = $('world');
@@ -402,7 +403,8 @@ function walk(elapsed) {
   const side = pressed(eastKeys) - pressed(westKeys) + stick.x;
   const forward = pressed(southKeys) - pressed(northKeys) + stick.z;
   const length = Math.hypot(side, forward);
-  const moving = length >= .075;
+  const privateOverview = rig?.overview && inBackstage(player.x, player.z);
+  const moving = !privateOverview && length >= .075;
   const yaw = rig?.movementYaw(moving) ?? 0;
   player.speed = 0;
   player.strafe = 0;
@@ -415,8 +417,9 @@ function walk(elapsed) {
   const previousZ = player.z;
   const newX = player.x + x * speed * elapsed;
   const newZ = player.z + z * speed * elapsed;
-  if (canWalk(newX, player.z)) player.x = newX;
-  if (canWalk(player.x, newZ)) player.z = newZ;
+  const allowBackstage = Boolean(rig && !rig.overview);
+  if (canWalk(newX, player.z, allowBackstage)) player.x = newX;
+  if (canWalk(player.x, newZ, allowBackstage)) player.z = newZ;
   const deltaX = player.x - previousX, deltaZ = player.z - previousZ;
   const travel = Math.hypot(deltaX, deltaZ);
   player.speed = travel / elapsed;
@@ -500,7 +503,8 @@ async function start() {
             player.heading = rig.paintHeading;
             player.paintElevation = rig.paintElevation;
           }
-          const firing = player.hasPaintball && (paintQueued || held.has('f') || paintPointer !== null);
+          const privateOverview = rig?.overview && inBackstage(player.x, player.z);
+          const firing = player.hasPaintball && !privateOverview && (paintQueued || held.has('f') || paintPointer !== null);
           paintball.update(player, dt, firing, player.heading, player.paintElevation);
           paintQueued = false;
         }
@@ -508,7 +512,7 @@ async function start() {
       updateNearby();
       world.frame(player, elapsed, now / 1000, marked, nearby);
       positionSigns(world);
-      if (player.hasPaintball) {
+      if (player.hasPaintball && !(rig?.overview && inBackstage(player.x, player.z))) {
         const point = paintball.preview(player, player.heading, player.paintElevation);
         const aim = (world.projectPaint || world.project)(point.x, point.y, point.z);
         paintAim.classList.toggle('on-target', Boolean(point.onTarget));

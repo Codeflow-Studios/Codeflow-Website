@@ -1,4 +1,5 @@
 import { maxPaintCapsules, paintDots, paintFlashTime, paintTrailStart } from './paintball.js';
+import { inBackstage } from './backstage-layout.js';
 
 export function addPaintballEffects(THREE, scene, paintball, reduceMotion) {
   const geometry = new THREE.BoxGeometry();
@@ -33,10 +34,11 @@ export function addPaintballEffects(THREE, scene, paintball, reduceMotion) {
     place(mesh, i, color);
   }
 
-  return function animate() {
-    rounds.count = paintball.balls.length;
-    trails.count = rounds.count;
-    paintball.balls.forEach((ball, i) => {
+  return function animate(showBackstage = false) {
+    const visible = item => showBackstage || !inBackstage(item.x, item.z);
+    let i = 0;
+    for (const ball of paintball.balls) {
+      if (!visible(ball)) continue;
       dot(rounds, i, ball.color, ball.x, ball.y, ball.z, .17);
       paintTrailStart(ball, start);
       delta.set(ball.x - start.x, ball.y - start.y, ball.z - start.z);
@@ -46,25 +48,32 @@ export function addPaintballEffects(THREE, scene, paintball, reduceMotion) {
       pose.scale.set(width, length, width);
       if (length > 0) pose.quaternion.setFromUnitVectors(up, delta.multiplyScalar(1 / length));
       place(trails, i, '#fa2d82', 2.8);
-    });
-    flashes.count = paintball.flashes.length;
-    paintball.flashes.forEach((flash, i) => {
+      i++;
+    }
+    trails.count = rounds.count = i;
+    i = 0;
+    for (const flash of paintball.flashes) {
+      if (!visible(flash)) continue;
       const envelope = 1 - flash.age / paintFlashTime;
       pose.position.set(flash.x, flash.y, flash.z);
       pose.scale.setScalar((reduceMotion ? .115 : .28) * envelope);
       pose.rotation.set(.25, .4, .38);
-      place(flashes, i, flash.color, 3.3);
-    });
-    capsules.count = paintball.capsules.length;
-    paintball.capsules.forEach((capsule, i) => {
+      place(flashes, i++, flash.color, 3.3);
+    }
+    flashes.count = i;
+    i = 0;
+    for (const capsule of paintball.capsules) {
+      if (!visible(capsule)) continue;
       const fade = Math.min(1, (6 - capsule.age) * 2);
       pose.position.set(capsule.x, capsule.y, capsule.z);
       pose.scale.set(.15 * fade, .25 * fade, .15 * fade);
       pose.rotation.set(capsule.grounded ? Math.PI / 2 : capsule.rotation, capsule.rotation, .1, 'YXZ');
-      place(capsules, i, capsule.color);
-    });
+      place(capsules, i++, capsule.color);
+    }
+    capsules.count = i;
     let count = 0;
     for (const burst of paintball.bursts) {
+      if (!visible(burst)) continue;
       const progress = burst.age / .38;
       const spread = burst.surface * (reduceMotion ? 1.7 : 1 + progress * 4);
       for (const [x, y, size] of paintDots) {

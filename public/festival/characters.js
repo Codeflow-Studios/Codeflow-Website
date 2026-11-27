@@ -1,4 +1,5 @@
 import { createCrowd } from './crowd-models.js';
+import { inBackstage } from './backstage-layout.js';
 
 const W = 36, H = 52;
 const ink = '#202334';
@@ -343,7 +344,7 @@ export function addCharacters(THREE, scene, reduceMotion, walkers) {
 
   return function tick(player, dt, time, overview) {
     halo.position.set(player.x, .086, player.z);
-    halo.visible = overview;
+    halo.visible = overview && !inBackstage(player.x, player.z);
     animateCrowd(time);
     for (let i = audience.length; i < actors.length; i++) placeShadow(i);
     shadows.instanceMatrix.needsUpdate = true;

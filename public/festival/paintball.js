@@ -1,5 +1,6 @@
 import { canWalk, entrance, solids } from './layout.js';
 import { dropWalker, stepRagdoll } from './ragdoll.js';
+import { inBackstage, managerSeat } from './backstage-layout.js';
 
 const routes = [
   [[-4, 16], [4, 16], [4, 21], [-4, 21]],
@@ -25,6 +26,7 @@ const hitsToFall = 4;
 const recoveryDelay = 2;
 const fallDuration = .28;
 const riseDuration = .36;
+export const managerReactionTime = .7;
 export const markerGrip = { x: -.35, y: 1.68, z: .37 };
 export const maxPaintCapsules = 36;
 export const paintballPickup = { x: entrance.x, z: entrance.z - 2.5, radius: 3 };
@@ -46,6 +48,7 @@ function launch(player, heading, elevation) {
     originY: .024 + player.jumpHeight + height,
     originZ: player.z - markerGrip.x * dx + length * dz,
     vx: dx * forward * speed, vy: raised * speed, vz: dz * forward * speed,
+    backstageShot: inBackstage(player.x, player.z),
   };
 }
 
@@ -71,6 +74,11 @@ function hitWalker({ x, y, z }, walkers) {
     y < walker.size && (x - walker.x)**2 + (z - walker.z)**2 < .53**2);
 }
 
+function hitManager({ x, y, z, backstageShot }) {
+  return backstageShot && y > .84 && y < 2.28 &&
+    ((x - managerSeat.x) / .48) ** 2 + ((z - managerSeat.z - .15) / .46) ** 2 < 1;
+}
+
 export function createPaintball(onHit) {
   const walkers = routes.map((route, i) => ({
     x: route[0][0], z: route[0][1], y: .066, route, stop: 1, size: 2.25 + i % 4 * .09,
@@ -82,6 +90,7 @@ export function createPaintball(onHit) {
   const bursts = [];
   const capsules = [];
   const flashes = [];
+  const manager = { react: 0, paintTime: 0, color: paintColors[0] };
   let cooldown = 0, fired = 0, hits = 0, timeSinceShot = Infinity;
 
   function preview(player, heading, elevation) {
@@ -93,7 +102,7 @@ export function createPaintball(onHit) {
         trace.y = Math.max(.08, trace.y);
         return trace;
       }
-      if (hitWalker(trace, walkers)) {
+      if (hitManager(trace) || hitWalker(trace, walkers)) {
         trace.onTarget = true;
         return trace;
       }
@@ -130,6 +139,8 @@ export function createPaintball(onHit) {
     const recoil = timeSinceShot / .034;
     player.markerKick = recoil < 9 ? recoil * Math.exp(1 - recoil) : 0;
     if (firing) fire(player, heading, elevation);
+    manager.react = Math.max(0, manager.react - dt);
+    manager.paintTime = Math.max(0, manager.paintTime - dt);
     for (const walker of walkers) {
       walker.paintTime = Math.max(0, walker.paintTime - dt);
       walker.react = Math.max(0, walker.react - dt);
@@ -174,14 +185,16 @@ export function createPaintball(onHit) {
         placeBall(ball, time);
         ball.age = time;
         const blocked = hitsScenery(ball);
-        const target = blocked ? null : hitWalker(ball, walkers);
+        const target = blocked ? null : hitManager(ball) ? manager : hitWalker(ball, walkers);
         if (blocked || target) {
           bursts.push({ x: ball.x, y: Math.max(.08, ball.y), z: ball.z,
             color: ball.color, age: 0, surface: blocked ? .5 : 1 });
           if (target) {
             target.color = ball.color;
             target.paintTime = 6;
-            if (++target.hits >= hitsToFall) {
+            if (target === manager) {
+              manager.react = managerReactionTime;
+            } else if (++target.hits >= hitsToFall) {
               target.downed = true;
               target.doll = dropWalker(target, ball);
               target.walking = false;
@@ -235,5 +248,5 @@ export function createPaintball(onHit) {
     }
   }
 
-  return { walkers, balls, bursts, capsules, flashes, update, preview };
+  return { walkers, balls, bursts, capsules, flashes, manager, update, preview };
 }

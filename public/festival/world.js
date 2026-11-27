@@ -14,6 +14,8 @@ import { paintballHover, paintballPickup } from './paintball.js';
 import { addPaintballEffects } from './paintball-visuals.js';
 import { createPerformer } from './performer-model.js';
 import { createFestivalAtmosphere } from './console-lighting.js';
+import { inBackstage, onBackstageGround, rearGate } from './backstage-layout.js';
+import { addBackstage } from './backstage.js';
 
 const up = new THREE.Vector3(0, 1, 0);
 const tau = Math.PI * 2;
@@ -297,13 +299,17 @@ export function createWorld(container, reduceMotion, paintball) {
     const z = -73 + random() * 132;
     if (Math.abs(x) < 55 && z > -47 && z < 48) continue;
     if (Math.abs(x) < 9 && z > 40) continue;
-    pine(x, z, 3.8 + random() * 9, random());
+    const size = 3.8 + random() * 9, variant = random();
+    if (x > 3 && x < 42 && z < -43 && z > -72) continue;
+    pine(x, z, size, variant);
   }
   for (let i = 0; i < 42; i++) {
     const x = -65 + random() * 130;
     const z = -49 + random() * 105;
     if (Math.abs(x) <= 50 && z > -43 && z < 43) continue;
-    prop(rock, '#3c4e52', x, .35, z, 1 + random() * 3, 1.2, 1.4, random() * tau);
+    const size = 1 + random() * 3, variant = random() * tau;
+    if (onBackstageGround(x, z)) continue;
+    prop(rock, '#3c4e52', x, .35, z, size, 1.2, 1.4, variant);
   }
 
   function railing(startX, startZ, endX, endZ, color, segments) {
@@ -318,7 +324,8 @@ export function createWorld(container, reduceMotion, paintball) {
     beam('#44565b', startX, .49, startZ, endX, .49, endZ, .09);
   }
 
-  railing(-51, -43, 51, -43, '#65797b', 26);
+  railing(-51, -43, rearGate.left, -43, '#65797b', 15);
+  railing(rearGate.right, -43, 51, -43, '#65797b', 10);
   for (const x of [-51, 51]) railing(x, -43, x, 43, '#65797b', 22);
   railing(-51, 43, -5, 43, '#7b827e', 12);
   railing(5, 43, 51, 43, '#7b827e', 12);
@@ -575,11 +582,14 @@ export function createWorld(container, reduceMotion, paintball) {
   const animateScenery = addScenery(THREE, scene, reduceMotion);
   const animateCharacters = addCharacters(THREE, scene, reduceMotion, paintball.walkers);
   const animatePaintball = addPaintballEffects(THREE, scene, paintball, reduceMotion);
+  const updateBackstage = addBackstage(THREE, scene, evergreen);
   const pickup = new THREE.Group();
   pickup.scale.setScalar(1.24);
   scene.add(pickup);
   const pickupGlow = floorSpot(pink, paintballPickup.x, paintballPickup.z, 3.9, 3.9, .49, true);
-  const animatePlayer = createPerformer(THREE, scene, pickup);
+  const playerModels = new THREE.Group();
+  scene.add(playerModels);
+  const animatePlayer = createPerformer(THREE, playerModels, pickup);
   const animateAtmosphere = createFestivalAtmosphere(THREE, scene, venues, reduceMotion);
   const gateRing = new THREE.Mesh(new THREE.RingGeometry(1.55, 1.68, 36),
     new THREE.MeshBasicMaterial({ color: yellow, transparent: true, depthWrite: false }));
@@ -597,9 +607,12 @@ export function createWorld(container, reduceMotion, paintball) {
 
   function frame(player, elapsed, time, marked, nearby) {
     rig.update(player, elapsed);
+    const backstageChanged = updateBackstage(player, rig.overview, paintball.manager, reduceMotion);
+    const privatePosition = inBackstage(player.x, player.z);
+    playerModels.visible = !rig.overview || !privatePosition;
     animateCharacters(player, elapsed, time, rig.overview);
     animatePlayer(player, elapsed, time, rig.overview, reduceMotion);
-    animatePaintball();
+    animatePaintball(!rig.overview && privatePosition);
     pickup.visible = pickupGlow.visible = Boolean(player.artist) && !player.hasPaintball;
     if (pickup.visible) {
       pickup.position.set(paintballPickup.x, paintballHover(time, reduceMotion), paintballPickup.z);
@@ -617,7 +630,7 @@ export function createWorld(container, reduceMotion, paintball) {
     }
     animateLights(reduceMotion ? 0 : time, player);
     animateGroundLight(reduceMotion ? 0 : time);
-    if (time - lastShadow >= 1 / 18) {
+    if (backstageChanged || time - lastShadow >= 1 / 18) {
       renderer.shadowMap.needsUpdate = true;
       lastShadow = time;
     }
