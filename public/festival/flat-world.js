@@ -3,7 +3,9 @@ import { drawMarquee } from './stage-murals.js';
 import { paintDots } from './paintball.js';
 import { createFlatArtistSprites, createFlatWalkerSprites } from './characters.js';
 import { makeFestivalSurfaceCanvas } from './terrain.js';
-import { puddles } from './ground-light.js';
+import { festivalLights, puddles } from './ground-light.js';
+
+const { dark, purple, pink, yellow } = festivalLights;
 
 export function createFlatWorld(container, paintball) {
   const canvas = document.createElement('canvas');
@@ -29,9 +31,9 @@ export function createFlatWorld(container, paintball) {
     pattern.setTransform(new DOMMatrix().scale(metres/tile.width));
     return pattern;
   }
-  const grass = surface('grass', 9, '#13192a99');
-  const gravel = surface('earth', 7.5, '#22203e88');
-  const deck = surface('deck', 5, '#161c3780');
+  const grass = surface('grass', 9, `${dark}99`);
+  const gravel = surface('earth', 7.5, `${purple}73`);
+  const deck = surface('deck', 5, `${dark}80`);
   canvas.style.imageRendering = 'auto';
 
   function resize() {
@@ -80,12 +82,12 @@ export function createFlatWorld(container, paintball) {
     centerX = player.x * (compact ? .92 : .29);
     centerZ = compact ? player.z - 7 : player.z * .19 - 2;
     ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
-    ctx.fillStyle = '#121529';
+    ctx.fillStyle = dark;
     ctx.fillRect(0, 0, width, height);
     ctx.translate(width / 2 - centerX * scale, height / 2 - centerZ * scale);
     ctx.scale(scale, scale);
     ctx.fillStyle = grass;
-    ctx.strokeStyle = '#404b60';
+    ctx.strokeStyle = purple;
     ctx.lineWidth = .27;
     ctx.beginPath();
     ctx.roundRect(grounds.minX, grounds.minZ, grounds.maxX - grounds.minX, grounds.maxZ - grounds.minZ, 1);
@@ -103,15 +105,15 @@ export function createFlatWorld(container, paintball) {
       ctx.rotate(-pool.angle);
       ctx.scale(pool.width*.5,pool.depth*.5);
       const sheen = ctx.createLinearGradient(-1,0,1,0);
-      sheen.addColorStop(0,'#2b203b');
+      sheen.addColorStop(0,purple);
       sheen.addColorStop(.48,pool.tint);
-      sheen.addColorStop(1,'#382b4a');
+      sheen.addColorStop(1,dark);
       ctx.globalAlpha = .40;
       disc(0,0,1,sheen);
       ctx.restore();
     }
-    for (const zone of venues) lightPool(zone.doorX,zone.doorZ,9,zone.color,.32);
-    for (const [x,z] of lanterns) lightPool(x,z,6,'#e4ad70',.36);
+    for (const zone of venues) lightPool(zone.doorX,zone.doorZ,9,pink,.32);
+    for (const [x,z] of lanterns) lightPool(x,z,6,yellow,.28);
     for (const [x, z, size] of trees) {
       disc(x + .4, z + .43, size * .38, '#223231');
       rectangle(x, z + .5, .65, size * .74, '#523f4a');
@@ -125,8 +127,8 @@ export function createFlatWorld(container, paintball) {
     }
     for (const [x, z] of benches) rectangle(x, z, 3.4, 1.5, '#9b7668');
     for (const [x, z] of lanterns) {
-      disc(x, z, 2.0, '#b29b5f37');
-      disc(x, z, .4, '#f9d69f');
+      disc(x, z, 2.0, `${yellow}29`);
+      disc(x, z, .4, yellow);
     }
     for (const stand of sideStands) {
       rectangle(stand.x, stand.z, stand.width, stand.depth, '#3b3449');

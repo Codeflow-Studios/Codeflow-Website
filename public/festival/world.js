@@ -3,7 +3,7 @@ import { benches, lanterns, sideStands, trees, venues } from './layout.js';
 
 import { createCameraRig } from './camera.js';
 import { addTerrain, makeDeckMaterial } from './terrain.js';
-import { addGroundLight } from './ground-light.js';
+import { addGroundLight, festivalLights } from './ground-light.js';
 import { addStageArt } from './stage-art.js';
 import { addScenery } from './scenery.js';
 import { addCharacters } from './characters.js';
@@ -17,6 +17,7 @@ import { createFestivalAtmosphere } from './console-lighting.js';
 const up = new THREE.Vector3(0, 1, 0);
 const tau = Math.PI * 2;
 const halfPi = Math.PI / 2;
+const { dark, purple, pink, yellow } = festivalLights;
 const ink = '#202634';
 const shell = '#303847';
 
@@ -39,15 +40,16 @@ function makeTexture(width, height, paint) {
 export function createWorld(container, reduceMotion, paintball) {
   const renderer = new THREE.WebGLRenderer({ antialias: false, powerPreference: 'high-performance', alpha: false });
   renderer.outputColorSpace = THREE.SRGBColorSpace;
-  renderer.setClearColor('#090e23');
+  renderer.setClearColor(dark);
   renderer.domElement.setAttribute('aria-hidden', 'true');
   container.append(renderer.domElement);
   const pixelRenderer = createPixelRenderer(THREE, renderer);
 
   const scene = new THREE.Scene();
-  scene.fog = new THREE.FogExp2('#252943', .0084);
-  scene.add(new THREE.HemisphereLight('#b0c0ff', '#514365', .74));
-  const fill = new THREE.DirectionalLight('#7889bd', .34);
+  scene.fog = new THREE.FogExp2(new THREE.Color(dark).lerp(new THREE.Color(purple), .29), .0084);
+  const lilac = new THREE.Color(purple).lerp(new THREE.Color('#fff'), .48);
+  scene.add(new THREE.HemisphereLight(lilac, purple, .80));
+  const fill = new THREE.DirectionalLight(purple, .50);
   fill.position.set(19,26,36);
   scene.add(fill);
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
@@ -55,7 +57,7 @@ export function createWorld(container, reduceMotion, paintball) {
   renderer.shadowMap.enabled = true;
   renderer.shadowMap.type = THREE.PCFSoftShadowMap;
   renderer.shadowMap.autoUpdate = false;
-  const moon = new THREE.DirectionalLight('#a2b9ff', .66);
+  const moon = new THREE.DirectionalLight(lilac, .68);
   moon.position.set(-6, 39, -55);
   moon.castShadow = true;
   Object.assign(moon.shadow.camera, { left: -65, right: 65, top: 65, bottom: -65, near: .5, far: 162 });
@@ -64,7 +66,7 @@ export function createWorld(container, reduceMotion, paintball) {
   moon.shadow.bias = -.00025;
   scene.add(moon);
   for (const stage of venues) {
-    const wash = new THREE.PointLight(stage.color, 185, 27, 2);
+    const wash = new THREE.PointLight(pink, 180, 27, 2);
     wash.position.set(stage.x, 3.6, stage.z + 3.5);
     scene.add(wash);
   }
@@ -96,7 +98,7 @@ export function createWorld(container, reduceMotion, paintball) {
   const followSpot = new THREE.SpotLight('#ffffff', 0, 32, .35, .72, 2);
   scene.add(followSpot, followSpot.target);
   const beamDirection = new THREE.Vector3();
-  const lanternFill = Array.from({ length: 2 }, () => new THREE.PointLight('#ffc397', 56, 13, 2));
+  const lanternFill = Array.from({ length: 2 }, () => new THREE.PointLight(yellow, 51, 13, 2));
   scene.add(...lanternFill);
   const shadowTexture = makeTexture(64, 64, (ctx, w, h) => {
     const gradient = ctx.createRadialGradient(w / 2, h / 2, w * .1, w / 2, h / 2, w / 2);
@@ -325,20 +327,20 @@ export function createWorld(container, reduceMotion, paintball) {
     bulbs.push(x, 5.38, z);
     prop(tube, '#414b53', x, .18, z, .65, .36, .65);
     prop(post, '#5d6570', x, 2.74, z, .17, 5.3, .17);
-    prop(tube, '#ffe1a5', x, 5.36, z, .36, .43, .36, 0, 0, true);
+    prop(tube, yellow, x, 5.36, z, .36, .43, .36, 0, 0, true);
     prop(cone, ink, x, 5.62, z, .65, .23, .65);
-    floorSpot('#ffc184', x, z, 12, 12, .32, true);
+    floorSpot(yellow, x, z, 12, 12, .30, true);
   }
   for (const z of [-12, 3, 23, 39]) {
     const sag = x => 4.50 + (x / 8) ** 2 * .92;
     for (let x = -8; x < 8; x += 1) {
       beam('#645a57', x, sag(x), z, x + 1, sag(x + 1), z, .027);
-      prop(round, x % 3 === 0 ? '#ffcf93' : '#ffedc3', x + .5, sag(x + .5) - .07, z, .102, .144, .102, 0, 0, true);
+      prop(round, yellow, x + .5, sag(x + .5) - .07, z, .102, .144, .102, 0, 0, true);
       bulbs.push(x + .5, sag(x + .5) - .07, z);
     }
   }
 
-  const resizeGlow = festoonGlow(THREE, scene, bulbs);
+  const resizeGlow = festoonGlow(THREE, scene, bulbs, yellow);
   const pennant = new THREE.BufferGeometry();
   pennant.setAttribute('position', new THREE.Float32BufferAttribute([0, 0, 0, .52, -.89, 0, 1, 0, 0], 3));
   pennant.computeVertexNormals();
@@ -392,7 +394,7 @@ export function createWorld(container, reduceMotion, paintball) {
 
   for (const x of [-6, 6]) {
     tower(x, 41.42, 4.88, '#ccea95');
-    floorSpot('#c2e879', x, 39.3, 4.3, 4.9, .16, true);
+    floorSpot(pink, x, 39.3, 4.3, 4.9, .16, true);
   }
   box(ink, 0, 4.92, 41.42, 13, 1.24, .74);
   sign('SKUMIC FESTIVAL', 0, 4.92, 41.80, 11.2, 1.12, '#dafa91');
@@ -401,7 +403,7 @@ export function createWorld(container, reduceMotion, paintball) {
   function deck(venue) {
     const { x, z, width: w, depth: d, color } = venue;
     floorSpot('#18212a', x, z, w + 10, d + 6, .95);
-    floorSpot(color, x, z + d / 2 + 6, w * 1.14, 17, .32, true);
+    floorSpot(pink, x, z + d / 2 + 6, w * 1.14, 17, .32, true);
     box(ink, x, .36, z, w, .72, d);
     box('#51566a', x, .76, z, w - .12, .13, d - .16);
     const floor = new THREE.Mesh(new THREE.PlaneGeometry(w - .15,d - .19),makeDeckMaterial(THREE,w,d));
@@ -416,16 +418,16 @@ export function createWorld(container, reduceMotion, paintball) {
       box('#55576c',x+xOffset,.31,z+d/2+.035,.041,.29,.016);
     }
     for (const side of [-1,1]) {
-      box(color,venue.doorX+side*2.5,.11,venue.doorZ,.21,.15,.23,true);
+      box(yellow,venue.doorX+side*2.5,.11,venue.doorZ,.21,.15,.23,true);
     }
     for (const contact of [-1, 1]) {
-      box(color, x + contact * w / 2, .64, z, .075, .10, d, true);
+      box(pink, x + contact * w / 2, .64, z, .075, .10, d, true);
       box('#303747', x + contact * (w / 2 - .68), .25, z + d / 2 + .61, 1.12, .5, 1.17);
     }
     for (let i = 0; i < 3; i++) box('#56596c', x, .30 - .10 * i, z + d / 2 + .3 + .32 * i, 6, .52 - .14 * i, .59);
     for (const dx of [-3.2, 3.2]) {
-      strip(x + dx, venue.doorZ, .13, 3.9, color);
-      strip(x + dx * .81, venue.doorZ + 1.99, .91, .13, color);
+      strip(x + dx, venue.doorZ, .13, 3.9, yellow);
+      strip(x + dx * .81, venue.doorZ + 1.99, .91, .13, yellow);
     }
   }
 
@@ -456,11 +458,11 @@ export function createWorld(container, reduceMotion, paintball) {
     deck(venue);
     box('#282d3d', x, 3.7, z - 4.8, 20.5, 6, 1.13);
     for (const side of [-1, 1]) {
-      tower(x + 10.8 * side, z + 4.11, 8.45, color);
-      tower(x + 10.8 * side, z - 4.13, 8.45, '#8bbdad');
+      tower(x + 10.8 * side, z + 4.11, 8.45, pink);
+      tower(x + 10.8 * side, z - 4.13, 8.45, yellow);
       speaker(x + 8.4 * side, z + 3.48, 4.95, color);
       box('#556f69', x + 8.1 * side, 4.75, z - 4.01, 3.4, 4.58, .14);
-      for (let i = 0; i < 8; i++) box(color, x + side * (8.1 + (i % 2 ? .42 : -.42)), 2.98 + i * .49, z - 3.92, 1.74, .12, .035, true);
+      for (let i = 0; i < 8; i++) box(pink, x + side * (8.1 + (i % 2 ? .42 : -.42)), 2.98 + i * .49, z - 3.92, 1.74, .12, .035, true);
       for (let i = 0; i < 5; i++) {
         const sign = side * (11.1 + .24 * i);
         beam('#526a66', sign, 7.5 + .16 * i, z - 4, sign, 7.5 + .16 * i, z + 4.4, .14);
@@ -468,13 +470,13 @@ export function createWorld(container, reduceMotion, paintball) {
     }
     box('#32394b', x, 8.01, z - 4.20, 22.6, .42, 2.14);
     beam('#778486', x - 10.8, 8.15, z + 4.11, x + 10.8, 8.15, z + 4.11, .18);
-    box(color, x, 7.88, z + 5.25, 22.6, .13, .18, true);
+    box(pink, x, 7.88, z + 5.25, 22.6, .13, .18, true);
     box(ink, x, 7.7, z + 5.28, 15.3, 1.55, .18);
     sign('CROWD SURFING', x, 7.77, z + 5.39, 14.7, 1.37, color);
     cover(venue, x, 3.96, z - 3.48, 11.7, 5.1);
-    for (let i = -6; i <= 6; i++) box(i % 2 ? '#dafa9b' : '#a8f4df', x + i * 1.25, 1.05, z + 5.61, .52, .105, .16, true);
-    spotlight('#bcfa86', [x - 9.4, 7.58, z + 5.56], [x + 2.8, z + 11.9], 4.8, 0);
-    spotlight('#81f6e4', [x + 9.4, 7.58, z + 5.56], [x - 2.8, z + 11.2], 4.9, 2.6);
+    for (let i = -6; i <= 6; i++) box(i % 2 ? pink : yellow, x + i * 1.25, 1.05, z + 5.61, .52, .105, .16, true);
+    spotlight(pink, [x - 9.4, 7.58, z + 5.56], [x + 2.8, z + 11.9], 4.8, 0);
+    spotlight(yellow, [x + 9.4, 7.58, z + 5.56], [x - 2.8, z + 11.2], 4.9, 2.6);
   }
 
   function fightingTent(venue) {
@@ -487,7 +489,7 @@ export function createWorld(container, reduceMotion, paintball) {
       for (let i = 0; i < 9; i++) {
         box('#4a424f', wallX + side * 1.39, 2.17, z - 5.25 + i * 1.29, .15, 2.50, .18);
       }
-      tower(x + side * 9.05, z + 4.9, 6.87, color);
+      tower(x + side * 9.05, z + 4.9, 6.87, pink);
       speaker(x + side * 6.53, z + 4.10, 2.82, color);
     }
     box('#3e3646', x, 3.6, z - 5.58, 16.3, 5.68, .72);
@@ -500,12 +502,12 @@ export function createWorld(container, reduceMotion, paintball) {
     const ringDepth = 4;
     box('#a77776', x, .92, z + 2.2, ringWidth, .27, ringDepth);
     for (const side of [-1, 1]) {
-      box('#ffbaaa', x + ringWidth / 2 * side, .98, z + 2.2, .11, .15, ringDepth, true);
+      box(yellow, x + ringWidth / 2 * side, .98, z + 2.2, .11, .15, ringDepth, true);
       for (const corner of [.2, 4.2]) box(ink, x + ringWidth / 2 * side, 1.43, z + corner, .26, 1.24, .26);
       for (let y = 1.22; y < 1.95; y += .32) beam(color, x + ringWidth / 2 * side, y, z + .2, x + ringWidth / 2 * side, y, z + 4.2, .062, true);
     }
-    spotlight('#ffab85', [x - 7.9, 6.2, z + 5.87], [x + .9, z + 11.6], 3.75, 1.1);
-    spotlight('#ffdca1', [x + 7.9, 6.2, z + 5.87], [x - 2.6, z + 9.4], 3.3, 3.7);
+    spotlight(pink, [x - 7.9, 6.2, z + 5.87], [x + .9, z + 11.6], 3.75, 1.1);
+    spotlight(yellow, [x + 7.9, 6.2, z + 5.87], [x - 2.6, z + 9.4], 3.3, 3.7);
   }
 
   function raveClub(venue) {
@@ -518,19 +520,19 @@ export function createWorld(container, reduceMotion, paintball) {
       speaker(x + side * 8.45, z + 3.65, 3.25, '#ab9fe8');
       for (let i = 0; i < 5; i++) {
         const postX = w + side * (i - 2) * .49;
-        box(i % 2 ? '#ccbcff' : '#9d99f0', postX, 4.52 - i * .24, z + 4.93, .20, 3.7 - i * .51, .19, true);
+        box(i % 2 ? pink : purple, postX, 4.52 - i * .24, z + 4.93, .20, 3.7 - i * .51, .19, true);
       }
-      beam('#9990e4', x, 7.36, z + 3.9, x + side * 9.25, 4.63, z + 3.9, .24, true);
+      beam(pink, x, 7.36, z + 3.9, x + side * 9.25, 4.63, z + 3.9, .24, true);
       beam('#7674b7', x, 7.36, z - 4.7, x + side * 9.25, 4.63, z - 4.7, .22);
     }
     cover(venue, x, 4.17, z - 4.28, 11.7, 4.72);
     const tunnel = new THREE.TorusGeometry(3.27, .16, 8, 12, Math.PI);
-    for (let i = 0; i < 4; i++) prop(tunnel, i % 2 ? '#e1b8fa' : color, x, 1.0, z + 4.1 - i, 1.23, 1, 1, 0, 0, true);
+    for (let i = 0; i < 4; i++) prop(tunnel, i % 2 ? pink : purple, x, 1.0, z + 4.1 - i, 1.23, 1, 1, 0, 0, true);
     box(ink, x, 6.77, z + 4.03, 13.28, 1.03, .48);
     sign('RAVE RUSH', x, 6.77, z + 4.29, 12.9, .93, color);
-    for (let i = -4; i <= 4; i++) strip(x + i * .74, z + 4.75, .37, 1.52, i % 2 ? '#aaa5fd' : '#e1b8fa');
-    spotlight('#c6a2ff', [x - 7.1, 6.05, z + 4.63], [x + 3.6, z + 12.7], 4.05, 4.1);
-    spotlight('#8c9bff', [x + 7.1, 6.05, z + 4.63], [x - 3.7, z + 12], 4.3, 2.1);
+    for (let i = -4; i <= 4; i++) strip(x + i * .74, z + 4.75, .37, 1.52, i % 2 ? purple : yellow);
+    spotlight(pink, [x - 7.1, 6.05, z + 4.63], [x + 3.6, z + 12.7], 4.05, 4.1);
+    spotlight(yellow, [x + 7.1, 6.05, z + 4.63], [x - 3.7, z + 12], 4.3, 2.1);
   }
 
   function dixieDash(venue) {
@@ -541,15 +543,15 @@ export function createWorld(container, reduceMotion, paintball) {
       box(index % 2 ? '#52526e' : '#614364', column, 2.6, z - 1.4, 2.2, 3.7, 2.5);
       box('#212034', column, 4.5, z - 1.4, 2.25, .25, 2.55);
       box('#372d46', column, 2.45, z - .12, 1.82, 2.98, .12);
-      box('#ffe3f0', column, 3.37, z - .045, .63, .16, .05);
-      box(color, column + .5, 2.45, z - .045, .18, .24, .05, true);
+      box(yellow, column, 3.37, z - .045, .63, .16, .05);
+      box(yellow, column + .5, 2.45, z - .045, .18, .24, .05, true);
     }
     box('#21162c', x, 5.25, z + .85, 12.25, 1.08, .3);
     sign('DIXIE DASH', x, 5.25, z + 1.02, 11.8, .92, color);
     cover(venue, x, 2.42, z + .75, 5.2, 2.92);
     for (const side of [-1, 1]) {
-      box(color, x + side * 5.9, 3.65, z + 1, .12, 2.45, .15, true);
-      spotlight(color, [x + side * 5.35, 4.9, z + 1.2], [x + side * 2.2, z + 7], 2.7, side);
+      box(pink, x + side * 5.9, 3.65, z + 1, .12, 2.45, .15, true);
+      spotlight(side < 0 ? pink : yellow, [x + side * 5.35, 4.9, z + 1.2], [x + side * 2.2, z + 7], 2.7, side);
     }
   }
 
@@ -575,7 +577,7 @@ export function createWorld(container, reduceMotion, paintball) {
   const animatePlayer = createPerformer(THREE, scene);
   const animateAtmosphere = createFestivalAtmosphere(THREE, scene, venues, reduceMotion);
   const gateRing = new THREE.Mesh(new THREE.RingGeometry(1.55, 1.68, 36),
-    new THREE.MeshBasicMaterial({ color: '#edffae', transparent: true, depthWrite: false }));
+    new THREE.MeshBasicMaterial({ color: yellow, transparent: true, depthWrite: false }));
   gateRing.rotation.x = -halfPi;
   scene.add(gateRing);
 

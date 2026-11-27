@@ -1,4 +1,5 @@
 import { paths } from './layout.js';
+import { festivalLights } from './ground-light.js';
 
 const extent = 260;
 const tau = 2 * Math.PI;
@@ -165,8 +166,11 @@ function nightPanorama(THREE) {
   const sky = raster(1024,512);
   const random = randomSource(0x5457494c);
   const noise = noiseField(0x62616e6b);
-  const stops = [[0,0x070d24],[.21,0x111938],[.32,0x202a51],[.39,0x2c345a],
-    [.445,0x3b4267],[.485,0x504865],[.54,0x35324c],[.63,0x1b263a],[1,0x0e182a]];
+  const dark = Number.parseInt(festivalLights.dark.slice(1), 16);
+  const purple = Number.parseInt(festivalLights.purple.slice(1), 16);
+  const pink = Number.parseInt(festivalLights.pink.slice(1), 16);
+  const stops = [[0,dark],[.22,blendRGB(dark,purple,.24)],[.39,blendRGB(dark,purple,.68)],
+    [.485,blendRGB(purple,pink,.11)],[.54,blendRGB(dark,purple,.56)],[.66,blendRGB(dark,purple,.23)],[1,dark]];
   const moonX=.736, moonY=.395;
   let band=1;
   for(let y=0;y<sky.height;y++) {
@@ -179,9 +183,9 @@ function nightPanorama(THREE) {
       const u=x/sky.width, dx=(u-moonX)*1.89;
       const dy=v-moonY, radius=dx*dx+dy*dy;
       const glow=.16/(1+radius*350);
-      let color=blendRGB(base,0x7a90d1,glow);
+      let color=blendRGB(base,0xc3a2ee,glow);
       if(cloudBand>0) {
-        // Thin clouds catch blue moonlight along their edges.
+        // Thin clouds catch violet moonlight along their edges.
         const shear=.78*Math.sin(u*tau*2+.7)+.35*Math.cos(u*tau*3);
         const a=noise(u*16,v*59+shear,16);
         const b=noise(u*32+2,v*134+shear*2,32);
@@ -191,13 +195,13 @@ function nightPanorama(THREE) {
         if(opacity>.003) {
           const edge=noise(u*16,(v+.006)*59+shear,16)-a;
           const light=clamp(.38-edge*3.2+c*.15+glow*.21);
-          const cloudColor=blendRGB(0x232442,0x555d87,light);
+          const cloudColor=blendRGB(0x231238,0x684783,light);
           color=blendRGB(color,cloudColor,opacity*.57);
         }
       }
       if (radius < .0002) {
         const detail = noise(dx * 300 + 13, dy * 300 + 17);
-        color = blendRGB(0xb3c3e3,0xf0f0e8,smooth(clamp((detail-.25)*2)));
+        color = blendRGB(0xc2a9e2,0xfcf0ff,smooth(clamp((detail-.25)*2)));
       }
       sky.pixel(x,y,color);
     }
@@ -206,10 +210,10 @@ function nightPanorama(THREE) {
     const u=random(), v=.05+random()*.345;
     if (((u-moonX)*1.89)**2+(v-moonY)**2 < .00029) continue;
     const x=u*sky.width, y=v*sky.height;
-    sky.pixel(x,y,i%13 ? 0x757da5 : 0xd5def4);
+    sky.pixel(x,y,i%13 ? 0x93829f : 0xe8d7f8);
     if (i%23 === 0) {
-      sky.pixel(x+1,y,0x929ec9);
-      sky.pixel(x,y+1,0x929ec9);
+      sky.pixel(x+1,y,0xbaa1cf);
+      sky.pixel(x,y+1,0xbaa1cf);
     }
   }
   function ridge(base, amplitude, color, shade, horizontal, offset) {
@@ -223,15 +227,15 @@ function nightPanorama(THREE) {
       sky.rect(x,silhouette,1,sky.height-silhouette,blendRGB(shade,color,southernFace));
     }
   }
-  ridge(.51,.068,0x454361,0x393b56,8,3);
-  ridge(.522,.055,0x353854,0x2d3049,12,7);
-  ridge(.534,.044,0x2b314a,0x252a42,16,11);
+  ridge(.51,.068,0x392650,0x2a1a3b,8,3);
+  ridge(.522,.055,0x2b2039,0x21162f,12,7);
+  ridge(.534,.044,0x251733,0x1c142b,16,11);
   for(let x=0;x<sky.width;x+=2+Math.floor(random()*4)) {
     const y=sky.height*(.525+Math.sin(x/sky.width*tau*6)*.004);
     const h=2+random()*6;
-    sky.polygon([[x-2,y+3],[x,y-h],[x+2,y+3]],0x20283e);
+    sky.polygon([[x-2,y+3],[x,y-h],[x+2,y+3]],0x180f25);
   }
-  ridge(.55,.036,0x192435,0x151e30,13,5);
+  ridge(.55,.036,0x170d23,0x120a1b,13,5);
   return asTexture(THREE,sky);
 }
 

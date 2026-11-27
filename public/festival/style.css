@@ -60,7 +60,7 @@ a:focus-visible, button:focus-visible { outline: 2px solid var(--lime); outline-
 #world { outline: none; touch-action: none; }
 #world canvas { image-rendering: auto; }
 #minimap { image-rendering: pixelated; }
-.vignette { pointer-events: none; background: linear-gradient(to top, #17142654, transparent 16%); }
+.vignette { pointer-events: none; background: linear-gradient(to top, #02010566, transparent 18%); }
 
 .wordmark { position: absolute; left: var(--outside); top: var(--top); pointer-events: none; }
 .wordmark-top {
@@ -274,7 +274,7 @@ kbd { min-width: 18px; padding: 2px 4px; border: 1px solid #9c9aa4; border-botto
   height: 9px;
   left: -5px;
   top: -5px;
-  border: 1px solid #e5ff8b;
+  border: 1px solid #dcf105;
   border-radius: 50%;
   box-shadow: 0 0 0 1px #202338, inset 0 0 0 1px #202338;
 }

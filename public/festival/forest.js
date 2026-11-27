@@ -1,5 +1,5 @@
 // A shared evergreen crown. Each drooping branch has an upper face that catches
-// the sunset and a darker underside. Trees reuse this mesh in a single batch.
+// the light and a darker underside. Trees reuse this mesh in a single batch.
 export function spruceCrown(THREE) {
   const positions = [], colors = [];
   const face = (a, b, c, tint) => {
@@ -32,11 +32,11 @@ export function spruceCrown(THREE) {
   return geometry;
 }
 
-export function festoonGlow(THREE, scene, bulbs) {
+export function festoonGlow(THREE, scene, bulbs, color) {
   const points = new THREE.BufferGeometry();
   points.setAttribute('position', new THREE.Float32BufferAttribute(bulbs,3));
   const material = new THREE.ShaderMaterial({
-    uniforms: { screenHeight: { value: 800 } },
+    uniforms: { screenHeight: { value: 800 }, tint: { value: new THREE.Color(color) } },
     transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
     vertexShader: `
       uniform float screenHeight;
@@ -46,11 +46,12 @@ export function festoonGlow(THREE, scene, bulbs) {
         gl_PointSize = clamp(screenHeight * .54 / max(1., -p.z), 3., 110.);
       }`,
     fragmentShader: `
+      uniform vec3 tint;
       void main(){
         float r = length(gl_PointCoord*2.-1.);
         if(r>=1.) discard;
         float a = .34 * exp(-4.8*r*r) * (1.-smoothstep(.55,1.,r));
-        gl_FragColor = vec4(vec3(1.,.48,.20), a);
+        gl_FragColor = vec4(tint, a);
         #include <colorspace_fragment>
       }`,
   });
