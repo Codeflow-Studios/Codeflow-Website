@@ -3,6 +3,7 @@ import { benches, lanterns, sideStands, trees, venues } from './layout.js';
 
 import { createCameraRig } from './camera.js';
 import { addTerrain, makeDeckMaterial } from './terrain.js';
+import { addGroundLight } from './ground-light.js';
 import { addStageArt } from './stage-art.js';
 import { addScenery } from './scenery.js';
 import { addCharacters } from './characters.js';
@@ -43,7 +44,7 @@ export function createWorld(container, reduceMotion) {
   const pixelRenderer = createPixelRenderer(THREE, renderer);
 
   const scene = new THREE.Scene();
-  scene.fog = new THREE.FogExp2('#817390', .0054);
+  scene.fog = new THREE.FogExp2('#776980', .0063);
   scene.add(new THREE.HemisphereLight('#bbceff', '#795f79', 1.09));
   const fill = new THREE.DirectionalLight('#b6dce8', .82);
   fill.position.set(19,26,36);
@@ -252,6 +253,7 @@ export function createWorld(container, reduceMotion) {
   }
 
   addTerrain(THREE, scene);
+  const animateGroundLight = addGroundLight(THREE, scene);
 
   function strip(x, z, width, depth, color, light = true) {
     box(color, x, .056, z, width, .025, depth, light);
@@ -316,7 +318,7 @@ export function createWorld(container, reduceMotion) {
     prop(post, '#5d6570', x, 2.74, z, .17, 5.3, .17);
     prop(tube, '#ffe1a5', x, 5.36, z, .36, .43, .36, 0, 0, true);
     prop(cone, ink, x, 5.62, z, .65, .23, .65);
-    floorSpot('#ffb65c', x, z, 7.9, 7.9, .105, true);
+    floorSpot('#ffc184', x, z, 10.5, 10.5, .20, true);
   }
   for (const z of [-12, 3, 23, 39]) {
     const sag = x => 4.50 + (x / 8) ** 2 * .92;
@@ -399,6 +401,14 @@ export function createWorld(container, reduceMotion) {
     floor.receiveShadow = true;
     scene.add(floor);
     box(color, x, .66, z + d / 2 + .018, w + .08, .13, .04, true);
+    // Vented fascia and small flanking LEDs reinforce the depth of the front lip.
+    box('#293043',x,.31,z+d/2+.012,w-.12,.37,.028);
+    for (let xOffset = -w/2+.65; xOffset < w/2-.43; xOffset += .93) {
+      box('#55576c',x+xOffset,.31,z+d/2+.035,.041,.29,.016);
+    }
+    for (const side of [-1,1]) {
+      box(color,venue.doorX+side*2.5,.11,venue.doorZ,.21,.15,.23,true);
+    }
     for (const contact of [-1, 1]) {
       box(color, x + contact * w / 2, .64, z, .075, .10, d, true);
       box('#303747', x + contact * (w / 2 - .68), .25, z + d / 2 + .61, 1.12, .5, 1.17);
@@ -583,6 +593,7 @@ export function createWorld(container, reduceMotion) {
       gateRing.material.opacity = reduceMotion ? .88 : .75 + Math.sin(time * 3.6) * .2;
     }
     animateLights(reduceMotion ? 0 : time, player);
+    animateGroundLight(reduceMotion ? 0 : time);
     if (time - lastShadow >= 1 / 18) {
       renderer.shadowMap.needsUpdate = true;
       lastShadow = time;

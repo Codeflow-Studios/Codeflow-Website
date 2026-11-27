@@ -2,6 +2,7 @@ import { benches, grounds, lanterns, paths, sideStands, trees, venues } from './
 import { drawMarquee } from './stage-murals.js';
 import { createFlatArtistSprites } from './characters.js';
 import { makeFestivalSurfaceCanvas } from './terrain.js';
+import { puddles } from './ground-light.js';
 
 export function createFlatWorld(container) {
   const canvas = document.createElement('canvas');
@@ -52,6 +53,17 @@ export function createFlatWorld(container) {
     ctx.fill();
   }
 
+  function lightPool(x,z,r,color,strength) {
+    const glow = ctx.createRadialGradient(x,z,0,x,z,r);
+    glow.addColorStop(0,color);
+    glow.addColorStop(1,'#0000');
+    ctx.save();
+    ctx.globalCompositeOperation = 'screen';
+    ctx.globalAlpha = strength;
+    disc(x,z,r,glow);
+    ctx.restore();
+  }
+
   function frame(player, _elapsed, time, marked, nearby) {
     const compact = width < height;
     centerX = player.x * (compact ? .92 : .29);
@@ -74,6 +86,21 @@ export function createFlatWorld(container) {
       ctx.roundRect(path.x-path.width/2,path.z-path.depth/2,path.width,path.depth,Math.min(1.3,path.width/4,path.depth/4));
       ctx.fill();
     }
+    for (const pool of puddles) {
+      ctx.save();
+      ctx.translate(pool.x,pool.z);
+      ctx.rotate(-pool.angle);
+      ctx.scale(pool.width*.5,pool.depth*.5);
+      const sheen = ctx.createLinearGradient(-1,0,1,0);
+      sheen.addColorStop(0,'#2b203b');
+      sheen.addColorStop(.48,pool.tint);
+      sheen.addColorStop(1,'#382b4a');
+      ctx.globalAlpha = .40;
+      disc(0,0,1,sheen);
+      ctx.restore();
+    }
+    for (const zone of venues) lightPool(zone.doorX,zone.doorZ,7,zone.color,.22);
+    for (const [x,z] of lanterns) lightPool(x,z,4.8,'#e4ad70',.31);
     for (const [x, z, size] of trees) {
       disc(x + .4, z + .43, size * .38, '#223231');
       rectangle(x, z + .5, .65, size * .74, '#523f4a');
@@ -99,6 +126,7 @@ export function createFlatWorld(container) {
     }
 
     for (const [i, zone] of venues.entries()) {
+      rectangle(zone.x+.5,zone.z+.7,zone.width+.4,zone.depth+.55,'#17162ca8');
       rectangle(zone.x, zone.z, zone.width, zone.depth, zone.color);
       rectangle(zone.x, zone.z, zone.width - .55, zone.depth - .55, deck);
       const image = covers[i];
