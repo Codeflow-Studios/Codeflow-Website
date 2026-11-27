@@ -2,7 +2,7 @@ import * as THREE from './vendor/three.module.min.js';
 import { benches, lanterns, sideStands, trees, venues } from './layout.js';
 
 import { createCameraRig } from './camera.js';
-import { addTerrain } from './terrain.js';
+import { addTerrain, makeDeckMaterial } from './terrain.js';
 import { addStageArt } from './stage-art.js';
 import { addScenery } from './scenery.js';
 import { addCharacters } from './characters.js';
@@ -393,8 +393,12 @@ export function createWorld(container, reduceMotion) {
     floorSpot(color, x, z + d / 2 + 6, w * 1.14, 17, .32, true);
     box(ink, x, .36, z, w, .72, d);
     box('#51566a', x, .76, z, w - .12, .13, d - .16);
+    const floor = new THREE.Mesh(new THREE.PlaneGeometry(w - .15,d - .19),makeDeckMaterial(THREE,w,d));
+    floor.rotation.x = -halfPi;
+    floor.position.set(x,.826,z);
+    floor.receiveShadow = true;
+    scene.add(floor);
     box(color, x, .66, z + d / 2 + .018, w + .08, .13, .04, true);
-    for (let i = 1; i < d - .65; i += .46) box('#606679', x, .828, z - d / 2 + i, w - .78, .012, .032);
     for (const contact of [-1, 1]) {
       box(color, x + contact * w / 2, .64, z, .075, .10, d, true);
       box('#303747', x + contact * (w / 2 - .68), .25, z + d / 2 + .61, 1.12, .5, 1.17);

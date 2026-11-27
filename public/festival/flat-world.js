@@ -1,6 +1,7 @@
 import { benches, grounds, lanterns, paths, sideStands, trees, venues } from './layout.js';
 import { drawMarquee } from './stage-murals.js';
 import { createFlatArtistSprites } from './characters.js';
+import { makeFestivalSurfaceCanvas } from './terrain.js';
 
 export function createFlatWorld(container) {
   const canvas = document.createElement('canvas');
@@ -15,6 +16,13 @@ export function createFlatWorld(container) {
   let ratio = 1;
   const covers = venues.map(venue => drawMarquee(venue.id));
   const artists = createFlatArtistSprites();
+  function surface(kind, metres) {
+    const tile = makeFestivalSurfaceCanvas(kind);
+    const pattern = ctx.createPattern(tile,'repeat');
+    pattern.setTransform(new DOMMatrix().scale(metres/tile.width));
+    return pattern;
+  }
+  const grass = surface('grass',9), gravel = surface('earth',7.5), deck = surface('deck',5);
   canvas.style.imageRendering = 'auto';
 
   function resize() {
@@ -52,19 +60,19 @@ export function createFlatWorld(container) {
     ctx.fillRect(0, 0, width, height);
     ctx.translate(width / 2 - centerX * scale, height / 2 - centerZ * scale);
     ctx.scale(scale, scale);
-    ctx.fillStyle = '#31594f';
-    ctx.strokeStyle = '#536660';
+    ctx.fillStyle = grass;
+    ctx.strokeStyle = '#73816b';
     ctx.lineWidth = .27;
     ctx.beginPath();
     ctx.roundRect(grounds.minX, grounds.minZ, grounds.maxX - grounds.minX, grounds.maxZ - grounds.minZ, 1);
     ctx.fill();
     ctx.stroke();
-    for (let i = 0; i < 560; i++) {
-      const x = grounds.minX + ((i * 337 + Math.floor(i / 11) * 57) % 1010) / 10;
-      const z = grounds.minZ + ((i * 179 + Math.floor(i / 5) * 31) % 850) / 10;
-      rectangle(x, z, .63, .27, i % 5 ? '#427061' : '#8a955e');
+    for (const path of paths) {
+      ctx.fillStyle = gravel;
+      ctx.beginPath();
+      ctx.roundRect(path.x-path.width/2,path.z-path.depth/2,path.width,path.depth,Math.min(1.3,path.width/4,path.depth/4));
+      ctx.fill();
     }
-    for (const path of paths) rectangle(path.x, path.z, path.width, path.depth, '#91635f');
     for (const [x, z, size] of trees) {
       disc(x + .4, z + .43, size * .38, '#223231');
       rectangle(x, z + .5, .65, size * .74, '#523f4a');
@@ -91,7 +99,7 @@ export function createFlatWorld(container) {
 
     for (const [i, zone] of venues.entries()) {
       rectangle(zone.x, zone.z, zone.width, zone.depth, zone.color);
-      rectangle(zone.x, zone.z, zone.width - .55, zone.depth - .55, '#262936');
+      rectangle(zone.x, zone.z, zone.width - .55, zone.depth - .55, deck);
       const image = covers[i];
       ctx.drawImage(image, zone.x - zone.width * .41, zone.z - zone.depth * .36, zone.width * .82, zone.depth * .67);
       rectangle(zone.doorX, zone.doorZ, 4.2, .24, zone.color);

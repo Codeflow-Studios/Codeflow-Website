@@ -80,63 +80,85 @@ function asTexture(THREE, image, tile = false) {
   return texture;
 }
 
-function groundTiles(THREE) {
-  const random = randomSource(0x434f4153);
-  const grass = raster(112, 112, true);
-  const track = raster(112, 112, true);
-  const turf = noiseField(0x35616d65);
-  for (let y=0;y<112;y++) for (let x=0;x<112;x++) {
-    const u=x/112, v=y/112;
-    // Whole wave periods keep the rolling colour variation continuous across the edges.
-    const swale=(Math.sin(tau*(u+v)+1.3)+Math.cos(tau*(u-v*2)))*.09;
-    const grain=random();
-    grass.pixel(x,y,blendRGB(0x385d51,0x638b67,clamp(.34+swale+grain*.30)));
-    track.pixel(x,y,blendRGB(0x997862,0xc4a282,clamp(.3+swale+grain*.36)));
+// Seeded, tileable surfaces shared by the 3D world and the overhead fallback.
+const surfaceTiles = new Map();
+function paintSurface(kind) {
+  if (surfaceTiles.has(kind)) return surfaceTiles.get(kind);
+  const size = 256;
+  const random = randomSource(kind === 'grass' ? 0x434f4153 : kind === 'earth' ? 0x50544853 : 0x4445434b);
+  const noise = noiseField(kind === 'grass' ? 0x35616d65 : 0x574f4f44);
+  const tile = raster(size, size, true);
+  for (let y = 0; y < size; y++) for (let x = 0; x < size; x++) {
+    const u = x / size, v = y / size;
+    const patches = noise(u * 8, v * 8, 8);
+    const flecks = noise(u * 32, v * 32, 32);
+    const grain = random();
+    if (kind === 'deck') {
+      const plank = Math.floor(y / 32);
+      const fibre = noise(u * 8, v * 64, 8);
+      const joint = y % 32;
+      const stain = clamp(.15 + fibre * .36 + noise(plank, .3, 8) * .28 + grain * .10);
+      const shade = blendRGB(0x363344, 0x837990, stain);
+      tile.pixel(x,y,joint === 0 ? 0x292539 : joint === 1 ? blendRGB(shade,0xa299ab,.36) : shade);
+    } else if (kind === 'grass') {
+      const shade = clamp(.16 + patches * .54 + flecks * .18 + grain * .13);
+      tile.pixel(x,y,blendRGB(0x2d514f,0x75906a,shade));
+    } else {
+      const shade = clamp(.16 + patches * .45 + flecks * .18 + grain * .21);
+      tile.pixel(x,y,blendRGB(0x806252,0xc2a688,shade));
+    }
   }
+  if (kind === 'grass') {
+    for (let i = 0; i < 530; i++) {
+      const x = random() * size, y = random() * size, height = 2 + random() * 5;
+      const lean = random() < .5 ? -1 : 1;
+      const light = i % 5 ? 0x6d9269 : 0x91a67b;
+      tile.polygon([[x-1,y+1],[x+2,y+1],[x+lean*3,y-height]],0x345b51);
+      tile.polygon([[x,y],[x+1.5,y],[x+lean*3,y-height]],light);
+    }
+    for (let i = 0; i < 19; i++) {
+      const x = random()*size, y = random()*size;
+      const petal = i % 3 ? 0xd5b0c5 : 0xe2ca95;
+      tile.rect(x-1,y,3,1,petal);
+      tile.rect(x,y-1,1,3,petal);
+      tile.pixel(x,y,0xf1ddd0);
+    }
+  } else if (kind === 'earth') {
+    for (let i = 0; i < 470; i++) {
+      const x = random()*size, y = random()*size, radius = .8+random()**2*3.8;
+      tile.polygon([[x-radius,y],[x,y-radius*.65],[x+radius,y],[x+radius*.6,y+radius*.7],[x-radius*.6,y+radius*.7]],i%3?0x987969:0x7e665c);
+      tile.rect(x-radius*.55,y-1,Math.max(1,radius),1,i%4?0xc1a58f:0xa99282);
+    }
+  } else {
+    for (let y = 16; y < size; y += 32) {
+      const seam = (y * 5) % size;
+      tile.rect(seam,y-14,1,29,0x4a4357);
+      for (const offset of [-4,5]) {
+        tile.pixel(seam+offset,y-9,0xa79bab);
+        tile.pixel(seam+offset,y-8,0x282436);
+        tile.pixel(seam+offset,y+9,0xa79bab);
+        tile.pixel(seam+offset,y+10,0x282436);
+      }
+    }
+  }
+  surfaceTiles.set(kind,tile);
+  return tile;
+}
 
-  // Flat islands of nearby shades form larger connected masses beneath the small details.
-  for (let i = 0; i < 47; i++) {
-    const x = Math.floor(random() * 112), y = Math.floor(random() * 112);
-    const w = 4 + Math.floor(random() * 15), h = 2 + Math.floor(random() * 5);
-    const patch = [[x,y+1],[x+3,y],[x+w-3,y],[x+w,y+2],[x+w-2,y+h],[x+4,y+h+1],[x,y+h-1]];
-    grass.polygon(patch, i % 3 ? 0x4b755d : 0x426952);
-    track.polygon(patch, i % 3 ? 0xaf9176 : 0xa88870);
-  }
-  for (let i = 0; i < 74; i++) {
-    const x = Math.floor(random() * 112), y = Math.floor(random() * 112);
-    const h = 2 + Math.floor(random() * 4);
-    const foot = [[x-2,y],[x-3,y-3],[x-1,y-2],[x,y],[x+1,y-h],[x+2,y-h-1],[x+2,y],[x+5,y-2],[x+4,y+1],[x,y+2]];
-    grass.polygon(foot, i % 3 ? 0x345e57 : 0x3a665b);
-    grass.rect(x+1,y-h+1,1,Math.max(1,h-1),i % 3 ? 0x63916e : 0x729875);
-    grass.rect(x+3,y-1,2,1,0x57886b);
-  }
-  for (let i = 0; i < 6; i++) {
-    const x = Math.floor(random() * 112), y = Math.floor(random() * 112);
-    const petals = i % 2 ? [0xd5b5c2,0xb18bb5] : [0xe1cb9c,0xd5a777];
-    for (let n = 0; n < 2 + i % 3; n++) {
-      const xx = x + Math.floor(random() * 7), yy = y + Math.floor(random() * 5);
-      grass.rect(xx, yy, 1, 3, 0x315f51);
-      grass.rect(xx-1, yy-1, 3, 1, petals[1]);
-      grass.pixel(xx, yy-2, petals[0]);
-      grass.pixel(xx, yy-1, 0xf3dca6);
-    }
-  }
-  for (let i = 0; i < 55; i++) {
-    const x = Math.floor(random() * 112), y = Math.floor(random() * 112);
-    const w = 1 + Math.floor(random() ** 2 * 5);
-    track.rect(x + 1,y + 1,w,1,0x947269);
-    track.rect(x,y,w + 1,1,i % 3 ? 0xc89e82 : 0x9a8179);
-    if (w > 2) {
-      track.rect(x+1,y-1,w-1,1,0xd5ae90);
-      track.pixel(x + w,y,0xb1917e);
-    }
-  }
-  for (let n=0;n<120;n++) {
-    const x=random()*112,y=random()*112,length=2+Math.floor(turf(x*.1,y*.1)*5);
-    grass.rect(x,y,length,1,n%4 ? 0x547a5d : 0x70906b);
-    track.rect(x,y,length+1,1,n%4 ? 0xab8b70 : 0xbb9a7d);
-  }
-  return { grass: asTexture(THREE,grass,true), earth: asTexture(THREE,track,true) };
+export function makeFestivalSurfaceCanvas(kind) {
+  const tile = paintSurface(kind);
+  const canvas = Object.assign(document.createElement('canvas'),{width:tile.width,height:tile.height});
+  const ctx = canvas.getContext('2d');
+  const image = ctx.createImageData(tile.width,tile.height);
+  image.data.set(tile.bytes);
+  ctx.putImageData(image,0,0);
+  return canvas;
+}
+
+export function makeDeckMaterial(THREE,width,depth) {
+  const texture = asTexture(THREE,paintSurface('deck'),true);
+  texture.repeat.set(width/5,depth/5);
+  return new THREE.MeshStandardMaterial({map:texture,roughness:.79,metalness:.06});
 }
 
 function duskPanorama(THREE) {
@@ -284,7 +306,8 @@ function meadowClumps(THREE,trails) {
 }
 
 export function addTerrain(THREE, scene) {
-  const {grass,earth}=groundTiles(THREE);
+  const grass=asTexture(THREE,paintSurface('grass'),true);
+  const earth=asTexture(THREE,paintSurface('earth'),true);
   const trails=pathMask(THREE);
   const material=new THREE.MeshStandardMaterial({map:grass,vertexColors:true,roughness:.96,metalness:0});
   material.onBeforeCompile=shader=>{
@@ -295,12 +318,16 @@ export function addTerrain(THREE, scene) {
         uniform sampler2D festivalEarth;
         uniform sampler2D festivalTrail;`)
       .replace('#include <map_fragment>',`
-        vec3 meadow = texture2D(map,vMapUv*22.0).rgb;
-        vec3 earth = texture2D(festivalEarth,vMapUv*25.0).rgb;
+        vec3 meadow = texture2D(map,vMapUv*29.0).rgb;
+        vec3 earth = texture2D(festivalEarth,vMapUv*34.0).rgb;
+        float variation = texture2D(map,vec2(vMapUv.y,-vMapUv.x)*6.0 + .37).g;
+        meadow *= .88 + variation*.48;
+        earth *= .92 + variation*.36;
         float mask = texture2D(festivalTrail,vMapUv).r;
         float edge = smoothstep(.05,.97,mask + (meadow.g - .16)*.55);
+        vec3 verge = mix(meadow, earth, .28);
         vec3 shade = mix(meadow,earth,edge);
-        diffuseColor.rgb *= shade*(1.0-.21*(4.0*edge*(1.0-edge)));`)
+        diffuseColor.rgb *= mix(shade,verge,.28*(4.0*edge*(1.0-edge)));`)
       .replace('#include <opaque_fragment>',`
         outgoingLight += diffuseColor.rgb * 0.19;
         #include <opaque_fragment>`);
