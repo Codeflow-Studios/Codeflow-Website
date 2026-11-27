@@ -278,6 +278,7 @@ function createAudience() {
 
 export function createFlatWalkerSprites(walkers) {
   const sprites = new Map();
+  const palettes = new Map();
   for (const { outfit } of walkers) {
     if (sprites.has(outfit)) continue;
     const strip = Object.assign(document.createElement('canvas'), { width: W * 5, height: H * 4 });
@@ -290,8 +291,10 @@ export function createFlatWalkerSprites(walkers) {
       }
     }
     sprites.set(outfit, strip);
+    const [coat, , , denim, , hair, skin] = outfits[outfit];
+    palettes.set(outfit, { coat, denim, hair, skin: skinTones[skin][1] });
   }
-  return { sprites, width: W, height: H };
+  return { sprites, palettes, width: W, height: H };
 }
 
 export function addCharacters(THREE, scene, reduceMotion, walkers) {
@@ -313,10 +316,18 @@ export function addCharacters(THREE, scene, reduceMotion, walkers) {
   function placeShadow(i) {
     const a = actors[i];
     const fall = reduceMotion ? Number(Boolean(a.downed)) : THREE.MathUtils.smootherstep(a.fall || 0, 0, 1);
-    const offset = a.size * .49 * fall;
-    stamp.position.set(a.x + .11 - Math.sin(a.heading) * offset, a.y + .011, a.z - .05 - Math.cos(a.heading) * offset);
-    stamp.rotation.set(-Math.PI / 2, 0, fall ? a.heading : -.2);
-    stamp.scale.set(a.size * .54, a.size * (.30 + fall * .74), 1);
+    let x = a.x + .11, z = a.z - .05, angle = -.2, depth = a.size * .30;
+    if (a.doll && fall > 0) {
+      const { leftFoot, rightFoot, head } = a.doll.points;
+      const footX = (leftFoot.x + rightFoot.x) / 2, footZ = (leftFoot.z + rightFoot.z) / 2;
+      x = THREE.MathUtils.lerp(x, (footX + head.x) / 2, fall);
+      z = THREE.MathUtils.lerp(z, (footZ + head.z) / 2, fall);
+      angle = Math.atan2(footX - head.x, footZ - head.z);
+      depth += Math.hypot(footX - head.x, footZ - head.z) * fall;
+    }
+    stamp.position.set(x, a.y + .011, z);
+    stamp.rotation.set(-Math.PI / 2, 0, angle);
+    stamp.scale.set(a.size * .54, depth, 1);
     stamp.updateMatrix();
     shadows.setMatrixAt(i, stamp.matrix);
   }

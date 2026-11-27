@@ -4,6 +4,7 @@ import { markerGrip, markerTip, paintballHover, paintballPickup, paintDots, pain
 import { createFlatArtistSprites, createFlatWalkerSprites } from './characters.js';
 import { makeFestivalSurfaceCanvas } from './terrain.js';
 import { festivalLights, puddles } from './ground-light.js';
+import { dollLimbs } from './ragdoll.js';
 
 const { dark, purple, pink, yellow } = festivalLights;
 
@@ -200,6 +201,38 @@ export function createFlatWorld(container, paintball) {
     }
   }
 
+  function drawWalkerRagdoll(walker) {
+    const { points } = walker.doll;
+    const colors = walkers.palettes.get(walker.outfit);
+    const size = walker.size;
+    function line(a, b, width, color) {
+      ctx.strokeStyle = color;
+      ctx.lineWidth = size * width;
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      ctx.moveTo(a.x, a.z - a.y * 1.3);
+      ctx.lineTo(b.x, b.z - b.y * 1.3);
+      ctx.stroke();
+    }
+    const { pelvis, neck, head } = points;
+    line(pelvis, neck, .24, colors.coat);
+    line(points.leftShoulder, points.rightShoulder, .13, colors.coat);
+    for (const [start, joint, end, coat] of dollLimbs) {
+      const a = points[start], b = points[joint], c = points[end];
+      line(a, b, .115, colors[coat]);
+      line(b, c, .085, coat === 'coat' ? colors.skin : colors[coat]);
+      if (coat === 'denim') disc(c.x, c.z - c.y * 1.3, size * .064, '#2b2938');
+    }
+    disc(head.x, head.z - head.y * 1.3, size * .094, colors.skin);
+    disc(head.x, head.z - head.y * 1.3 - .09, size * .078, colors.hair);
+    if (walker.paintTime > 0) {
+      const fade = Math.min(1, walker.paintTime);
+      const x = (pelvis.x + neck.x) / 2;
+      const z = (pelvis.z + neck.z - (pelvis.y + neck.y) * 1.3) / 2;
+      for (const [dx, dy, radius] of paintDots) disc(x + dx, z + dy, radius * fade, walker.color);
+    }
+  }
+
   function drawWalker(walker, time) {
     const { sprites, width: w, height: h } = walkers;
     const direction = (Math.round(walker.heading / (Math.PI / 2)) + 4) & 3;
@@ -207,21 +240,28 @@ export function createFlatWorld(container, paintball) {
     const pose = walking ? Math.floor(time * walker.pace * 4 + walker.phase) % 4 : 4;
     const size = walker.size * 1.7;
     const width = size * w / h;
-    const fall = reduceMotion.matches ? Number(walker.downed) : walker.fall ** 2 * (3 - 2 * walker.fall);
-    const lean = Math.sin(walker.heading) < 0 ? 1 : -1;
-    rectangle(walker.x + lean * size * .42 * fall, walker.z + .18, .98 + size * .85 * fall,
-      .40 + fall * .24, '#22283b');
+    const fall = reduceMotion.matches ? Number(walker.downed) :
+      (walker.downed ? Math.min(1, walker.fall * 3) : walker.fall);
+    const pelvis = walker.doll?.points.pelvis;
+    const shadowX = pelvis ? walker.x + (pelvis.x - walker.x) * fall : walker.x;
+    const shadowZ = pelvis ? walker.z + (pelvis.z - walker.z) * fall : walker.z;
+    rectangle(shadowX, shadowZ + .18, .98 + fall * .4, .40 + fall * .24, '#22283b');
     ctx.save();
-    ctx.translate(walker.x, walker.z + .30);
-    ctx.rotate(lean * Math.PI / 2 * fall);
-    ctx.drawImage(sprites.get(walker.outfit), pose * w, direction * h, w, h,
-      -width / 2, -size, width, size);
-    rectangle(.48, -.30 - size * .47, .22, .12, '#b4ff95');
-    if (walker.paintTime > 0) {
-      const fade = Math.min(1, walker.paintTime);
-      for (const [x, y, radius] of paintDots) {
-        disc(x * 1.7, -.30 - size * .51 + y * 1.7, radius * 1.6 * fade, walker.color);
+    if (fall < 1) {
+      ctx.globalAlpha = 1 - fall;
+      ctx.drawImage(sprites.get(walker.outfit), pose * w, direction * h, w, h,
+        walker.x - width / 2, walker.z + .30 - size, width, size);
+      rectangle(walker.x + .48, walker.z - size * .47, .22, .12, '#b4ff95');
+      if (walker.paintTime > 0) {
+        const fade = Math.min(1, walker.paintTime);
+        for (const [x, y, radius] of paintDots) {
+          disc(walker.x + x * 1.7, walker.z - size * .51 + y * 1.7, radius * 1.6 * fade, walker.color);
+        }
       }
+    }
+    if (walker.doll && fall > 0) {
+      ctx.globalAlpha = fall;
+      drawWalkerRagdoll(walker);
     }
     ctx.restore();
   }

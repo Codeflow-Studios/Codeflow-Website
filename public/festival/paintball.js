@@ -1,4 +1,5 @@
 import { canWalk, entrance, solids } from './layout.js';
+import { dropWalker, stepRagdoll } from './ragdoll.js';
 
 const routes = [
   [[-4, 16], [4, 16], [4, 21], [-4, 21]],
@@ -75,7 +76,7 @@ export function createPaintball(onHit) {
     x: route[0][0], z: route[0][1], y: .066, route, stop: 1, size: 2.25 + i % 4 * .09,
     outfit: 1 + i % 8, phase: i * 1.9, walking: true, pace: 1.35 + (i % 5) * .18,
     heading: Math.atan2(route[1][0] - route[0][0], route[1][1] - route[0][1]),
-    paintTime: 0, react: 0, color: paintColors[0], hits: 0, downed: false, fall: 0,
+    paintTime: 0, react: 0, color: paintColors[0], hits: 0, downed: false, fall: 0, doll: null,
   }));
   const balls = [];
   const bursts = [];
@@ -135,10 +136,17 @@ export function createPaintball(onHit) {
       if (walker.downed && timeSinceShot >= recoveryDelay) {
         walker.downed = false;
         walker.hits = 0;
+        const { x, z } = walker.doll.points.pelvis;
+        if (canWalk(x, z)) {
+          walker.x = x;
+          walker.z = z;
+        }
       }
+      if (walker.downed) stepRagdoll(walker.doll, dt);
       walker.fall = walker.downed
         ? Math.min(1, walker.fall + dt / fallDuration)
         : Math.max(0, walker.fall - dt / riseDuration);
+      if (!walker.downed && walker.fall === 0) walker.doll = null;
       walker.walking = !walker.downed && walker.fall === 0 && walker.react === 0;
       if (!walker.walking) continue;
       const [destX, destZ] = walker.route[walker.stop];
@@ -175,6 +183,7 @@ export function createPaintball(onHit) {
             target.paintTime = 6;
             if (++target.hits >= hitsToFall) {
               target.downed = true;
+              target.doll = dropWalker(target, ball);
               target.walking = false;
               target.react = 0;
             } else {

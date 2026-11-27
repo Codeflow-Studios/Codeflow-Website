@@ -1,4 +1,5 @@
 import { paintDots } from './paintball.js';
+import { dollLimbs } from './ragdoll.js';
 
 // Fans share geometry and draw calls, while their poses and clothes vary by person.
 export function createCrowd(THREE, scene, actors, outfits, skinTones, reduceMotion) {
@@ -59,7 +60,7 @@ export function createCrowd(THREE, scene, actors, outfits, skinTones, reduceMoti
     } else {
       part(head, cylinder, hair, 0, .138, hat === 'bucket' ? 0 : .053, .096, .013, .09);
     }
-    const shoulders = [], elbows = [], hips = [];
+    const shoulders = [], elbows = [], hips = [], knees = [];
     const paint = [];
     if (actor.route) {
       for (const side of [-1, 1]) for (const [x, y, size] of paintDots) {
@@ -74,9 +75,11 @@ export function createCrowd(THREE, scene, actors, outfits, skinTones, reduceMoti
       const hip = joint(body, side * .064, -.016, 0);
       hips.push(hip);
       part(hip, sleeve, denim, 0, -.103, 0, .069, .232, .071);
-      part(hip, sleeve, denim, 0, -.294, 0, .060, .199, .060);
-      part(hip, round, dark, 0, -.398, .024, .065, .049, .090);
-      part(hip, cylinder, sole, 0, -.444, .021, .065, .017, .087);
+      const knee = joint(hip, 0, -.228, 0);
+      knees.push(knee);
+      part(knee, sleeve, denim, 0, -.066, 0, .060, .199, .060);
+      part(knee, round, dark, 0, -.170, .024, .065, .049, .090);
+      part(knee, cylinder, sole, 0, -.216, .021, .065, .017, .087);
       const shoulder = joint(chest, side * .128, .23, 0);
       const elbow = joint(shoulder, 0, -.14, 0);
       shoulders.push(shoulder);
@@ -101,7 +104,9 @@ export function createCrowd(THREE, scene, actors, outfits, skinTones, reduceMoti
       part(guitar, box, '#977159', 0, .204, .010, .035, .29, .029);
       part(guitar, box, '#e1ae79', 0, .371, .009, .053, .055, .035);
     }
-    pose.push({ root, body, chest, head, shoulders, elbows, hips, actor, hat, index, paint });
+    const bones = [[hips[0], knees[0]], [hips[1], knees[1]],
+      [shoulders[0], elbows[0]], [shoulders[1], elbows[1]]];
+    pose.push({ root, body, chest, head, shoulders, elbows, hips, knees, bones, actor, hat, index, paint });
   }
   const color = new THREE.Color();
   for (const [geometry, batch] of batches) {
@@ -114,11 +119,43 @@ export function createCrowd(THREE, scene, actors, outfits, skinTones, reduceMoti
     scene.add(mesh);
   }
   let lastFrame = -1;
+  const across = new THREE.Vector3(), spine = new THREE.Vector3(), forward = new THREE.Vector3();
+  const limb = new THREE.Vector3(), down = new THREE.Vector3(0, -1, 0), up = new THREE.Vector3(0, 1, 0);
+  const pivot = new THREE.Vector3(), offset = new THREE.Vector3();
+  const torso = new THREE.Matrix4(), turn = new THREE.Quaternion(), parentRotation = new THREE.Quaternion();
+  function boneDirection(from, to, result) {
+    return result.set(to.x - from.x, to.y - from.y, to.z - from.z).normalize();
+  }
+  function alignJoint(joint, from, to, axis, weight) {
+    joint.parent.getWorldQuaternion(parentRotation).invert();
+    boneDirection(from, to, limb).applyQuaternion(parentRotation);
+    joint.quaternion.slerp(turn.setFromUnitVectors(axis, limb), weight);
+  }
+  function poseRagdoll({ root, body, chest, head, bones, actor }, weight) {
+    const points = actor.doll.points;
+    boneDirection(points.leftShoulder, points.rightShoulder, across);
+    boneDirection(points.pelvis, points.neck, spine);
+    forward.crossVectors(across, spine).normalize();
+    across.crossVectors(spine, forward).normalize();
+    turn.setFromRotationMatrix(torso.makeBasis(across, spine, forward));
+    offset.set(0, body.position.y * actor.size, 0).applyQuaternion(turn);
+    pivot.set(points.pelvis.x, points.pelvis.y, points.pelvis.z).sub(offset);
+    root.position.lerp(pivot, weight);
+    root.quaternion.slerp(turn, weight);
+    chest.quaternion.slerp(turn.identity(), weight);
+    alignJoint(head, points.neck, points.head, up, weight);
+    dollLimbs.forEach(([start, joint, end], index) => {
+      const [upper, lower] = bones[index];
+      alignJoint(upper, points[start], points[joint], down, weight);
+      alignJoint(lower, points[joint], points[end], down, weight);
+    });
+  }
   return function animate(time) {
     const frame = Math.floor(time * 24);
     if (frame === lastFrame) return;
     lastFrame = frame;
-    for (const { root, body, chest, head, shoulders, elbows, hips, actor, hat, index, paint } of pose) {
+    for (const rig of pose) {
+      const { root, body, chest, head, shoulders, elbows, hips, knees, actor, hat, index, paint } = rig;
       const beat = (reduceMotion ? 0 : frame / 24) * (3.5 + index % 4 * .17) + actor.phase;
       const sway = Math.sin(beat), step = Math.cos(beat * .5);
       body.position.y = .48 + .015 * (1 + sway);
@@ -133,9 +170,8 @@ export function createCrowd(THREE, scene, actors, outfits, skinTones, reduceMoti
         hips[k].rotation.set(.035 * sway * sign, 0, sign * (.023 + .03 * step));
       }
       if (actor.route) {
-        const fall = reduceMotion ? Number(actor.downed) : THREE.MathUtils.smootherstep(actor.fall, 0, 1);
-        root.position.set(actor.x, actor.y + actor.size * .15 * fall, actor.z);
-        root.rotation.set(-Math.PI / 2 * fall, actor.heading, 0);
+        root.position.set(actor.x, actor.y, actor.z);
+        root.rotation.set(0, actor.heading, 0);
         const gait = Math.sin(time * actor.pace * 5.2 + actor.phase) *
           (actor.walking && !reduceMotion ? .54 : 0);
         const reaction = actor.react / .42;
@@ -143,10 +179,14 @@ export function createCrowd(THREE, scene, actors, outfits, skinTones, reduceMoti
         body.position.y = .48 + Math.abs(gait) * .034;
         for (let k = 0; k < 2; k++) {
           const sign = k === 0 ? -1 : 1;
-          hips[k].rotation.set(sign * gait - fall * .07, 0, sign * (.055 + fall * .11));
-          shoulders[k].rotation.set(-sign * gait - reaction * .38, 0, sign * (.15 + reaction * 1.3 + fall * .48));
-          elbows[k].rotation.x = -.33 - reaction * .67;
+          hips[k].rotation.set(sign * gait, 0, sign * .055);
+          knees[k].rotation.set(0, 0, 0);
+          shoulders[k].rotation.set(-sign * gait - reaction * .38, 0, sign * (.15 + reaction * 1.3));
+          elbows[k].rotation.set(-.33 - reaction * .67, 0, 0);
         }
+        const fall = actor.downed ? Math.min(1, actor.fall * 3) : actor.fall;
+        const weight = reduceMotion ? Number(actor.downed) : THREE.MathUtils.smootherstep(fall, 0, 1);
+        if (actor.doll && weight > 0) poseRagdoll(rig, weight);
         const fade = Math.min(1, actor.paintTime);
         for (const { mark, size } of paint) mark.scale.set(size * .45 * fade, size * .45 * fade, .014 * fade);
       }
