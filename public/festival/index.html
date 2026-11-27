@@ -4,26 +4,28 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#11151b">
-  <meta name="description" content="Verken als Gauthier of Matar een 3D-festival in 128-bit-consolestijl en wandel naar de vier Skumic-games.">
+  <meta name="description" content="Verken als Gauthier of Matar een nachtelijk 3D-festival in 128-bit-consolestijl en wandel naar de vier Skumic-games.">
   <link rel="canonical" href="https://codeflowstudios.be/festival/">
   <link rel="icon" href="/skumic/assets/logo.webp" type="image/webp">
-  <link rel="stylesheet" href="/festival/style.css?v=jump-1">
+  <link rel="stylesheet" href="/festival/style.css?v=paintball-1">
   <script type="importmap">
     { "imports": {
-      "/festival/world.js": "/festival/world.js?v=midway-glow-1",
-      "/festival/camera.js": "/festival/camera.js?v=world-polish-1",
+      "/festival/world.js": "/festival/world.js?v=paintball-1",
+      "/festival/camera.js": "/festival/camera.js?v=paintball-1",
       "/festival/artist-head.js": "/festival/artist-head.js?v=festival-artists-02",
       "/festival/layout.js": "/festival/layout.js?v=dixie-hard-start-1",
-      "/festival/flat-world.js": "/festival/flat-world.js?v=midway-glow-1",
-      "/festival/characters.js": "/festival/characters.js?v=console-128",
+      "/festival/flat-world.js": "/festival/flat-world.js?v=paintball-1",
+      "/festival/characters.js": "/festival/characters.js?v=paintball-1",
       "/festival/pixel-renderer.js": "/festival/pixel-renderer.js?v=world-polish-1",
-      "/festival/performer-model.js": "/festival/performer-model.js?v=jump-1",
+      "/festival/performer-model.js": "/festival/performer-model.js?v=paintball-1",
       "/festival/stage-art.js": "/festival/stage-art.js?v=console-128",
       "/festival/console-lighting.js": "/festival/console-lighting.js?v=dixie-dash-1",
-      "/festival/crowd-models.js": "/festival/crowd-models.js?v=console-128",
+      "/festival/crowd-models.js": "/festival/crowd-models.js?v=paintball-1",
       "/festival/stage-murals.js": "/festival/stage-murals.js?v=dixie-dash-1",
       "/festival/ground-light.js": "/festival/ground-light.js?v=midway-glow-1",
-      "/festival/terrain.js": "/festival/terrain.js?v=festival-textures-1"
+      "/festival/paintball.js": "/festival/paintball.js?v=paintball-1",
+      "/festival/paintball-visuals.js": "/festival/paintball-visuals.js?v=paintball-1",
+      "/festival/terrain.js": "/festival/terrain.js?v=festival-night-1"
     } }
   </script>
   <title>Skumic Festival</title>
@@ -31,6 +33,7 @@
 <body>
   <main id="festival">
     <div id="world" tabindex="0" role="region" aria-label="Festivalterrein" aria-describedby="walk-hint keyboard-help"></div>
+    <div id="paint-aim" class="paint-aim" aria-hidden="true" hidden></div>
     <div class="vignette" aria-hidden="true"></div>
     <div id="world-signs" aria-label="Gamestands"></div>
 
@@ -41,6 +44,7 @@
         <span id="visit-dots" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
         <span id="visit-count">0 van 4 stands bezocht</span>
       </div>
+      <div id="paint-count" class="paint-count" hidden>0 verftreffers</div>
       <button id="change-artist" class="change-artist" type="button" aria-haspopup="dialog" hidden>
         <span id="artist-name"></span><span>Wisselen</span>
       </button>
@@ -67,6 +71,7 @@
         <span><kbd>ZQSD</kbd> <kbd>WASD</kbd> <kbd>↑↓←→</kbd> <span>Lopen / zijstappen</span></span>
         <span><kbd>Shift</kbd> <span>Rennen</span></span>
         <span><kbd>Spatie</kbd> <span>Springen</span></span>
+        <span><kbd>F</kbd> <span>Paintball</span></span>
         <span><kbd>E</kbd> <span>Spelen</span></span>
         <span id="map-shortcut" hidden><kbd>M</kbd> <span>Kaart</span></span>
       </div>
@@ -74,6 +79,7 @@
 
     <div id="joystick" class="joystick" aria-hidden="true"><span id="joystick-knob"></span></div>
     <button id="jump" class="jump-button" type="button" aria-label="Springen">Spring</button>
+    <button id="paint" class="jump-button paint-button" type="button" aria-label="Paintball schieten">Paint</button>
     <div id="notice" class="notice" aria-live="polite" hidden></div>
     <div id="loading" class="loading" role="status">Festivalterrein laden…</div>
     <noscript><p class="loading">Zet JavaScript aan om het festivalterrein te spelen.</p></noscript>
@@ -107,6 +113,6 @@
     </div>
     <div id="game-view" class="game-view"></div>
   </dialog>
-  <script type="module" src="/festival/main.js?v=dixie-hard-start-1"></script>
+  <script type="module" src="/festival/main.js?v=paintball-1"></script>
 </body>
 </html>

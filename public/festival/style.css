@@ -265,3 +265,27 @@ kbd { min-width: 18px; padding: 2px 4px; border: 1px solid #9c9aa4; border-botto
 @media (max-width: 500px) and (pointer: fine) {
   .keyboard { flex-wrap: wrap; justify-content: center; }
 }
+
+.paint-aim { position: absolute; top: 0; left: 0; pointer-events: none; z-index: 1; }
+.paint-aim::after {
+  content: '';
+  position: absolute;
+  width: 9px;
+  height: 9px;
+  left: -5px;
+  top: -5px;
+  border: 1px solid #e5ff8b;
+  border-radius: 50%;
+  box-shadow: 0 0 0 1px #202338, inset 0 0 0 1px #202338;
+}
+.paint-count { color: #dcff9a; font: 700 16px/1.2 var(--pixel); margin-top: 5px; }
+@media (pointer: coarse) {
+  .paint-button {
+    bottom: calc(var(--bottom) + 121px);
+    color: #242138;
+    background: #9aece6;
+    border-color: #659eaa;
+    touch-action: none;
+  }
+  .paint-button:active { background: #d6fff4; }
+}

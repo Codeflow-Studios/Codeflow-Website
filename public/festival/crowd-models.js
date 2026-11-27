@@ -1,3 +1,5 @@
+import { paintDots } from './paintball.js';
+
 // Fans share geometry and draw calls, while their poses and clothes vary by person.
 export function createCrowd(THREE, scene, actors, outfits, skinTones, reduceMotion) {
   const round = new THREE.SphereGeometry(1, 10, 7);
@@ -57,6 +59,16 @@ export function createCrowd(THREE, scene, actors, outfits, skinTones, reduceMoti
       part(head, cylinder, hair, 0, .138, hat === 'bucket' ? 0 : .053, .096, .013, .09);
     }
     const shoulders = [], elbows = [], hips = [];
+    const paint = [];
+    if (actor.route) {
+      for (const side of [-1, 1]) for (const [x, y, size] of paintDots) {
+        const mark = part(chest, box, actor.color, x * .55, .15 + y * .6, side * .102,
+          size * .45, size * .45, .014);
+        mark.rotation.z = .35;
+        batches.get(box).pieces.at(-1).paintActor = actor;
+        paint.push({ mark, size });
+      }
+    }
     for (const side of [-1, 1]) {
       const hip = joint(body, side * .064, -.016, 0);
       hips.push(hip);
@@ -71,7 +83,7 @@ export function createCrowd(THREE, scene, actors, outfits, skinTones, reduceMoti
       part(shoulder, round, coat, 0, -.012, 0, .063, .06, .06);
       part(shoulder, sleeve, coat, 0, -.072, 0, .061, .14, .056);
       part(elbow, sleeve, skin, 0, -.055, 0, .04, .145, .04);
-      part(elbow, cylinder, trim, 0, -.10, 0, .042, .025, .042);
+      part(elbow, cylinder, actor.route ? '#b4ff95' : trim, 0, -.10, 0, .042, .025, .042);
       part(elbow, round, skin, 0, -.142, .004, .043, .052, .041);
       if (hat === 'mic' && side === 1) {
         const mic = joint(elbow, 0, -.14, .022);
@@ -88,7 +100,7 @@ export function createCrowd(THREE, scene, actors, outfits, skinTones, reduceMoti
       part(guitar, box, '#977159', 0, .204, .010, .035, .29, .029);
       part(guitar, box, '#e1ae79', 0, .371, .009, .053, .055, .035);
     }
-    pose.push({ root, body, chest, head, shoulders, elbows, hips, actor, hat, index });
+    pose.push({ root, body, chest, head, shoulders, elbows, hips, actor, hat, index, paint });
   }
   const color = new THREE.Color();
   for (const [geometry, batch] of batches) {
@@ -102,11 +114,11 @@ export function createCrowd(THREE, scene, actors, outfits, skinTones, reduceMoti
   }
   let lastFrame = -1;
   return function animate(time) {
-    const frame = reduceMotion ? 0 : Math.floor(time * 24);
+    const frame = Math.floor(time * 24);
     if (frame === lastFrame) return;
     lastFrame = frame;
-    for (const { root, body, chest, head, shoulders, elbows, hips, actor, hat, index } of pose) {
-      const beat = frame / 24 * (3.5 + index % 4 * .17) + actor.phase;
+    for (const { root, body, chest, head, shoulders, elbows, hips, actor, hat, index, paint } of pose) {
+      const beat = (reduceMotion ? 0 : frame / 24) * (3.5 + index % 4 * .17) + actor.phase;
       const sway = Math.sin(beat), step = Math.cos(beat * .5);
       body.position.y = .48 + .015 * (1 + sway);
       chest.rotation.set(.026 + .048 * sway, .12 * step, .043 * step);
@@ -119,10 +131,31 @@ export function createCrowd(THREE, scene, actors, outfits, skinTones, reduceMoti
         elbows[k].rotation.x = hat === 'mic' || hat === 'guitar' ? -1.22 : -.55 + .23 * step;
         hips[k].rotation.set(.035 * sway * sign, 0, sign * (.023 + .03 * step));
       }
+      if (actor.route) {
+        root.position.set(actor.x, actor.y, actor.z);
+        root.rotation.y = actor.heading;
+        const gait = Math.sin(time * actor.pace * 5.2 + actor.phase) *
+          (actor.walking && !reduceMotion ? .54 : 0);
+        const reaction = actor.react / .42;
+        chest.rotation.set(-reaction * .32, 0, reaction * .12);
+        body.position.y = .48 + Math.abs(gait) * .034;
+        for (let k = 0; k < 2; k++) {
+          const sign = k === 0 ? -1 : 1;
+          hips[k].rotation.set(sign * gait, 0, sign * .055);
+          shoulders[k].rotation.set(-sign * gait - reaction * .38, 0, sign * (.15 + reaction * 1.3));
+          elbows[k].rotation.x = -.33 - reaction * .67;
+        }
+        const fade = Math.min(1, actor.paintTime);
+        for (const { mark, size } of paint) mark.scale.set(size * .45 * fade, size * .45 * fade, .014 * fade);
+      }
       root.updateMatrixWorld(true);
     }
     for (const { pieces, mesh } of batches.values()) {
-      pieces.forEach(({ piece }, i) => mesh.setMatrixAt(i, piece.matrixWorld));
+      pieces.forEach(({ piece, paintActor }, i) => {
+        mesh.setMatrixAt(i, piece.matrixWorld);
+        if (paintActor) mesh.setColorAt(i, color.set(paintActor.color).multiplyScalar(2.3));
+      });
+      if (mesh.geometry === box) mesh.instanceColor.needsUpdate = true;
       mesh.instanceMatrix.needsUpdate = true;
     }
   };

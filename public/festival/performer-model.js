@@ -414,7 +414,17 @@ export function createPerformer(THREE, scene) {
       s.finish();
       legs.push({side,hip,knee,foot});
     }
-    return {root,pelvis,chest,head,arms,legs};
+    const marker=joint(chest,.17,.33,.30);
+    const gear=sculpt(marker);
+    gear.slab('#4de1c3',0,0,.10,.19,.17,.40);
+    gear.slab('#b8ffeb',0,.087,.07,.15,.025,.35);
+    gear.slab('#364650',0,-.067,-.046,.102,.215,.116);
+    gear.facet('#454c72',0,.17,.04,.27,.16,.23);
+    gear.slab('#85aeff',0,.225,.04,.19,.047,.18);
+    gear.slab('#ff905c',0,.011,.36,.115,.11,.27);
+    gear.slab('#ffc091',0,.011,.49,.128,.125,.05);
+    gear.finish();
+    return {root,pelvis,chest,head,arms,legs,marker};
   }
   const models={gauthier:build(false),matar:build(true)};
   let active='',phase=0,weight=0,facing=0, lateral=0,longitudinal=0;
@@ -425,6 +435,8 @@ export function createPerformer(THREE, scene) {
       for(const [name,rig] of Object.entries(models)) rig.root.visible=name===id;
       facing=player.heading;active=id;
     }
+    const kick = reduceMotion ? 0 : player.markerKick;
+    if (player.markerKick > .66) facing = player.heading;
     const delta=player.heading-facing;
     facing+=Math.atan2(Math.sin(delta),Math.cos(delta))*(1-Math.exp(-18*dt));
     model.root.position.set(player.x,.024+(player.jumpHeight || 0),player.z);
@@ -446,11 +458,13 @@ export function createPerformer(THREE, scene) {
     model.chest.rotation.set((.055+.072*run)*motion*longitudinal,-stride*.14*motion*longitudinal,(swing*.025-lateral*.11)*motion);
     model.chest.rotation.x+=compression*.17-airborne*.11;
     model.head.rotation.set(-(.048+.064*run)*motion,stride*.067*motion+idle*.022,-swing*.017*motion);
-    for(const {side,shoulder,elbow} of model.arms){
-      shoulder.rotation.set(-.065+side*stride*(.47+.22*run)*motion*longitudinal,side*swing*.035*motion,side*(.13+.012*idle)+lateral*stride*.11*motion);
-      shoulder.rotation.x-=airborne*.47;
-      shoulder.rotation.z+=side*airborne*.17;
-      elbow.rotation.x=-.19-(.22+.28*run+.12*side*swing)*motion-airborne*.26;
+    model.marker.position.set(.17,.33 + idle * .007,.30 - kick * .094);
+    model.marker.rotation.x = -kick * .19 + swing * .015 * motion;
+    model.chest.rotation.x += kick * .06;
+    for (const {side,shoulder,elbow} of model.arms) {
+      shoulder.rotation.set((side > 0 ? -.32 : -.78) - kick * .15 + swing * .04 * motion,
+        side > 0 ? -.13 : .64, side > 0 ? -.23 : .44);
+      elbow.rotation.x = (side > 0 ? -1.16 : -.63) + kick * .27;
     }
     for(const {side,hip,knee,foot} of model.legs){
       // Target the sole first so the planted foot sits flat while the pelvis moves.

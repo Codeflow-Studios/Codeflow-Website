@@ -161,13 +161,13 @@ export function makeDeckMaterial(THREE,width,depth) {
   return new THREE.MeshStandardMaterial({map:texture,roughness:.79,metalness:.06});
 }
 
-function duskPanorama(THREE) {
+function nightPanorama(THREE) {
   const sky = raster(1024,512);
   const random = randomSource(0x5457494c);
   const noise = noiseField(0x62616e6b);
-  const stops = [[0,0x182540],[.21,0x344064],[.32,0x655f8d],[.39,0xa387aa],
-    [.445,0xe4aaac],[.485,0xffc8a0],[.54,0xb494a0],[.63,0x6d7487],[1,0x384554]];
-  const sunX=.798, sunY=.434;
+  const stops = [[0,0x070d24],[.21,0x111938],[.32,0x202a51],[.39,0x2c345a],
+    [.445,0x3b4267],[.485,0x504865],[.54,0x35324c],[.63,0x1b263a],[1,0x0e182a]];
+  const moonX=.736, moonY=.395;
   let band=1;
   for(let y=0;y<sky.height;y++) {
     const v=y/sky.height;
@@ -176,14 +176,12 @@ function duskPanorama(THREE) {
     const base=blendRGB(c0,c1,(v-y0)/(y1-y0));
     const cloudBand=smooth(clamp((v-.23)*14))*smooth(clamp((.49-v)*29));
     for(let x=0;x<sky.width;x++) {
-      const u=x/sky.width, dx=Math.min(Math.abs(u-sunX),1-Math.abs(u-sunX))*2;
-      const dy=v-sunY, radius=dx*dx+dy*dy;
-      const glow=.63/(1+radius*88);
-      let color=blendRGB(base,0xffc490,glow*smooth(clamp((v-.2)*4.1)));
-      if(radius<.007) color=blendRGB(color,0xffdf9e,.56/(1+radius*900));
-      if(radius<.00044) color=blendRGB(0xffe6ac,0xfff3cc,clamp(.5-dy*25));
+      const u=x/sky.width, dx=(u-moonX)*1.89;
+      const dy=v-moonY, radius=dx*dx+dy*dy;
+      const glow=.16/(1+radius*350);
+      let color=blendRGB(base,0x7a90d1,glow);
       if(cloudBand>0) {
-        // Sheared shelves of vapour catch the light on their lower edges.
+        // Thin clouds catch blue moonlight along their edges.
         const shear=.78*Math.sin(u*tau*2+.7)+.35*Math.cos(u*tau*3);
         const a=noise(u*16,v*59+shear,16);
         const b=noise(u*32+2,v*134+shear*2,32);
@@ -193,17 +191,26 @@ function duskPanorama(THREE) {
         if(opacity>.003) {
           const edge=noise(u*16,(v+.006)*59+shear,16)-a;
           const light=clamp(.38-edge*3.2+c*.15+glow*.21);
-          let cloudColor=blendRGB(0x66628a,0xd99da8,light);
-          cloudColor=blendRGB(cloudColor,0xffcea2,clamp(-edge*5.4)*glow*1.25);
-          color=blendRGB(color,cloudColor,opacity*.87);
+          const cloudColor=blendRGB(0x232442,0x555d87,light);
+          color=blendRGB(color,cloudColor,opacity*.57);
         }
+      }
+      if (radius < .0002) {
+        const detail = noise(dx * 300 + 13, dy * 300 + 17);
+        color = blendRGB(0xb3c3e3,0xf0f0e8,smooth(clamp((detail-.25)*2)));
       }
       sky.pixel(x,y,color);
     }
   }
-  for(let i=0;i<105;i++) {
-    const x=random()*sky.width,y=(.095+random()*.235)*sky.height;
-    sky.pixel(x,y,i%7 ? 0x9493b2 : 0xd6c2c6);
+  for(let i=0;i<190;i++) {
+    const u=random(), v=.05+random()*.345;
+    if (((u-moonX)*1.89)**2+(v-moonY)**2 < .00029) continue;
+    const x=u*sky.width, y=v*sky.height;
+    sky.pixel(x,y,i%13 ? 0x757da5 : 0xd5def4);
+    if (i%23 === 0) {
+      sky.pixel(x+1,y,0x929ec9);
+      sky.pixel(x,y+1,0x929ec9);
+    }
   }
   function ridge(base, amplitude, color, shade, horizontal, offset) {
     for(let x=0;x<sky.width;x++) {
@@ -216,15 +223,15 @@ function duskPanorama(THREE) {
       sky.rect(x,silhouette,1,sky.height-silhouette,blendRGB(shade,color,southernFace));
     }
   }
-  ridge(.51,.068,0xcfa2a7,0xb591a3,8,3);
-  ridge(.522,.055,0xaa91a1,0x957f97,12,7);
-  ridge(.534,.044,0x897e93,0x756e87,16,11);
+  ridge(.51,.068,0x454361,0x393b56,8,3);
+  ridge(.522,.055,0x353854,0x2d3049,12,7);
+  ridge(.534,.044,0x2b314a,0x252a42,16,11);
   for(let x=0;x<sky.width;x+=2+Math.floor(random()*4)) {
     const y=sky.height*(.525+Math.sin(x/sky.width*tau*6)*.004);
     const h=2+random()*6;
-    sky.polygon([[x-2,y+3],[x,y-h],[x+2,y+3]],0x6d6e82);
+    sky.polygon([[x-2,y+3],[x,y-h],[x+2,y+3]],0x20283e);
   }
-  ridge(.55,.036,0x687081,0x5c6477,13,5);
+  ridge(.55,.036,0x192435,0x151e30,13,5);
   return asTexture(THREE,sky);
 }
 
@@ -338,11 +345,11 @@ export function addTerrain(THREE, scene) {
   scene.add(ground,meadowClumps(THREE,trails));
 
   // Use the panorama directly on the dome. A reflection conversion would soften pixel edges.
-  const sky=duskPanorama(THREE);
+  const sky=nightPanorama(THREE);
   const dome=new THREE.Mesh(new THREE.SphereGeometry(145,64,32),new THREE.MeshBasicMaterial({
     map:sky,side:THREE.BackSide,depthTest:false,depthWrite:false,fog:false,toneMapped:false,
   }));
-  dome.name='Festival sunset';
+  dome.name='Festival night sky';
   dome.renderOrder=-100;
   dome.frustumCulled=false;
   dome.onBeforeRender=(_renderer,_scene,camera)=>{

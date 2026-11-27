@@ -10,6 +10,7 @@ import { addCharacters } from './characters.js';
 import { spruceCrown, festoonGlow } from './forest.js';
 import { createPixelRenderer } from './pixel-renderer.js';
 import { stageMural } from './stage-murals.js';
+import { addPaintballEffects } from './paintball-visuals.js';
 import { createPerformer } from './performer-model.js';
 import { createFestivalAtmosphere } from './console-lighting.js';
 
@@ -35,18 +36,18 @@ function makeTexture(width, height, paint) {
   return texture;
 }
 
-export function createWorld(container, reduceMotion) {
+export function createWorld(container, reduceMotion, paintball) {
   const renderer = new THREE.WebGLRenderer({ antialias: false, powerPreference: 'high-performance', alpha: false });
   renderer.outputColorSpace = THREE.SRGBColorSpace;
-  renderer.setClearColor('#121c28');
+  renderer.setClearColor('#090e23');
   renderer.domElement.setAttribute('aria-hidden', 'true');
   container.append(renderer.domElement);
   const pixelRenderer = createPixelRenderer(THREE, renderer);
 
   const scene = new THREE.Scene();
-  scene.fog = new THREE.FogExp2('#776980', .0063);
-  scene.add(new THREE.HemisphereLight('#bbceff', '#795f79', 1.09));
-  const fill = new THREE.DirectionalLight('#b6dce8', .82);
+  scene.fog = new THREE.FogExp2('#252943', .0084);
+  scene.add(new THREE.HemisphereLight('#b0c0ff', '#514365', .74));
+  const fill = new THREE.DirectionalLight('#7889bd', .34);
   fill.position.set(19,26,36);
   scene.add(fill);
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
@@ -54,14 +55,14 @@ export function createWorld(container, reduceMotion) {
   renderer.shadowMap.enabled = true;
   renderer.shadowMap.type = THREE.PCFSoftShadowMap;
   renderer.shadowMap.autoUpdate = false;
-  const sun = new THREE.DirectionalLight('#ffbd91', 1.56);
-  sun.position.set(-48, 27, -38);
-  sun.castShadow = true;
-  Object.assign(sun.shadow.camera, { left: -65, right: 65, top: 65, bottom: -65, near: .5, far: 162 });
-  sun.shadow.mapSize.set(2048, 2048);
-  sun.shadow.normalBias = .05;
-  sun.shadow.bias = -.00025;
-  scene.add(sun);
+  const moon = new THREE.DirectionalLight('#a2b9ff', .66);
+  moon.position.set(-6, 39, -55);
+  moon.castShadow = true;
+  Object.assign(moon.shadow.camera, { left: -65, right: 65, top: 65, bottom: -65, near: .5, far: 162 });
+  moon.shadow.mapSize.set(2048, 2048);
+  moon.shadow.normalBias = .05;
+  moon.shadow.bias = -.00025;
+  scene.add(moon);
   for (const stage of venues) {
     const wash = new THREE.PointLight(stage.color, 185, 27, 2);
     wash.position.set(stage.x, 3.6, stage.z + 3.5);
@@ -95,6 +96,8 @@ export function createWorld(container, reduceMotion) {
   const followSpot = new THREE.SpotLight('#ffffff', 0, 32, .35, .72, 2);
   scene.add(followSpot, followSpot.target);
   const beamDirection = new THREE.Vector3();
+  const lanternFill = Array.from({ length: 2 }, () => new THREE.PointLight('#ffc397', 56, 13, 2));
+  scene.add(...lanternFill);
   const shadowTexture = makeTexture(64, 64, (ctx, w, h) => {
     const gradient = ctx.createRadialGradient(w / 2, h / 2, w * .1, w / 2, h / 2, w / 2);
     gradient.addColorStop(0, '#ffffffd9');
@@ -195,6 +198,12 @@ export function createWorld(container, reduceMotion) {
 
   function animateLights(time, player) {
     let nearest = Infinity;
+    const nearbyLanterns = lanterns.map(([x, z]) => [x, z, (x - player.x)**2 + (z - player.z)**2]);
+    nearbyLanterns.sort((a, b) => a[2] - b[2]);
+    for (const [i, lamp] of lanternFill.entries()) {
+      const [x, z] = nearbyLanterns[i];
+      lamp.position.set(x, 5.32, z);
+    }
     for (const { origin, aim, spread, phase, shaft, pool } of movingLights) {
       const endX = aim[0] + Math.sin(time * .67 + phase) * 2.8;
       const endZ = aim[1] + Math.cos(time * .48 + phase) * 1.65;
@@ -318,7 +327,7 @@ export function createWorld(container, reduceMotion) {
     prop(post, '#5d6570', x, 2.74, z, .17, 5.3, .17);
     prop(tube, '#ffe1a5', x, 5.36, z, .36, .43, .36, 0, 0, true);
     prop(cone, ink, x, 5.62, z, .65, .23, .65);
-    floorSpot('#ffc184', x, z, 10.5, 10.5, .20, true);
+    floorSpot('#ffc184', x, z, 12, 12, .32, true);
   }
   for (const z of [-12, 3, 23, 39]) {
     const sag = x => 4.50 + (x / 8) ** 2 * .92;
@@ -561,7 +570,8 @@ export function createWorld(container, reduceMotion) {
 
   const animateStage = addStageArt(THREE, scene, venues, reduceMotion);
   const animateScenery = addScenery(THREE, scene, reduceMotion);
-  const animateCharacters = addCharacters(THREE, scene, reduceMotion);
+  const animateCharacters = addCharacters(THREE, scene, reduceMotion, paintball.walkers);
+  const animatePaintball = addPaintballEffects(THREE, scene, paintball, reduceMotion);
   const animatePlayer = createPerformer(THREE, scene);
   const animateAtmosphere = createFestivalAtmosphere(THREE, scene, venues, reduceMotion);
   const gateRing = new THREE.Mesh(new THREE.RingGeometry(1.55, 1.68, 36),
@@ -582,6 +592,7 @@ export function createWorld(container, reduceMotion) {
     rig.update(player, elapsed);
     animateCharacters(player, elapsed, time, rig.overview);
     animatePlayer(player, elapsed, time, rig.overview, reduceMotion);
+    animatePaintball();
     animateAtmosphere(time);
     animateScenery(time);
     animateStage(time);

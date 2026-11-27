@@ -2,6 +2,7 @@ import { canWalk, entrance, venues } from './layout.js';
 import { createWorld } from './world.js';
 import { createFlatWorld } from './flat-world.js';
 import { createMap } from './map.js';
+import { createPaintball } from './paintball.js';
 
 const $ = id => document.getElementById(id);
 const worldElement = $('world');
@@ -13,6 +14,10 @@ const openSeparately = $('open-separately');
 const joystick = $('joystick');
 const joystickKnob = $('joystick-knob');
 const jumpButton = $('jump');
+const paintButton = $('paint');
+const paintAim = $('paint-aim');
+const paintCount = $('paint-count');
+const paintball = createPaintball(hits => { paintCount.textContent = `${hits} verftreffers`; });
 const nearbyCard = $('nearby');
 const artistDialog = $('artist-dialog');
 const artistNames = { gauthier: 'Gauthier', matar: 'Matar' };
@@ -20,7 +25,7 @@ const artistKey = 'skumic.festival.artist';
 let preferredArtist = null;
 try { preferredArtist = localStorage.getItem(artistKey); } catch { /* Private storage can be unavailable. */ }
 const player = { ...entrance, heading: Math.PI, speed: 0, strafe: 0, forward: 0,
-  jumpAge: -1, jumpHeight: 0, liftPose: 0, crouch: 0,
+  markerKick: 0, jumpAge: -1, jumpHeight: 0, liftPose: 0, crouch: 0,
   artist: Object.hasOwn(artistNames, preferredArtist) ? preferredArtist : null };
 const visited = new Set();
 const held = new Set();
@@ -38,6 +43,9 @@ let marked = null;
 let nearby = null;
 let lastFrame = 0;
 let rig;
+let paintPointer = null;
+let paintQueued = false;
+const aimingHeading = () => rig && !rig.overview ? rig.paintHeading : player.heading;
 
 function updateLookHint() {
   const hint=$('walk-hint');
@@ -74,6 +82,8 @@ function clearStick() {
 
 function clearInput() {
   held.clear();
+  paintPointer = null;
+  paintQueued = false;
   clearStick();
 }
 
@@ -236,6 +246,26 @@ function advanceJump(dt) {
 }
 
 jumpButton.addEventListener('click',jump);
+paintButton.addEventListener('pointerdown', event => {
+  if (event.button !== 0) return;
+  paintPointer = event.pointerId;
+  paintQueued = true;
+  paintButton.setPointerCapture(event.pointerId);
+});
+paintButton.addEventListener('lostpointercapture', releasePaintPointer);
+paintButton.addEventListener('click', event => {
+  if (event.detail === 0) paintQueued = true;
+});
+worldElement.addEventListener('pointerdown', event => {
+  if (event.button !== 0 || document.pointerLockElement !== worldElement) return;
+  paintPointer = event.pointerId;
+  paintQueued = true;
+});
+function releasePaintPointer(event) {
+  if (event.pointerId === paintPointer) paintPointer = null;
+}
+window.addEventListener('pointerup', releasePaintPointer);
+window.addEventListener('pointercancel', releasePaintPointer);
 window.addEventListener('keydown', event => {
   if (gameDialog.open || artistDialog.open || event.altKey || event.ctrlKey || event.metaKey) return;
   const key = event.key.toLowerCase();
@@ -253,6 +283,13 @@ window.addEventListener('keydown', event => {
   if (key === 'm' && rig && !event.repeat) {
     event.preventDefault();
     toggleOverview();
+    return;
+  }
+  if (key === 'f') {
+    if (event.target?.closest?.('input,textarea,select,[contenteditable=true]')) return;
+    event.preventDefault();
+    if (!event.repeat) paintQueued = true;
+    held.add(key);
     return;
   }
   if (movementKeys.includes(key)) {
@@ -304,7 +341,7 @@ function walk(elapsed) {
   const travel = Math.hypot(deltaX, deltaZ);
   player.speed = travel / elapsed;
   if (!travel) return;
-  player.heading = yaw + Math.PI;
+  player.heading = rig && !rig.overview ? yaw + Math.PI : Math.atan2(deltaX, deltaZ);
   // Project actual travel back onto the camera axes so wall slides animate correctly.
   player.strafe = (deltaX * Math.cos(yaw) - deltaZ * Math.sin(yaw)) / travel;
   player.forward = -(deltaX * Math.sin(yaw) + deltaZ * Math.cos(yaw)) / travel;
@@ -346,16 +383,17 @@ async function start() {
   ]);
   let world;
   try {
-    world = createWorld(worldElement, reduceMotion);
+    world = createWorld(worldElement, reduceMotion, paintball);
   } catch (error) {
     console.warn('3D-weergave starten', error);
     worldElement.replaceChildren();
-    world = createFlatWorld(worldElement);
+    world = createFlatWorld(worldElement, paintball);
     $('notice').textContent = 'Bovenaanzicht actief';
     $('notice').hidden = false;
   }
   const drawMap = createMap($('minimap'));
   rig = world.rig;
+  if (!rig) $('walk-hint').textContent = 'Loop om te richten · F om te paintballen';
   if (rig) {
     const cameraButton = $('camera-toggle');
     cameraButton.hidden = false;
@@ -374,11 +412,20 @@ async function start() {
         for (let step = 0; step < steps; step++) {
           advanceJump(elapsed / steps);
           walk(elapsed / steps);
+          paintball.update(player, elapsed / steps, paintQueued || held.has('f') || paintPointer !== null, aimingHeading());
+          paintQueued = false;
         }
       }
       updateNearby();
       world.frame(player, elapsed, now / 1000, marked, nearby);
       positionSigns(world);
+      const heading = aimingHeading();
+      const aim = (world.projectPaint || world.project)(player.x + Math.sin(heading) * 9,
+        1.44 + player.jumpHeight, player.z + Math.cos(heading) * 9);
+      paintAim.hidden = !player.artist || aim.inFront === false ||
+        aim.x < 10 || aim.y < 10 || aim.x > worldElement.clientWidth - 10 || aim.y > worldElement.clientHeight - 10;
+      if (!paintAim.hidden) paintAim.style.transform = `translate(${aim.x}px, ${aim.y}px)`;
+      paintCount.hidden = !player.artist;
       if (!mapContent.hidden) drawMap(player, marked, visited);
       $('loading').hidden = true;
     }

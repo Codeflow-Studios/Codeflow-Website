@@ -172,6 +172,7 @@ export function createCameraRig(THREE, container, reduceMotion) {
   return {
     camera,
     get overview() { return overview; },
+    get paintHeading() { return yaw + Math.PI; },
     movementYaw(moving) {
       if (overview) return 0;
       // Keep the start bearing while a direction is held so camera follow can't curve the walk.

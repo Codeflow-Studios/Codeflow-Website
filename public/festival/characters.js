@@ -276,8 +276,27 @@ function createAudience() {
   return actors;
 }
 
-export function addCharacters(THREE, scene, reduceMotion) {
-  const actors = createAudience();
+export function createFlatWalkerSprites(walkers) {
+  const sprites = new Map();
+  for (const { outfit } of walkers) {
+    if (sprites.has(outfit)) continue;
+    const strip = Object.assign(document.createElement('canvas'), { width: W * 5, height: H * 4 });
+    const ctx = strip.getContext('2d');
+    const image = ctx.createImageData(W, H);
+    for (let direction = 0; direction < 4; direction++) {
+      for (let pose = 0; pose < 5; pose++) {
+        new Uint32Array(image.data.buffer).set(drawCharacter(outfits[outfit], direction, pose, 0));
+        ctx.putImageData(image, pose * W, direction * H);
+      }
+    }
+    sprites.set(outfit, strip);
+  }
+  return { sprites, width: W, height: H };
+}
+
+export function addCharacters(THREE, scene, reduceMotion, walkers) {
+  const audience = createAudience();
+  const actors = [...audience, ...walkers];
   const animateCrowd = createCrowd(THREE, scene, actors, outfits, skinTones, reduceMotion);
   const plane = new THREE.PlaneGeometry(1, 1);
   const shadowTex = new Uint8Array(20 * 14 * 4);
@@ -301,6 +320,7 @@ export function addCharacters(THREE, scene, reduceMotion) {
   }
   actors.forEach((a, i) => placeShadow(i));
   shadows.frustumCulled = false;
+  shadows.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
   scene.add(shadows);
   const halo = new THREE.Mesh(new THREE.RingGeometry(.82, .89, 12), new THREE.MeshBasicMaterial({
     color: '#d6fa8d', transparent: true, opacity: .87, toneMapped: false, depthWrite: false,
@@ -312,5 +332,7 @@ export function addCharacters(THREE, scene, reduceMotion) {
     halo.position.set(player.x, .086, player.z);
     halo.visible = overview;
     animateCrowd(time);
+    for (let i = audience.length; i < actors.length; i++) placeShadow(i);
+    shadows.instanceMatrix.needsUpdate = true;
   };
 }
