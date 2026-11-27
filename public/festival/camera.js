@@ -34,6 +34,7 @@ export function createCameraRig(THREE, container, reduceMotion) {
   const obstacles = cameraObstacles(THREE);
   let yaw = 0, pitch = .225, zoom = 1, overview = false, first = true;
   let yawVelocity = 0, boomDistance = 0, lift = 0, baseFov = 55;
+  let viewYaw = yaw, viewPitch = pitch, viewZoom = zoom;
   let touch = null, lastX, lastY, wantsLock = false;
   let steering = false, steeringYaw = yaw, followYaw = null, manualLookTime = 0;
   const locked = () => document.pointerLockElement === container;
@@ -117,10 +118,20 @@ export function createCameraRig(THREE, container, reduceMotion) {
   }
 
   function placeCamera(player, dt, snap) {
-    const dx = Math.sin(yaw), dz = Math.cos(yaw);
-    const distance = (camera.aspect < .9 ? 9.4 : 10.0) * zoom * Math.cos(pitch);
+    if (snap) {
+      viewYaw = yaw;
+      viewPitch = pitch;
+      viewZoom = zoom;
+    } else {
+      const turn = Math.atan2(Math.sin(yaw - viewYaw), Math.cos(yaw - viewYaw));
+      viewYaw += turn * (1 - Math.exp(-24 * dt));
+      viewPitch = THREE.MathUtils.damp(viewPitch, pitch, 22, dt);
+      viewZoom = THREE.MathUtils.damp(viewZoom, zoom, 13, dt);
+    }
+    const dx = Math.sin(viewYaw), dz = Math.cos(viewYaw);
+    const distance = (camera.aspect < .9 ? 9.4 : 10.0) * viewZoom * Math.cos(viewPitch);
     const shoulder = Math.min(distance * .07, .68);
-    const slope = Math.tan(pitch);
+    const slope = Math.tan(viewPitch);
     desiredPosition.set(focus.x + dx * distance + dz * shoulder,
       Math.max(.55, 1.68 + distance * slope), focus.z + dz * distance - dx * shoulder);
     // Test the view from the real player position, including the shoulder offset and pitch.

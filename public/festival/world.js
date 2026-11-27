@@ -43,9 +43,9 @@ export function createWorld(container, reduceMotion) {
   const pixelRenderer = createPixelRenderer(THREE, renderer);
 
   const scene = new THREE.Scene();
-  scene.fog = new THREE.FogExp2('#998a9e', .0047);
-  scene.add(new THREE.HemisphereLight('#b5c6ef', '#74596d', 1.04));
-  const fill = new THREE.DirectionalLight('#b6dce8', .90);
+  scene.fog = new THREE.FogExp2('#817390', .0054);
+  scene.add(new THREE.HemisphereLight('#bbceff', '#795f79', 1.09));
+  const fill = new THREE.DirectionalLight('#b6dce8', .82);
   fill.position.set(19,26,36);
   scene.add(fill);
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
@@ -53,7 +53,7 @@ export function createWorld(container, reduceMotion) {
   renderer.shadowMap.enabled = true;
   renderer.shadowMap.type = THREE.PCFSoftShadowMap;
   renderer.shadowMap.autoUpdate = false;
-  const sun = new THREE.DirectionalLight('#ffbf88', 1.5);
+  const sun = new THREE.DirectionalLight('#ffbd91', 1.56);
   sun.position.set(-48, 27, -38);
   sun.castShadow = true;
   Object.assign(sun.shadow.camera, { left: -65, right: 65, top: 65, bottom: -65, near: .5, far: 162 });
@@ -240,7 +240,8 @@ export function createWorld(container, reduceMotion) {
       ctx.fillText(text, width / 2, 10);
     });
     texture.magFilter = THREE.NearestFilter;
-    texture.minFilter = THREE.NearestMipmapNearestFilter;
+    texture.minFilter = THREE.LinearMipmapLinearFilter;
+    texture.anisotropy = Math.min(8, renderer.capabilities.getMaxAnisotropy());
     panel(texture, x, y, z, w, h, { ground });
   }
 
@@ -582,7 +583,9 @@ export function createWorld(container, reduceMotion) {
       renderer.shadowMap.needsUpdate = true;
       lastShadow = time;
     }
-    pixelRenderer.draw(scene, camera);
+    const previousHeight = pixelRenderer.height;
+    pixelRenderer.draw(scene, camera, elapsed);
+    if (previousHeight !== pixelRenderer.height) resizeGlow(pixelRenderer.height);
   }
 
   function project(x, y, z) {

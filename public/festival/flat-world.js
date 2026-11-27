@@ -15,12 +15,12 @@ export function createFlatWorld(container) {
   let ratio = 1;
   const covers = venues.map(venue => drawMarquee(venue.id));
   const artists = createFlatArtistSprites();
-  canvas.style.imageRendering = 'pixelated';
+  canvas.style.imageRendering = 'auto';
 
   function resize() {
-    width = container.clientWidth;
-    height = container.clientHeight;
-    ratio = 1 / Math.max(1, Math.round(Math.max(width / 535, height / 330)));
+    width = Math.max(1, container.clientWidth);
+    height = Math.max(1, container.clientHeight);
+    ratio = Math.min(window.devicePixelRatio || 1, 1.25, Math.sqrt(900_000 / (width * height)));
     canvas.width = Math.round(width * ratio);
     canvas.height = Math.round(height * ratio);
     ctx.imageSmoothingEnabled = false;

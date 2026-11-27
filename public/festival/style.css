@@ -58,7 +58,8 @@ a:focus-visible, button:focus-visible { outline: 2px solid var(--lime); outline-
 #festival { height: 100dvh; width: 100vw; position: relative; overflow: hidden; isolation: isolate; }
 #world, #world canvas, .vignette, #world-signs { position: absolute; inset: 0; width: 100%; height: 100%; }
 #world { outline: none; touch-action: none; }
-#world canvas, #minimap { image-rendering: pixelated; }
+#world canvas { image-rendering: auto; }
+#minimap { image-rendering: pixelated; }
 .vignette { pointer-events: none; background: linear-gradient(to top, #17142654, transparent 16%); }
 
 .wordmark { position: absolute; left: var(--outside); top: var(--top); pointer-events: none; }

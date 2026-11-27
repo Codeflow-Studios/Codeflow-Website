@@ -1,8 +1,14 @@
-// Light blooms at quarter resolution while the native scene keeps crisp edges.
+// Render the geometry at a bounded device resolution and composite a softer bloom.
 export function createPixelRenderer(THREE, renderer) {
   const type = renderer.extensions.has('EXT_color_buffer_float') ? THREE.HalfFloatType : THREE.UnsignedByteType;
   const options = { type, minFilter: THREE.LinearFilter, magFilter: THREE.LinearFilter };
-  const sceneTarget = new THREE.WebGLRenderTarget(1, 1, options);
+  const gl = renderer.getContext();
+  const coarse = matchMedia('(pointer: coarse)').matches;
+  const format = type === THREE.HalfFloatType ? gl.RGBA16F : gl.RGBA8;
+  const sampleCounts = gl.getInternalformatParameter(gl.RENDERBUFFER, format, gl.SAMPLES);
+  // Use a supported format-specific sample count. Keep mobile renderbuffers small.
+  const samples = !coarse && sampleCounts?.includes(2) ? 2 : 0;
+  const sceneTarget = new THREE.WebGLRenderTarget(1, 1, { ...options, samples });
   const bloomX = new THREE.WebGLRenderTarget(1, 1, { ...options, depthBuffer: false });
   const bloomY = new THREE.WebGLRenderTarget(1, 1, { ...options, depthBuffer: false });
   const screen = new THREE.Scene();
@@ -66,13 +72,15 @@ export function createPixelRenderer(THREE, renderer) {
         float contrast = max(abs(dx), abs(dy));
         // Soften stair steps along diagonals while preserving printed signs and textures.
         float diagonal = min(abs(dx), abs(dy)) / max(.001, contrast);
-        hdr = mix(hdr, (n+s+e+w)*.25, diagonal * smoothstep(.04,.4,contrast) * .32);
-        hdr += texture2D(bloom, coord).rgb * .17;
+        hdr = mix(hdr, (n+s+e+w)*.25, diagonal * smoothstep(.035,.36,contrast) * ${samples ? ".18" : ".54"});
+        hdr += texture2D(bloom, coord).rgb * .21;
         gl_FragColor = vec4(hdr, 1.);
         #include <tonemapping_fragment>
         #include <colorspace_fragment>
         vec3 rgb = gl_FragColor.rgb;
         float luma = brightness(rgb);
+        vec2 edge = (coord - .5) * vec2(1.26, 1.);
+        rgb *= 1. - .12 * smoothstep(.26, .72, length(edge));
         rgb = mix(vec3(luma), rgb, 1.08);
         rgb += (1. - smoothstep(.04, .4, luma)) * vec3(.004,.004,.014);
         gl_FragColor = vec4(clamp(rgb, 0., 1.), 1.);
@@ -84,21 +92,45 @@ export function createPixelRenderer(THREE, renderer) {
     renderer.setRenderTarget(destination);
     renderer.render(screen, camera);
   }
+  let width = 1, height = 1, quality = 1, average = 1 / 60, sampleTime = 0, renderHeight = 1;
+  function resizeTargets() {
+    const pixelBudget = coarse ? 950_000 : 2_000_000;
+    const density = Math.min(window.devicePixelRatio || 1, coarse ? 1.5 : 1.75);
+    const scale = Math.min(density, Math.sqrt(pixelBudget / (width * height))) * quality;
+    const w = Math.max(1, Math.round(width * scale)), h = Math.max(1, Math.round(height * scale));
+    const bw = Math.max(1, Math.ceil(w / 4)), bh = Math.max(1, Math.ceil(h / 4));
+    sceneTarget.setSize(w, h);
+    bloomX.setSize(bw, bh);
+    bloomY.setSize(bw, bh);
+    horizontal.uniforms.stepUV.value.set(1 / bw, 0);
+    vertical.uniforms.stepUV.value.set(0, 1 / bh);
+    texel.set(1 / w, 1 / h);
+    renderer.setSize(w, h, false);
+    renderHeight = h;
+  }
   return {
-    resize(width, height) {
-      const scale = Math.min(1, 1280 / width, 800 / height);
-      const w = Math.max(1, Math.round(width * scale)), h = Math.max(1, Math.round(height * scale));
-      const bw = Math.max(1, Math.ceil(w / 4)), bh = Math.max(1, Math.ceil(h / 4));
-      sceneTarget.setSize(w, h);
-      bloomX.setSize(bw, bh);
-      bloomY.setSize(bw, bh);
-      horizontal.uniforms.stepUV.value.set(1 / bw, 0);
-      vertical.uniforms.stepUV.value.set(0, 1 / bh);
-      texel.set(1 / w, 1 / h);
-      renderer.setSize(w, h, false);
-      return h;
+    get height() { return renderHeight; },
+    resize(nextWidth, nextHeight) {
+      width = nextWidth;
+      height = nextHeight;
+      resizeTargets();
+      return renderHeight;
     },
-    draw(scene, view) {
+    draw(scene, view, dt) {
+      if (dt > 0) {
+        const sample = Math.min(dt, .085);
+        average += (sample - average) * (1 - Math.exp(-3 * sample));
+        sampleTime += dt;
+        if (sampleTime > 1.8) {
+          const next = average > .026 ? Math.max(.65, quality - .12) :
+            average < .018 && quality < 1 ? Math.min(1, quality + .07) : quality;
+          if (next !== quality) {
+            quality = next;
+            resizeTargets();
+          }
+          sampleTime = 0;
+        }
+      }
       renderer.setRenderTarget(sceneTarget);
       renderer.render(scene, view);
       drawPass(horizontal, bloomX);
