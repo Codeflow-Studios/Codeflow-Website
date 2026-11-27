@@ -1,6 +1,8 @@
 import { addArtistHead } from './artist-head.js';
 import { markerGrip, markerTip } from './paintball.js';
 
+const supportGrip = { x: .10, y: -.005, z: .22 };
+
 // The sculpt is assembled in joint-local space. Every rigid section shares
 // one vertex-coloured surface for its fabric, skin, seams and accessories.
 export function createPerformer(THREE, scene) {
@@ -349,6 +351,7 @@ export function createPerformer(THREE, scene) {
       s.shell([[-.317,.072,.080,.055],[-.304,.076,.084,.053],[-.287,.079,.087,.050]],wrist,18);
       s.slab('#dfd1b2',side*.078,-.301,.061,.018,.017,.035);
       s.finish();arms.push({side,shoulder,elbow});
+      elbow.name = side < 0 ? 'Marker grip wrist' : 'Marker support wrist';
       const hip=joint(pelvis,side*.154,-.10,0), knee=joint(hip,0,-.55,0), foot=joint(knee,0,-.43,0);
       s=sculpt(hip);
       s.shell([[-.558,.119,.134,.010],[-.485,.122,.142,.012],[-.419,.135,.143,-.006],[-.252,.147,.163],[.02,.141,.153]],'#393b48',16,.049);
@@ -429,6 +432,8 @@ export function createPerformer(THREE, scene) {
     }
     gear.slab(yellow,0,-.114,-.079,.114,.035,.139,0,0,-.23);
     gear.seam(alloy,[[0,.033,.146],[0,-.052,.140],[0,-.058,.072],[0,-.034,.047]],.014);
+    gear.slab('#54334e', .052, .02, supportGrip.z, .117, .119, .129);
+    gear.slab('#a77d9d', .096, .031, supportGrip.z, .031, .116, .103);
     // The hopper, bright tip band and air tank give the marker a readable shape from behind.
     gear.facet('#68426e',0,.329,.066,.281,.204,.308,0,1);
     gear.facet('#916286',0,.394,.059,.267,.116,.291,0,1);
@@ -463,26 +468,27 @@ export function createPerformer(THREE, scene) {
   const upper = new THREE.Vector3();
   const lower = new THREE.Vector3();
   const inverse = new THREE.Quaternion();
-  const upperAxis = new THREE.Vector3(-.045,-.34,0).normalize();
+  const upperAxis = new THREE.Vector3();
   const lowerAxis = new THREE.Vector3(0,-.37,.065);
   const lowerLength = lowerAxis.length();
   lowerAxis.normalize();
 
-  function gripMarker(model) {
-    const { shoulder, elbow } = model.arms[0];
-    model.marker.getWorldPosition(target);
+  function gripMarker(model, arm, x, y, z) {
+    const { side, shoulder, elbow } = arm;
+    model.marker.localToWorld(target.set(x,y,z));
     model.chest.worldToLocal(target);
     direction.subVectors(target, shoulder.position);
     const upperLength = elbow.position.length();
-    const reach = Math.min(direction.length(), upperLength + lowerLength - .0001);
+    const reach = THREE.MathUtils.clamp(direction.length(),
+      Math.abs(upperLength - lowerLength) + .0001, upperLength + lowerLength - .0001);
     direction.normalize();
-    bendDirection.set(-.44,-1,-.09);
+    bendDirection.set(side*.38,-1,-.15);
     bendDirection.addScaledVector(direction,-bendDirection.dot(direction)).normalize();
     const along = (reach**2 + upperLength**2 - lowerLength**2) / (2 * reach);
     upper.copy(direction).multiplyScalar(along)
       .addScaledVector(bendDirection, Math.sqrt(Math.max(0, upperLength**2 - along**2)));
     lower.copy(direction).multiplyScalar(reach).sub(upper);
-    shoulder.quaternion.setFromUnitVectors(upperAxis, upper.normalize());
+    shoulder.quaternion.setFromUnitVectors(upperAxis.copy(elbow.position).normalize(), upper.normalize());
     lower.applyQuaternion(inverse.copy(shoulder.quaternion).invert()).normalize();
     elbow.quaternion.setFromUnitVectors(lowerAxis, lower);
   }
@@ -515,18 +521,19 @@ export function createPerformer(THREE, scene) {
     model.pelvis.position.y=1.17+(.012-.036*stride*stride-.037*run)*motion+idle*.004-compression*.14;
     model.pelvis.rotation.y=stride*.045*motion*longitudinal;
     model.pelvis.rotation.z=-lateral*.035*motion;
-    model.chest.rotation.set((.055+.072*run)*motion*longitudinal,-stride*.14*motion*longitudinal,(swing*.025-lateral*.11)*motion);
+    model.chest.rotation.set(.08+(.055+.072*run)*motion*longitudinal,-.55-stride*.06*motion*longitudinal,
+      (swing*.025-lateral*.11)*motion);
     model.chest.rotation.x+=compression*.17-airborne*.11;
     model.head.rotation.set(-(.048+.064*run)*motion,stride*.067*motion+idle*.022,-swing*.017*motion);
     const elevation = player.paintElevation || 0;
-    model.head.rotation.x -= elevation * .36;
-    model.marker.position.set(markerGrip.x, markerGrip.y, markerGrip.z - kick * .09);
-    model.marker.rotation.x = -elevation - kick * .065;
-    model.chest.rotation.x += kick * .045;
-    gripMarker(model);
-    const leftArm = model.arms[1];
-    leftArm.shoulder.rotation.set(-.12 + stride * .30 * motion * longitudinal, 0, .18);
-    leftArm.elbow.rotation.x = -.33 - run * .34;
+    model.head.rotation.x -= elevation * .36 + kick * .11;
+    model.head.rotation.y += .26;
+    model.marker.position.set(markerGrip.x, markerGrip.y + kick * .028, markerGrip.z - kick * .19);
+    model.marker.rotation.x = -elevation - kick * .15;
+    model.chest.rotation.x += kick * .15;
+    model.chest.rotation.y -= kick * .09;
+    gripMarker(model, model.arms[0], 0, 0, 0);
+    gripMarker(model, model.arms[1], supportGrip.x, supportGrip.y, supportGrip.z);
     for(const {side,hip,knee,foot} of model.legs){
       // Target the sole first so the planted foot sits flat while the pelvis moves.
       const forward=side*stride*(.26+.13*run)*motion*longitudinal+airborne*(side<0?.16:-.046);

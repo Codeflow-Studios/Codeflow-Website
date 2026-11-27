@@ -20,7 +20,9 @@ const speed = 32;
 const flightTime = maxPaintDistance / speed;
 const sampleTime = .23 / speed;
 const drop = 1.15;
-export const markerGrip = { x: -.45, y: 1.59, z: .46 };
+export const markerGrip = { x: -.35, y: 1.68, z: .37 };
+export const maxPaintCapsules = 36;
+export const paintFlashTime = .115;
 export const markerTip = { y: .14, z: .72 };
 export const limitPaintElevation = elevation => Math.max(-.68, Math.min(.64, elevation));
 
@@ -37,10 +39,15 @@ function launch(player, heading, elevation) {
   };
 }
 
-function placeBall(ball, time) {
-  ball.x = ball.originX + ball.vx * time;
-  ball.y = ball.originY + ball.vy * time - drop * time * time;
-  ball.z = ball.originZ + ball.vz * time;
+function placeBall(ball, time, point = ball) {
+  point.x = ball.originX + ball.vx * time;
+  point.y = ball.originY + ball.vy * time - drop * time * time;
+  point.z = ball.originZ + ball.vz * time;
+  return point;
+}
+
+export function paintTrailStart(ball, point) {
+  return placeBall(ball, Math.max(0, ball.age - .094), point);
 }
 
 function hitsScenery({ x, y, z }) {
@@ -62,7 +69,9 @@ export function createPaintball(onHit) {
   }));
   const balls = [];
   const bursts = [];
-  let cooldown = 0, fired = 0, hits = 0;
+  const capsules = [];
+  const flashes = [];
+  let cooldown = 0, fired = 0, hits = 0, recoilAge = Infinity;
 
   function preview(player, heading, elevation) {
     const trace = launch(player, heading, elevation);
@@ -88,14 +97,27 @@ export function createPaintball(onHit) {
     ball.color = paintColors[fired++ % paintColors.length];
     placeBall(ball, 0);
     balls.push(ball);
-    player.markerKick = 1;
+    flashes.push({ x: ball.x, y: ball.y, z: ball.z, color: ball.color, age: 0 });
+    const sideX = -Math.cos(heading), sideZ = Math.sin(heading);
+    const scatter = Math.random();
+    capsules.push({
+      x: player.x + sideX * .54 + Math.sin(heading) * markerGrip.z,
+      y: markerGrip.y + player.jumpHeight, z: player.z + sideZ * .54 + Math.cos(heading) * markerGrip.z,
+      vx: sideX * (1.45 + scatter * .8), vy: .68 + scatter * .6, vz: sideZ * (1.45 + scatter * .8),
+      rotation: heading + scatter, spin: 6 + scatter * 5, age: 0, color: ball.color, grounded: false,
+    });
+    if (capsules.length > maxPaintCapsules) capsules.shift();
+    recoilAge = 0;
+    player.markerKick = 0;
     player.heading = heading;
     cooldown = .19;
   }
 
   function update(player, dt, firing, heading, elevation = 0) {
     cooldown = Math.max(0, cooldown - dt);
-    player.markerKick *= Math.exp(-dt * 19);
+    recoilAge += dt;
+    const recoil = recoilAge / .034;
+    player.markerKick = recoil < 9 ? recoil * Math.exp(1 - recoil) : 0;
     if (firing) fire(player, heading, elevation);
     for (const walker of walkers) {
       walker.paintTime = Math.max(0, walker.paintTime - dt);
@@ -148,7 +170,38 @@ export function createPaintball(onHit) {
       bursts[i].age += dt;
       if (bursts[i].age >= .38) bursts.splice(i, 1);
     }
+    for (let i = flashes.length - 1; i >= 0; i--) {
+      flashes[i].age += dt;
+      if (flashes[i].age >= paintFlashTime) flashes.splice(i, 1);
+    }
+    for (let i = capsules.length - 1; i >= 0; i--) {
+      const capsule = capsules[i];
+      capsule.age += dt;
+      if (capsule.age >= 6) {
+        capsules.splice(i, 1);
+        continue;
+      }
+      if (capsule.grounded) continue;
+      capsule.rotation += capsule.spin * dt;
+      capsule.vy -= 9.2 * dt;
+      capsule.y += capsule.vy * dt;
+      const nextX = capsule.x + capsule.vx * dt, nextZ = capsule.z + capsule.vz * dt;
+      if (hitsScenery({ x: nextX, y: Math.max(.08, capsule.y), z: capsule.z })) capsule.vx *= -.43;
+      else capsule.x = nextX;
+      if (hitsScenery({ x: capsule.x, y: Math.max(.08, capsule.y), z: nextZ })) capsule.vz *= -.43;
+      else capsule.z = nextZ;
+      if (capsule.y <= .075) {
+        capsule.y = .075;
+        if (capsule.vy > -1.1) capsule.grounded = true;
+        else {
+          capsule.vy *= -.36;
+          capsule.vx *= .55;
+          capsule.vz *= .55;
+          capsule.spin *= .57;
+        }
+      }
+    }
   }
 
-  return { walkers, balls, bursts, update, preview };
+  return { walkers, balls, bursts, capsules, flashes, update, preview };
 }

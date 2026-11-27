@@ -1,6 +1,6 @@
 import { benches, grounds, lanterns, paths, sideStands, trees, venues } from './layout.js';
 import { drawMarquee } from './stage-murals.js';
-import { markerGrip, markerTip, paintDots } from './paintball.js';
+import { markerGrip, markerTip, paintDots, paintFlashTime, paintTrailStart } from './paintball.js';
 import { createFlatArtistSprites, createFlatWalkerSprites } from './characters.js';
 import { makeFestivalSurfaceCanvas } from './terrain.js';
 import { festivalLights, puddles } from './ground-light.js';
@@ -152,13 +152,33 @@ export function createFlatWorld(container, paintball) {
       disc(gate.doorX, gate.doorZ, 1.34, '#645a56');
     }
 
+    for (const capsule of paintball.capsules) {
+      const fade = Math.min(1, (6 - capsule.age) * 2);
+      ctx.save();
+      ctx.translate(capsule.x, capsule.z - capsule.y * 1.3);
+      ctx.rotate(capsule.rotation);
+      rectangle(-.15 * fade, -.07 * fade, .30 * fade, .14 * fade, capsule.color);
+      ctx.restore();
+    }
     const actors = [...paintball.walkers, player].sort((a, b) => a.z - b.z);
     for (const actor of actors) {
       if (actor === player) drawPlayer(player, time);
       else drawWalker(actor, time);
     }
+    const trail = {};
     for (const ball of paintball.balls) {
-      disc(ball.x, ball.z - ball.y * 1.3, .17, ball.color);
+      paintTrailStart(ball, trail);
+      ctx.strokeStyle = '#fa2d82';
+      ctx.lineWidth = reduceMotion.matches ? .095 : .17;
+      ctx.beginPath();
+      ctx.moveTo(trail.x, trail.z - trail.y * 1.3);
+      ctx.lineTo(ball.x, ball.z - ball.y * 1.3);
+      ctx.stroke();
+      disc(ball.x, ball.z - ball.y * 1.3, .19, ball.color);
+    }
+    for (const flash of paintball.flashes) {
+      const radius = (1 - flash.age / paintFlashTime) * (reduceMotion.matches ? .16 : .34);
+      disc(flash.x, flash.z - flash.y * 1.3, radius, flash.color);
     }
     for (const burst of paintball.bursts) {
       const progress = burst.age / .38;
@@ -206,7 +226,7 @@ export function createFlatWorld(container, paintball) {
       ctx.save();
       const dx = Math.sin(player.heading), dz = Math.cos(player.heading);
       const elevation = player.paintElevation || 0;
-      const kick = reduceMotion.matches ? 0 : player.markerKick * .09;
+      const kick = reduceMotion.matches ? 0 : player.markerKick * .19;
       const gripZ = markerGrip.z - kick;
       const barrelZ = markerTip.z * Math.cos(elevation) - markerTip.y * Math.sin(elevation);
       const barrelY = markerTip.y * Math.cos(elevation) + markerTip.z * Math.sin(elevation);
