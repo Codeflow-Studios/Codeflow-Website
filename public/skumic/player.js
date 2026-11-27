@@ -38,6 +38,60 @@ if (typeof player.showModal === "function") {
 const featuredGame = document.querySelector(".featured-game");
 if (featuredGame) {
   const viewport = featuredGame.querySelector(".featured-game-viewport");
+  const festivalPlayer = featuredGame.querySelector(".featured-game-player");
+  const festivalFrame = featuredGame.querySelector(".featured-game-frame");
+  const fullscreenButton = featuredGame.querySelector(".fullscreen-toggle");
+  let pageFullscreen = false;
+
+  function updateFullscreen() {
+    const fullscreen = pageFullscreen || document.fullscreenElement === festivalPlayer;
+    festivalPlayer.classList.toggle("is-fullscreen", fullscreen);
+    document.documentElement.classList.toggle("festival-fullscreen", fullscreen);
+    fullscreenButton.textContent = fullscreen ? "Volledig scherm sluiten" : "Volledig scherm";
+  }
+
+  fullscreenButton.addEventListener("click", async (event) => {
+    if (pageFullscreen) {
+      pageFullscreen = false;
+      updateFullscreen();
+    } else if (document.fullscreenElement === festivalPlayer) {
+      await document.exitFullscreen();
+    } else {
+      if (document.fullscreenEnabled && festivalPlayer.requestFullscreen) {
+        try {
+          await festivalPlayer.requestFullscreen();
+          if (event.detail) festivalFrame.focus({ preventScroll: true });
+          return;
+        } catch {
+          // Use the full browser window when native fullscreen is unavailable.
+        }
+      }
+      pageFullscreen = true;
+      updateFullscreen();
+    }
+    if (event.detail) festivalFrame.focus({ preventScroll: true });
+  });
+
+  function closePageFullscreen(event) {
+    const activeDocument = event.currentTarget;
+    if (!pageFullscreen || event.key !== "Escape" || event.defaultPrevented ||
+        activeDocument.pointerLockElement || activeDocument.querySelector("dialog[open]")) return;
+    event.preventDefault();
+    pageFullscreen = false;
+    updateFullscreen();
+    fullscreenButton.focus({ preventScroll: true });
+  }
+
+  function listenForFestivalEscape() {
+    festivalFrame.contentDocument?.addEventListener("keydown", closePageFullscreen);
+  }
+
+  document.addEventListener("fullscreenchange", updateFullscreen);
+  document.addEventListener("keydown", closePageFullscreen);
+  festivalFrame.addEventListener("load", listenForFestivalEscape);
+  listenForFestivalEscape();
+  fullscreenButton.hidden = false;
+
   const header = document.querySelector(".site-header");
   const marquee = document.querySelector(".arcade-marquee");
 

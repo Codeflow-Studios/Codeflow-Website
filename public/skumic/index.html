@@ -9,8 +9,8 @@
   <meta property="og:description" content="Verken het Skumic Festival als Gauthier of Matar, speel de games op het terrein en ontdek officiële merch, muziek en videoclips.">
   <title>SKUMIC Official — Games, merch en muziek</title>
   <link rel="icon" href="/skumic/assets/logo.webp" type="image/webp">
-  <link rel="stylesheet" href="/skumic/style.css?v=6a142c3ee6a6">
-  <script src="/skumic/player.js?v=cc08e6fbb11b" defer></script>
+  <link rel="stylesheet" href="/skumic/style.css?v=7edd9519d9e0">
+  <script src="/skumic/player.js?v=75a6e0dd4299" defer></script>
 <link rel="canonical" href="https://codeflowstudios.be/skumic/">
 <meta property="og:url" content="https://codeflowstudios.be/skumic/">
 </head>
@@ -36,10 +36,14 @@
 </div>
 <section class="featured-game" id="game" aria-labelledby="festival-title">
   <div class="featured-game-viewport">
-    <iframe class="featured-game-frame" src="/festival/" title="Speelbaar Skumic Festival"
-      allow="autoplay; fullscreen; gamepad" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe>
+    <div class="featured-game-player" id="festival-player">
+      <iframe class="featured-game-frame" src="/festival/" title="Speelbaar Skumic Festival"
+        allow="autoplay; fullscreen; gamepad" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe>
+      <div class="featured-game-controls">
+        <button class="fullscreen-toggle" type="button" aria-controls="festival-player" hidden>Volledig scherm</button>
+      </div>
+    </div>
   </div>
-  <div class="featured-game-links"><a class="text-link" href="/festival/" target="_blank" rel="noopener noreferrer">Open het festival in een nieuw tabblad</a></div>
 </section>
 <section class="shop-band" id="shop" aria-labelledby="shop-title">
   <div class="section wrap">
