@@ -78,7 +78,7 @@ nav a:hover,nav a[aria-current]{color:var(--game-pink)}
   background: radial-gradient(ellipse 51% 75% at center, #120817f2 13%, #120817d9 39%, #12081748 77%, transparent);
   pointer-events: none;
 }
-.arcade-marquee h2 {
+.arcade-marquee h1 {
   color: #fff4fb;
   font: clamp(2rem, 5.5vw, 5rem)/.88 var(--display);
   letter-spacing: .04em;
@@ -91,7 +91,7 @@ nav a:hover,nav a[aria-current]{color:var(--game-pink)}
 }
 @media (max-height: 520px) {
   .arcade-marquee { min-height: 96px; padding-block: 10px; }
-  .arcade-marquee h2 { font-size: clamp(1.6rem, 4vw, 2.5rem); }
+  .arcade-marquee h1 { font-size: clamp(1.6rem, 4vw, 2.5rem); }
 }
 @media (prefers-reduced-motion: reduce) {
   .arcade-marquee-lights span:nth-child(n) { animation: none; }
@@ -213,11 +213,21 @@ body{
 .arcade-intro h1{font-size:clamp(3.1rem,10vw,8rem);overflow-wrap:anywhere;text-shadow:4px 4px 0 var(--edge)}
 .game-cover,.video-poster,.shop-card img{border-bottom:3px solid var(--line)}
 .game-cover{border-color:var(--accent)}
+@media (max-width: 650px) and (max-height: 660px) {
+  .arcade-marquee { min-height: 72px; padding-block: 10px; }
+}
 @media(orientation:landscape) and (max-height:550px){
   .header-row{min-height:36px}.brand img{height:30px;width:84px}
-  .arcade-marquee{min-height:0;padding:3px 12px}.arcade-marquee h2{font-size:1.2rem;line-height:1}
+  .arcade-marquee{min-height:0;padding:3px 12px}.arcade-marquee h1{font-size:1.2rem;line-height:1}
   .arcade-marquee br{display:none}
   .featured-game{padding-top:2px}
+}
+@media (540px <= width <= 650px) and (max-height: 400px) and (orientation: landscape) {
+  body:has(.featured-game) .header-row { flex-wrap: nowrap; gap: 8px; padding-block: 6px; }
+  body:has(.featured-game) .brand img { width: 64px; height: 27px; }
+  body:has(.featured-game) .header-row nav { order: 1; width: auto; gap: 2px 5px; padding: 0; border: 0; }
+  body:has(.featured-game) .header-row nav a { font-size: 1rem; padding: 4px 2px; }
+  body:has(.featured-game) .header-play { order: 2; font-size: 1rem; padding: 5px 7px; }
 }
 .game-copy h3,.shop-card h3{letter-spacing:.025em}
 .button:active,.game-play:active,.header-play:active{transform:translate(2px,2px);box-shadow:1px 1px 0 var(--edge)}

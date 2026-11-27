@@ -318,3 +318,80 @@ kbd { min-width: 18px; padding: 2px 4px; border: 1px solid #9c9aa4; border-botto
   font: 700 clamp(21px, 5vw, 32px)/1.1 var(--pixel);
   pointer-events: none;
 }
+
+@media (max-height: 360px) {
+  :root { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+
+  #artist-dialog {
+    max-height: calc(100dvh - 16px);
+    padding: 10px;
+  }
+
+  .artist-heading { margin-bottom: 6px; }
+  .artist-card img { height: min(33dvh, 118px); margin-top: 4px; }
+  .artist-card strong { padding-block: 4px; }
+
+  .wordmark { display: grid; grid-template-columns: auto 1fr; justify-items: start; column-gap: 6px; }
+  .wordmark-top { grid-area: 1 / 1; }
+  .wordmark h1 { grid-area: 2 / 1 / auto / -1; margin-block: 5px 7px; font-size: clamp(16px, 4vw, 28px); }
+  .visit-status { grid-area: 3 / 1 / auto / -1; }
+  .paint-count { grid-area: 1 / 2; margin-top: 0; align-self: center; font-size: 13px; }
+  .change-artist { grid-area: 4 / 1 / auto / -1; margin-top: 4px; padding: 3px 6px; font-size: 13px; }
+
+  .map-panel { width: clamp(128px, 30vw, 176px); }
+  #map-content { padding: 0 4px 4px; }
+  .map-image { width: min(100%, 21dvh); }
+  #map-legend { margin-top: 2px; }
+  .map-heading, .camera-toggle { min-height: 24px; padding: 3px 5px; font-size: 14px; }
+  .map-stop { min-height: 22px; padding: 1px 3px; gap: 4px; font-size: 13px; }
+
+  .game-bar { min-height: 38px; }
+  .game-bar a, .game-bar button { min-height: 30px; }
+}
+
+@media (max-height: 300px) and (min-width: 480px) {
+  .map-panel { width: min(265px, 48vw); }
+  #map-content { display: grid; grid-template-columns: 52px minmax(0, 1fr); gap: 5px; }
+  .map-image { width: 100%; align-self: center; }
+  #map-legend { grid-template-columns: repeat(2, minmax(0, 1fr)); margin-top: 0; }
+  .map-stop { min-height: 28px; font-size: 12px; }
+}
+
+@media (max-height: 520px) and (pointer: coarse) {
+  .joystick { left: var(--outside); bottom: var(--bottom); width: 70px; }
+  .jump-button { right: var(--outside); bottom: var(--bottom); min-width: 64px; min-height: 44px; }
+  .paint-button { right: calc(var(--outside) + 70px); }
+  .bottom-ui { right: calc(var(--outside) + 70px); bottom: calc(var(--bottom) + 49px); width: min(calc(100% - 130px), 380px); }
+  .walk-hint { font-size: 12px; }
+}
+
+@media (max-height: 360px) and (pointer: coarse) {
+  .nearby { padding: 4px; }
+  .pickup-card, #nearby-title { font-size: 15px; }
+  .play-button { min-height: 36px; padding-inline: 6px; font-size: 15px; }
+}
+
+@media (min-width: 480px) and (max-height: 300px) and (pointer: coarse) {
+  .joystick { width: 58px; }
+  .bottom-ui {
+    left: calc(var(--outside) + 64px);
+    right: calc(var(--outside) + 148px);
+    bottom: var(--bottom);
+    width: auto;
+    justify-items: center;
+  }
+  .walk-hint { text-align: center; }
+}
+
+@media (max-width: 479px) and (max-height: 360px) and (pointer: coarse) {
+  .bottom-ui {
+    left: var(--outside);
+    right: auto;
+    bottom: calc(var(--bottom) + 76px);
+    width: calc(100% - 136px - 2 * var(--outside));
+    justify-items: start;
+  }
+  .walk-hint { text-align: left; }
+  .nearby { min-width: 0; width: 100%; }
+  .pickup-card { font-size: 13px; }
+}
