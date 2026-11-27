@@ -2,7 +2,7 @@ import { canWalk, entrance, venues } from './layout.js';
 import { createWorld } from './world.js';
 import { createFlatWorld } from './flat-world.js';
 import { createMap } from './map.js';
-import { createPaintball, limitPaintElevation, paintballPickup } from './paintball.js';
+import { createPaintball, limitPaintElevation } from './paintball.js';
 import { inBackstage } from './backstage-layout.js';
 
 const $ = id => document.getElementById(id);
@@ -16,11 +16,19 @@ const joystick = $('joystick');
 const joystickKnob = $('joystick-knob');
 const jumpButton = $('jump');
 const paintButton = $('paint');
+const dropButton = $('drop-paintball');
 const paintAim = $('paint-aim');
+const paintHit = $('paint-hit');
+const paintHud = $('paint-hud');
 const paintCount = $('paint-count');
 const pickupCard = $('paintball-pickup');
 const pickupMessage = $('paintball-acquired');
-const paintball = createPaintball(hits => { paintCount.textContent = `${hits} verftreffers`; });
+const hitMarkerDuration = 220;
+let lastHit = null;
+const paintball = createPaintball((hits, impact) => {
+  paintCount.textContent = `${hits} verftreffers`;
+  lastHit = { ...impact, until: performance.now() + hitMarkerDuration };
+});
 const nearbyCard = $('nearby');
 const artistDialog = $('artist-dialog');
 const artistNames = { gauthier: 'Gauthier', matar: 'Matar' };
@@ -56,7 +64,9 @@ const pitchKeys = ['r', 'v'];
 
 function updateLookHint() {
   const hint=$('walk-hint');
-  if (!player.hasPaintball) hint.textContent = 'De paintballgun zweeft bij de ingang';
+  if (!player.hasPaintball) hint.textContent = paintball.pickup.dropped
+    ? 'Je paintballgun ligt waar je hem hebt gedropt'
+    : 'De paintballgun zweeft bij de ingang';
   else if (!rig) hint.textContent = touchControls.matches ? 'Loop om te richten · Veeg voor hoogte · Tik om te schieten' : 'Loop om te richten · R/V voor hoogte';
   else if (rig.overview) hint.textContent = 'Kies een podium op de plattegrond';
   else if (document.pointerLockElement === worldElement) hint.textContent = 'Muis om te richten · Scroll om te zoomen · Esc voor cursor';
@@ -231,28 +241,43 @@ $('back-to-festival').addEventListener('click', () => gameDialog.close());
 $('enter-game').addEventListener('click', enterGame);
 
 function canPickUpPaintball() {
+  const { x, z, radius } = paintball.pickup;
+  const privatePickup = inBackstage(x, z);
   return player.artist && !player.hasPaintball && !gameDialog.open && !artistDialog.open &&
-    Math.hypot(player.x - paintballPickup.x, player.z - paintballPickup.z) <= paintballPickup.radius;
+    (!privatePickup || (!rig?.overview && inBackstage(player.x, player.z))) &&
+    Math.hypot(player.x - x, player.z - z) <= radius;
+}
+
+function setPaintballEquipped(equipped) {
+  player.hasPaintball = equipped;
+  paintQueued = false;
+  paintPointer = null;
+  held.delete('f');
+  paintButton.hidden = paintHud.hidden = $('paint-shortcut').hidden = !equipped;
+  pickupMessageUntil = performance.now() + (paintball.pickup.dropped ? 1300 : 3600);
+  pickupMessage.textContent = equipped
+    ? (paintball.pickup.dropped ? 'Paintballgun opgepakt' : '+1 Paintballgun')
+    : 'Paintballgun gedropt';
+  pickupMessage.hidden = false;
+  pickupCard.hidden = equipped;
+  updateLookHint();
+  worldElement.focus({ preventScroll: true });
 }
 
 function pickUpPaintball() {
   if (!canPickUpPaintball()) return false;
-  player.hasPaintball = true;
-  paintQueued = false;
-  paintPointer = null;
-  held.delete('f');
-  pickupMessageUntil = performance.now() + 3600;
-  pickupMessage.textContent = '+1 Paintballgun';
-  pickupMessage.hidden = false;
-  pickupCard.hidden = true;
-  paintButton.hidden = false;
-  $('paint-shortcut').hidden = false;
-  updateLookHint();
-  worldElement.focus({ preventScroll: true });
+  setPaintballEquipped(true);
   return true;
 }
 
+function dropPaintball() {
+  if (!player.hasPaintball || gameDialog.open || artistDialog.open) return;
+  Object.assign(paintball.pickup, { x: player.x, z: player.z, heading: player.heading, dropped: true });
+  setPaintballEquipped(false);
+}
+
 $('pick-up-paintball').addEventListener('click', pickUpPaintball);
+dropButton.addEventListener('click', dropPaintball);
 
 const jumpWindup = .07;
 const jumpFlight = .66;
@@ -279,7 +304,14 @@ function advanceJump(dt) {
   }
 }
 
-jumpButton.addEventListener('click',jump);
+jumpButton.addEventListener('pointerdown', event => {
+  if (event.button !== 0) return;
+  event.preventDefault();
+  jump();
+});
+jumpButton.addEventListener('click', event => {
+  if (event.detail === 0) jump();
+});
 paintButton.addEventListener('pointerdown', event => {
   if (!player.hasPaintball || event.button !== 0) return;
   paintPointer = event.pointerId;
@@ -367,6 +399,11 @@ window.addEventListener('keydown', event => {
     event.preventDefault();
     if (!event.repeat) paintQueued = true;
     held.add(key);
+    return;
+  }
+  if (key === 'g' && !event.repeat && player.hasPaintball) {
+    event.preventDefault();
+    dropPaintball();
     return;
   }
   if (movementKeys.includes(key) || pitchKeys.includes(key)) {
@@ -522,7 +559,16 @@ async function start() {
       } else {
         paintAim.hidden = true;
       }
-      paintCount.hidden = !player.hasPaintball;
+      paintHit.hidden = true;
+      if (lastHit && now < lastHit.until && (!inBackstage(lastHit.x, lastHit.z) ||
+        (!rig?.overview && inBackstage(player.x, player.z)))) {
+        const impact = (world.projectPaint || world.project)(lastHit.x, lastHit.y, lastHit.z);
+        if (impact.inFront !== false) {
+          paintHit.style.transform = `translate(${impact.x}px, ${impact.y}px)`;
+          paintHit.style.opacity = Math.min(1, (lastHit.until - now) / 95);
+          paintHit.hidden = false;
+        }
+      }
       pickupMessage.hidden = now >= pickupMessageUntil;
       if (!mapContent.hidden) drawMap(player, marked, visited);
       $('loading').hidden = true;

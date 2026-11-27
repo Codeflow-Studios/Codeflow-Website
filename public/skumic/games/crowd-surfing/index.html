@@ -75,7 +75,7 @@ function resize(){
   const r=canvas.getBoundingClientRect(),oldW=W,oldH=H;if(!r.width||!r.height)return;
   // Show more of the crowd on phones, including landscape touch screens.
   const mobile=matchMedia('(max-width: 700px), (max-width: 1000px) and (max-height: 560px), (pointer: coarse)').matches;
-  zoom=mobile?Math.min(1.35,r.height/240,r.width/300):Math.min(2.15,r.height/190,r.width/155);
+  zoom=mobile?Math.min(.98,r.height/325,r.width/380):Math.min(2.15,r.height/190,r.width/155);
   W=r.width/zoom;H=r.height/zoom;dpr=Math.min(devicePixelRatio||1,2);
   canvas.width=r.width*dpr;canvas.height=r.height*dpr;ctx.setTransform(dpr*zoom,0,0,dpr*zoom,0,0);
   canvas.dataset.cameraZoom=zoom.toFixed(4);canvas.dataset.worldWidth=W.toFixed(1);canvas.dataset.worldHeight=H.toFixed(1);

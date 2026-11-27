@@ -10,7 +10,7 @@ import { addCharacters } from './characters.js';
 import { spruceCrown, festoonGlow } from './forest.js';
 import { createPixelRenderer } from './pixel-renderer.js';
 import { stageMural } from './stage-murals.js';
-import { paintballHover, paintballPickup } from './paintball.js';
+import { paintballHover } from './paintball.js';
 import { addPaintballEffects } from './paintball-visuals.js';
 import { createPerformer } from './performer-model.js';
 import { createFestivalAtmosphere } from './console-lighting.js';
@@ -586,7 +586,7 @@ export function createWorld(container, reduceMotion, paintball) {
   const pickup = new THREE.Group();
   pickup.scale.setScalar(1.24);
   scene.add(pickup);
-  const pickupGlow = floorSpot(pink, paintballPickup.x, paintballPickup.z, 3.9, 3.9, .49, true);
+  const pickupGlow = floorSpot(pink, paintball.pickup.x, paintball.pickup.z, 3.9, 3.9, .49, true);
   const playerModels = new THREE.Group();
   scene.add(playerModels);
   const animatePlayer = createPerformer(THREE, playerModels, pickup);
@@ -613,10 +613,14 @@ export function createWorld(container, reduceMotion, paintball) {
     animateCharacters(player, elapsed, time, rig.overview);
     animatePlayer(player, elapsed, time, rig.overview, reduceMotion);
     animatePaintball(!rig.overview && privatePosition);
-    pickup.visible = pickupGlow.visible = Boolean(player.artist) && !player.hasPaintball;
+    const marker = paintball.pickup;
+    const canSeePickup = !inBackstage(marker.x, marker.z) || (!rig.overview && privatePosition);
+    pickup.visible = pickupGlow.visible = Boolean(player.artist) && !player.hasPaintball && canSeePickup;
     if (pickup.visible) {
-      pickup.position.set(paintballPickup.x, paintballHover(time, reduceMotion), paintballPickup.z);
-      pickup.rotation.set(-.13, reduceMotion ? -.85 : time * .93, .06);
+      pickup.position.set(marker.x, marker.dropped ? .26 : paintballHover(time, reduceMotion), marker.z);
+      pickup.rotation.set(marker.dropped ? 0 : -.13, marker.dropped || reduceMotion ? marker.heading : time * .93,
+        marker.dropped ? Math.PI / 2 : .06);
+      pickupGlow.position.set(marker.x, .048, marker.z);
     }
     animateAtmosphere(time);
     animateScenery(time);

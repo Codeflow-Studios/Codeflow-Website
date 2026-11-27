@@ -1,6 +1,6 @@
 import { benches, grounds, lanterns, paths, sideStands, trees, venues } from './layout.js';
 import { drawMarquee } from './stage-murals.js';
-import { markerGrip, markerTip, paintballHover, paintballPickup, paintDots, paintFlashTime, paintTrailStart } from './paintball.js';
+import { markerGrip, markerTip, paintballHover, paintDots, paintFlashTime, paintTrailStart } from './paintball.js';
 import { createFlatArtistSprites, createFlatWalkerSprites } from './characters.js';
 import { makeFestivalSurfaceCanvas } from './terrain.js';
 import { festivalLights, puddles } from './ground-light.js';
@@ -162,10 +162,11 @@ export function createFlatWorld(container, paintball) {
       ctx.restore();
     }
     if (player.artist && !player.hasPaintball) {
-      lightPool(paintballPickup.x, paintballPickup.z, 2.1, '#fa2d82', .58);
-      const y = paintballHover(time, reduceMotion.matches);
+      const marker = paintball.pickup;
+      lightPool(marker.x, marker.z, 2.1, '#fa2d82', .58);
+      const y = marker.dropped ? .18 : paintballHover(time, reduceMotion.matches);
       ctx.save();
-      ctx.translate(paintballPickup.x, paintballPickup.z - y * 1.3);
+      ctx.translate(marker.x, marker.z - y * 1.3);
       ctx.rotate(reduceMotion.matches ? -.45 : -.45 + .23 * Math.sin(time * 2));
       ctx.scale(1.4, 1.4);
       drawMarkerSprite(1.13);

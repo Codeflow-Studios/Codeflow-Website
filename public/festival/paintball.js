@@ -75,8 +75,9 @@ function hitWalker({ x, y, z }, walkers) {
 }
 
 function hitManager({ x, y, z, backstageShot }) {
-  return backstageShot && y > .84 && y < 2.28 &&
-    ((x - managerSeat.x) / .48) ** 2 + ((z - managerSeat.z - .15) / .46) ** 2 < 1;
+  if (!backstageShot || y <= .84 || y >= 2.56) return false;
+  const radius = y < 2.12 ? .48 : .29;
+  return ((x - managerSeat.x) / radius) ** 2 + ((z - managerSeat.z - .15) / .46) ** 2 < 1;
 }
 
 export function createPaintball(onHit) {
@@ -91,6 +92,7 @@ export function createPaintball(onHit) {
   const capsules = [];
   const flashes = [];
   const manager = { react: 0, paintTime: 0, color: paintColors[0] };
+  const pickup = { ...paintballPickup, dropped: false, heading: -.85 };
   let cooldown = 0, fired = 0, hits = 0, timeSinceShot = Infinity;
 
   function preview(player, heading, elevation) {
@@ -202,7 +204,7 @@ export function createPaintball(onHit) {
             } else {
               target.react = .42;
             }
-            onHit(++hits);
+            onHit(++hits, { x: ball.x, y: ball.y, z: ball.z });
           }
         }
         if (blocked || target || ball.age >= flightTime) {
@@ -248,5 +250,5 @@ export function createPaintball(onHit) {
     }
   }
 
-  return { walkers, balls, bursts, capsules, flashes, manager, update, preview };
+  return { walkers, balls, bursts, capsules, flashes, manager, pickup, update, preview };
 }

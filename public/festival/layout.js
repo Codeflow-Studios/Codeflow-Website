@@ -8,7 +8,7 @@ export const venues = [
     id: 'crowd', title: 'Crowd Surfing', type: 'Crowdsurf arcade',
     color: '#c9fa79', cover: '/skumic/assets/crowd-surfing.webp',
     x: 0, z: -31, width: 24, depth: 12, signHeight: 10.6,
-    doorX: 0, doorZ: -20, url: '/skumic/games/crowd-surfing/index.html',
+    doorX: 0, doorZ: -20, url: '/skumic/games/crowd-surfing/index.html?v=mobile-wide-2',
   },
   {
     id: 'fighters', title: 'Stage Fighters', type: 'Meppn, detsn & dokkn',

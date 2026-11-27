@@ -265,16 +265,24 @@ export function addBackstage(THREE, scene, spruce) {
   const head = new THREE.Group();
   head.position.set(0, 1.14, .08);
   coat.add(head);
-  fixture(head, bush, skin, 0, .04, 0, .50, .53, .48);
-  fixture(head, bush, '#51443d', 0, .214, -.045, .52, .26, .49);
-  fixture(head, bush, skin, 0, .014, .232, .115, .14, .107);
-  const mouth = fixture(head, bush, '#462c34', 0, -.104, .213, .153, .060, .039);
+  const fallbackHead = new THREE.Group();
+  head.add(fallbackHead);
+  fixture(fallbackHead, bush, skin, 0, .04, 0, .50, .53, .48);
+  fixture(fallbackHead, bush, '#51443d', 0, .214, -.045, .52, .26, .49);
+  fixture(fallbackHead, bush, skin, 0, .014, .232, .115, .14, .107);
+  const mouth = fixture(fallbackHead, bush, '#462c34', 0, -.104, .213, .153, .060, .039);
   for (const side of [-1, 1]) {
-    fixture(head, bush, '#c58b70', side * .247, .034, -.006, .099, .15, .089);
-    fixture(head, cube, '#584e54', side * .105, .083, .218, .17, .082, .045);
-    fixture(head, cube, '#d7d8c5', side * .105, .080, .247, .126, .046, .027);
-    fixture(head, cube, '#2a2834', side * .105, .079, .262, .044, .047, .012);
+    fixture(fallbackHead, bush, '#c58b70', side * .247, .034, -.006, .099, .15, .089);
+    fixture(fallbackHead, cube, '#584e54', side * .105, .083, .218, .17, .082, .045);
+    fixture(fallbackHead, cube, '#d7d8c5', side * .105, .080, .247, .126, .046, .027);
+    fixture(fallbackHead, cube, '#2a2834', side * .105, .079, .262, .044, .047, .012);
   }
+  const portrait = new THREE.Sprite(new THREE.SpriteMaterial({ alphaTest: .09, toneMapped: false }));
+  portrait.name = 'Manager face photo';
+  portrait.position.set(0, .101, .19);
+  portrait.visible = false;
+  head.add(portrait);
+  let portraitRequested = false;
   const arms = [];
   for (const side of [-1, 1]) {
     fixture(seated, bush, denim, side * .23, -.015, .33, .34, .33, .80);
@@ -327,12 +335,25 @@ export function addBackstage(THREE, scene, spruce) {
     yard.visible = visible;
     grove.visible = !yard.visible;
     if (!yard.visible) return changed;
+    if (!portraitRequested) {
+      portraitRequested = true;
+      new THREE.TextureLoader().load(new URL('./avatars/manager-face.png', import.meta.url).href, map => {
+        map.colorSpace = THREE.SRGBColorSpace;
+        const height = .74;
+        portrait.scale.set(height * map.image.width / map.image.height, height, 1);
+        portrait.material.map = map;
+        portrait.material.needsUpdate = true;
+        portrait.visible = true;
+        fallbackHead.visible = false;
+      });
+    }
     const energy = manager.react / managerReactionTime;
     const age = managerReactionTime - manager.react;
     const shake = energy * Math.sin(age * 85);
     const jolt = reduceMotion ? 0 : shake;
     coat.rotation.set(-Math.abs(jolt) * .19, jolt * .26, jolt * .24);
     head.rotation.set(jolt * .19, jolt * .37, -jolt * .17);
+    portrait.material.rotation = jolt * .12;
     arms.forEach((arm, index) => {
       const side = index === 0 ? -1 : 1;
       arm.rotation.set(-.34 - Math.abs(jolt) * .64, jolt * side * .35, side * (.12 + Math.abs(jolt) * .51));
