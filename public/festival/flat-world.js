@@ -115,13 +115,15 @@ export function createFlatWorld(container) {
     ctx.translate(player.x, player.z);
     const sprite = artists[player.artist];
     if (sprite) {
-      rectangle(0, .4, 2.35, .78, '#293c48');
+      const height = player.jumpHeight || 0;
+      const shadow = 1 - height * .15;
+      rectangle(0, .4, 2.35*shadow, .78*shadow, '#293c48');
       const size = 4.8;
       const width = size * sprite.width / sprite.height;
       const side = (player.strafe || 0) * Math.min(1,player.speed/6);
       const sway = reduceMotion.matches ? 0 : side*Math.sin(time*12)*.12;
       ctx.translate(sway,0);
-      ctx.drawImage(sprite, -width / 2, .68 - size, width, size);
+      ctx.drawImage(sprite, -width / 2, .68 - size - height*1.45, width, size);
     }
     ctx.restore();
   }

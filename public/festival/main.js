@@ -12,6 +12,7 @@ const gameView = $('game-view');
 const openSeparately = $('open-separately');
 const joystick = $('joystick');
 const joystickKnob = $('joystick-knob');
+const jumpButton = $('jump');
 const nearbyCard = $('nearby');
 const artistDialog = $('artist-dialog');
 const artistNames = { gauthier: 'Gauthier', matar: 'Matar' };
@@ -19,6 +20,7 @@ const artistKey = 'skumic.festival.artist';
 let preferredArtist = null;
 try { preferredArtist = localStorage.getItem(artistKey); } catch { /* Private storage can be unavailable. */ }
 const player = { ...entrance, heading: Math.PI, speed: 0, strafe: 0, forward: 0,
+  jumpAge: -1, jumpHeight: 0, liftPose: 0, crouch: 0,
   artist: Object.hasOwn(artistNames, preferredArtist) ? preferredArtist : null };
 const visited = new Set();
 const held = new Set();
@@ -42,7 +44,7 @@ function updateLookHint() {
   if (!rig) return;
   if (rig.overview) hint.textContent = 'Kies een podium op de plattegrond';
   else if (document.pointerLockElement === worldElement) hint.textContent = 'Muis om rond te kijken · Scroll om te zoomen · Esc voor cursor';
-  else if (touchControls.matches) hint.textContent = 'Loop met de joystick · Veeg om rond te kijken';
+  else if (touchControls.matches) hint.textContent = 'Joystick om te lopen · Veeg om rond te kijken';
   else if (worldElement.requestPointerLock) hint.textContent = 'Klik op het terrein om rond te kijken · Scroll om te zoomen';
   else hint.textContent = 'Loop naar een podium · Scroll om te zoomen';
 }
@@ -208,9 +210,41 @@ gameDialog.addEventListener('close', () => {
 $('back-to-festival').addEventListener('click', () => gameDialog.close());
 $('enter-game').addEventListener('click', enterGame);
 
+const jumpWindup = .07;
+const jumpFlight = .66;
+const jumpRecovery = .14;
+
+function jump() {
+  if (!player.artist || gameDialog.open || artistDialog.open || player.jumpAge >= 0) return;
+  player.jumpAge = 0;
+}
+
+function advanceJump(dt) {
+  if (player.jumpAge < 0) return;
+  player.jumpAge += dt;
+  const airTime = player.jumpAge - jumpWindup;
+  const progress = Math.max(0,Math.min(1,airTime/jumpFlight));
+  player.jumpHeight = 4 * .92 * progress * (1 - progress);
+  player.liftPose = Math.sin(Math.PI * progress);
+  const landing = (airTime - jumpFlight) / jumpRecovery;
+  player.crouch = airTime < 0 ? .73 * Math.sin(Math.PI * player.jumpAge / jumpWindup) :
+    landing >= 0 && landing < 1 ? Math.sin(Math.PI * landing) : 0;
+  if (landing >= 1) {
+    player.jumpAge = -1;
+    player.jumpHeight = player.liftPose = player.crouch = 0;
+  }
+}
+
+jumpButton.addEventListener('click',jump);
 window.addEventListener('keydown', event => {
   if (gameDialog.open || artistDialog.open || event.altKey || event.ctrlKey || event.metaKey) return;
   const key = event.key.toLowerCase();
+  if (event.code === 'Space' || key === ' ') {
+    if (event.target?.closest?.('button,a,input,textarea,select,[contenteditable=true]')) return;
+    event.preventDefault();
+    if (!event.repeat) jump();
+    return;
+  }
   if ((key === 'escape' || key === 'tab') && document.pointerLockElement === worldElement) {
     rig?.releaseLook();
     clearInput();
@@ -337,7 +371,10 @@ async function start() {
     if (!gameDialog.open) {
       const steps = Math.max(1, Math.ceil(elapsed / .045));
       if (!artistDialog.open) {
-        for (let step = 0; step < steps; step++) walk(elapsed / steps);
+        for (let step = 0; step < steps; step++) {
+          advanceJump(elapsed / steps);
+          walk(elapsed / steps);
+        }
       }
       updateNearby();
       world.frame(player, elapsed, now / 1000, marked, nearby);

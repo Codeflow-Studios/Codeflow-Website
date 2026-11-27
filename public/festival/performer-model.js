@@ -251,6 +251,13 @@ export function createPerformer(THREE, scene) {
       s.slab(steel[1],0,.619,-.237,.056,.060,.017,.78);
       s.slab(lining,0,.619,-.248,.034,.038,.009,.78);
     }
+    // Embossed cuff hems and a laminated festival pass add shape under side lighting.
+    const passColor = matar ? '#c580ad' : '#afb982';
+    s.seam(passColor,[[-.105,.76,.170],[-.062,.63,.215],[0,.515,.221],[.062,.63,.215],[.105,.76,.170]],.011);
+    s.slab('#292732',0,.471,.229,.118,.142,.020);
+    s.slab(passColor,0,.473,.244,.095,.116,.012);
+    s.slab('#3c3548',0,.502,.253,.067,.020,.008);
+    s.slab('#ece0bc',0,.454,.253,.060,.030,.008);
     // Artist-specific embroidery stays readable from the follow camera.
     const patchZ = -.274;
     const trim = matar ? '#f0a4d2' : '#d8ed96';
@@ -337,6 +344,9 @@ export function createPerformer(THREE, scene) {
         const z=.025+finger*.025;
         s.facet(finger%2?skinLight:skin,-side*.008,-.397+.006*Math.abs(finger-2),z,.042,.048-.006*Math.abs(finger-2),.017,side*-.20,1);
       }
+      const wrist = matar ? (side<0?'#b673b1':'#626d8d') : (side<0?'#97ad6b':'#646e89');
+      s.shell([[-.317,.072,.080,.055],[-.304,.076,.084,.053],[-.287,.079,.087,.050]],wrist,18);
+      s.slab('#dfd1b2',side*.078,-.301,.061,.018,.017,.035);
       s.finish();arms.push({side,shoulder,elbow});
       const hip=joint(pelvis,side*.154,-.10,0), knee=joint(hip,0,-.55,0), foot=joint(knee,0,-.43,0);
       s=sculpt(hip);
@@ -417,32 +427,37 @@ export function createPerformer(THREE, scene) {
     }
     const delta=player.heading-facing;
     facing+=Math.atan2(Math.sin(delta),Math.cos(delta))*(1-Math.exp(-18*dt));
-    model.root.position.set(player.x,.024,player.z);
+    model.root.position.set(player.x,.024+(player.jumpHeight || 0),player.z);
+    const airborne=reduceMotion?0:(player.liftPose || 0);
+    const compression=reduceMotion?0:(player.crouch || 0);
     model.root.rotation.y=facing;
     weight+=(Math.min(1,player.speed/6)-weight)*(1-Math.exp(-14*dt));
     phase+=Math.min(15,player.speed*1.38)*dt;
     const gaitBlend=1-Math.exp(-12*dt);
     lateral+=(-(player.strafe || 0)-lateral)*gaitBlend;
     longitudinal+=((player.forward || 0)-longitudinal)*gaitBlend;
-    const motion=reduceMotion?0:weight;
+    const motion=reduceMotion?0:weight*(1-airborne*.9);
     const idle=reduceMotion?0:Math.sin(time*2.1)*(1-weight);
     const run=THREE.MathUtils.clamp((player.speed-6)/6,0,1);
     const stride=Math.sin(phase), swing=Math.cos(phase);
-    model.pelvis.position.y=1.17+(.012-.036*stride*stride-.037*run)*motion+idle*.004;
+    model.pelvis.position.y=1.17+(.012-.036*stride*stride-.037*run)*motion+idle*.004-compression*.14;
     model.pelvis.rotation.y=stride*.045*motion*longitudinal;
     model.pelvis.rotation.z=-lateral*.035*motion;
     model.chest.rotation.set((.055+.072*run)*motion*longitudinal,-stride*.14*motion*longitudinal,(swing*.025-lateral*.11)*motion);
+    model.chest.rotation.x+=compression*.17-airborne*.11;
     model.head.rotation.set(-(.048+.064*run)*motion,stride*.067*motion+idle*.022,-swing*.017*motion);
     for(const {side,shoulder,elbow} of model.arms){
       shoulder.rotation.set(-.065+side*stride*(.47+.22*run)*motion*longitudinal,side*swing*.035*motion,side*(.13+.012*idle)+lateral*stride*.11*motion);
-      elbow.rotation.x=-.19-(.22+.28*run+.12*side*swing)*motion;
+      shoulder.rotation.x-=airborne*.47;
+      shoulder.rotation.z+=side*airborne*.17;
+      elbow.rotation.x=-.19-(.22+.28*run+.12*side*swing)*motion-airborne*.26;
     }
     for(const {side,hip,knee,foot} of model.legs){
       // Target the sole first so the planted foot sits flat while the pelvis moves.
-      const forward=side*stride*(.26+.13*run)*motion*longitudinal;
+      const forward=side*stride*(.26+.13*run)*motion*longitudinal+airborne*(side<0?.16:-.046);
       const outward=side*(.035+Math.abs(lateral)*.1)*motion;
       const sideStep=outward+lateral*side*stride*(.16+.065*run)*motion;
-      const lift=Math.max(0,side*swing)**1.6*(.145+.11*run)*motion;
+      const lift=Math.max(0,side*swing)**1.6*(.145+.11*run)*motion+airborne*(side<0?.27:.16);
       const down=model.pelvis.position.y-.10-.115-lift;
       const reachSquared=down*down+forward*forward+sideStep*sideStep;
       const bend=Math.acos(THREE.MathUtils.clamp((reachSquared-.55**2-.43**2)/(2*.55*.43),-1,1));

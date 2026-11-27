@@ -243,3 +243,25 @@ kbd { min-width: 18px; padding: 2px 4px; border: 1px solid #9c9aa4; border-botto
   .map-image { max-width: 125px; margin-inline: auto; }
   .map-heading, .map-stop, .camera-toggle { min-height: 27px; }
 }
+
+.jump-button { display: none; }
+@media (pointer: coarse) {
+  .jump-button {
+    display: block;
+    position: absolute;
+    right: max(17px, env(safe-area-inset-right));
+    bottom: calc(var(--bottom) + 63px);
+    min-width: 74px;
+    min-height: 50px;
+    z-index: 3;
+    color: #202637;
+    background: #e4efae;
+    border: 2px solid #899966;
+    font: 700 17px "Pixelify Sans", monospace;
+    touch-action: manipulation;
+  }
+  .jump-button:active { background: #f5ffce; }
+}
+@media (max-width: 500px) and (pointer: fine) {
+  .keyboard { flex-wrap: wrap; justify-content: center; }
+}
