@@ -71,7 +71,20 @@ let zoom=2.15;
 let W=1000,H=650,dpr=1,mode='intro',last=0,elapsed=0,score=0,best=0,hp=5,combo=1,comboTime=0,boost=0,invuln=0,dash=0,dashCooldown=0,spawnClock=0,pickClock=0,scroll=0,pits=[],pickups=[],particles=[],floats=[],crowd=[],keys={},target=null,sound=true,volume=50,audio=null,masterGain=null,nextLevel=1,noticeTime=0;
 try{best=Number(localStorage.getItem('skumic-crowdrush-best'))||0;}catch{} $('best').textContent=String(best).padStart(6,'0');
 const player={x:W/2,y:H*.7,vx:0,vy:0,tilt:0,lift:0,handoff:0,stroke:0};const rand=(a,b)=>a+Math.random()*(b-a),clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
-function resize(){const r=canvas.getBoundingClientRect(),oldW=W,oldH=H;if(!r.width||!r.height)return;zoom=Math.min(2.15,r.height/190,r.width/155);W=r.width/zoom;H=r.height/zoom;dpr=Math.min(devicePixelRatio||1,2);canvas.width=r.width*dpr;canvas.height=r.height*dpr;ctx.setTransform(dpr*zoom,0,0,dpr*zoom,0,0);player.x=clamp(player.x/oldW*W,20,W-20);player.y=clamp(player.y/oldH*H,55,H-20);for(const p of pits){p.x=p.x/oldW*W;p.y=p.y/oldH*H;}for(const p of pickups){p.x=p.x/oldW*W;p.y=p.y/oldH*H;}crowd=[];for(let y=-40;y<H+50;y+=16)for(let x=12;x<W;x+=16)crowd.push({x:x+rand(-7,7),y:y+rand(-7,7),a:rand(0,6.28),look:Math.floor(rand(0,48)),size:rand(.88,1.16)});}
+function resize(){
+  const r=canvas.getBoundingClientRect(),oldW=W,oldH=H;if(!r.width||!r.height)return;
+  // Show more of the crowd on phones, including landscape touch screens.
+  const mobile=matchMedia('(max-width: 700px), (max-width: 1000px) and (max-height: 560px), (pointer: coarse)').matches;
+  zoom=mobile?Math.min(1.35,r.height/240,r.width/300):Math.min(2.15,r.height/190,r.width/155);
+  W=r.width/zoom;H=r.height/zoom;dpr=Math.min(devicePixelRatio||1,2);
+  canvas.width=r.width*dpr;canvas.height=r.height*dpr;ctx.setTransform(dpr*zoom,0,0,dpr*zoom,0,0);
+  canvas.dataset.cameraZoom=zoom.toFixed(4);canvas.dataset.worldWidth=W.toFixed(1);canvas.dataset.worldHeight=H.toFixed(1);
+  player.x=clamp(player.x/oldW*W,20,W-20);player.y=clamp(player.y/oldH*H,55,H-20);
+  if(stageX!==null)stageX=clamp(stageX/oldW*W,24,W-24);
+  for(const p of pits){p.x=p.x/oldW*W;p.y=p.y/oldH*H;}
+  for(const p of pickups){p.x=p.x/oldW*W;p.y=p.y/oldH*H;}
+  crowd=[];for(let y=-40;y<H+50;y+=16)for(let x=12;x<W;x+=16)crowd.push({x:x+rand(-7,7),y:y+rand(-7,7),a:rand(0,6.28),look:Math.floor(rand(0,48)),size:rand(.88,1.16)});
+}
 new ResizeObserver(resize).observe(canvas);
 function renderAudioSettings() {
   $('sound').textContent = sound ? '♪ AAN' : '♪ UIT';
