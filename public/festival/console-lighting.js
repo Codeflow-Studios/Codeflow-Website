@@ -1,4 +1,4 @@
-// Three silkscreen prints share one cloth mesh and a mipmapped texture.
+// Four silkscreen prints share one cloth mesh and a mipmapped texture.
 function pennantAtlas(THREE) {
   const canvas = Object.assign(document.createElement('canvas'), { width: 512, height: 512 });
   const ctx = canvas.getContext('2d');
@@ -15,6 +15,7 @@ function pennantAtlas(THREE) {
     ['#17464a', '#83dfba', '#f1f4ba'],
     ['#572b3b', '#e87569', '#ffdeb1'],
     ['#343050', '#ad9cff', '#ffcbeb'],
+    ['#4d2950', '#ffa6d3', '#ffe9a2'],
   ];
 
   prints.forEach(([ground, ink, highlight], row) => {
@@ -72,14 +73,14 @@ export function createFestivalAtmosphere(THREE, scene, venues, reduceMotion) {
     venues.length * 2,
   );
   const mount = new THREE.Matrix4();
-  const atlasRows = { crowd: 0, fighters: 1, rave: 2 };
+  const atlasRows = { crowd: 0, fighters: 1, rave: 2, dixie: 3 };
   let mastCount = 0;
   for (const venue of venues) {
     const { x, z, id } = venue;
     const row = atlasRows[id] ?? 0;
     for (const side of [-1, 1]) {
-      const mastX = x + side * (id === 'crowd' ? 10.7 : 8.82);
-      const top = id === 'crowd' ? 10.95 : 8.65;
+      const mastX = x + side * Math.min(venue.width / 2 - .2, id === 'crowd' ? 10.7 : 8.82);
+      const top = id === 'dixie' ? 6.2 : id === 'crowd' ? 10.95 : 8.65;
       const mastZ = z + 4;
       masts.setMatrixAt(mastCount++, mount.makeTranslation(mastX, top - 1.40, mastZ));
       const start = vertices.length / 3;

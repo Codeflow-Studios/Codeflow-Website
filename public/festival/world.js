@@ -509,9 +509,28 @@ export function createWorld(container, reduceMotion) {
     spotlight('#8c9bff', [x + 7.1, 6.05, z + 4.63], [x - 3.7, z + 12], 4.3, 2.1);
   }
 
-  mainStage(venues[0]);
-  fightingTent(venues[1]);
-  raveClub(venues[2]);
+  function dixieDash(venue) {
+    const { x, z, color } = venue;
+    deck(venue);
+    for (let index = -2; index <= 2; index++) {
+      const column = x + index * 2.4;
+      box(index % 2 ? '#52526e' : '#614364', column, 2.6, z - 1.4, 2.2, 3.7, 2.5);
+      box('#212034', column, 4.5, z - 1.4, 2.25, .25, 2.55);
+      box('#372d46', column, 2.45, z - .12, 1.82, 2.98, .12);
+      box('#ffe3f0', column, 3.37, z - .045, .63, .16, .05);
+      box(color, column + .5, 2.45, z - .045, .18, .24, .05, true);
+    }
+    box('#21162c', x, 5.25, z + .85, 12.25, 1.08, .3);
+    sign('DIXIE DASH', x, 5.25, z + 1.02, 11.8, .92, color);
+    cover(venue, x, 2.42, z + .75, 5.2, 2.92);
+    for (const side of [-1, 1]) {
+      box(color, x + side * 5.9, 3.65, z + 1, .12, 2.45, .15, true);
+      spotlight(color, [x + side * 5.35, 4.9, z + 1.2], [x + side * 2.2, z + 7], 2.7, side);
+    }
+  }
+
+  const buildVenue = { crowd: mainStage, fighters: fightingTent, rave: raveClub, dixie: dixieDash };
+  for (const venue of venues) buildVenue[venue.id](venue);
 
   for (const [geometry, materials] of batches) {
     for (const [material, instances] of materials) {

@@ -4,23 +4,24 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#11151b">
-  <meta name="description" content="Verken als Gauthier of Matar een 3D-festival in 128-bit-consolestijl en wandel naar de drie Skumic-games.">
+  <meta name="description" content="Verken als Gauthier of Matar een 3D-festival in 128-bit-consolestijl en wandel naar de vier Skumic-games.">
   <link rel="canonical" href="https://codeflowstudios.be/festival/">
   <link rel="icon" href="/skumic/assets/logo.webp" type="image/webp">
   <link rel="stylesheet" href="/festival/style.css?v=festival-artists-02">
   <script type="importmap">
     { "imports": {
-      "/festival/world.js": "/festival/world.js?v=follow-camera",
+      "/festival/world.js": "/festival/world.js?v=dixie-dash-1",
       "/festival/camera.js": "/festival/camera.js?v=follow-camera-2",
       "/festival/artist-head.js": "/festival/artist-head.js?v=festival-artists-02",
-      "/festival/layout.js": "/festival/layout.js?v=open-paths",
-      "/festival/flat-world.js": "/festival/flat-world.js?v=artists-01",
+      "/festival/layout.js": "/festival/layout.js?v=dixie-dash-1",
+      "/festival/flat-world.js": "/festival/flat-world.js?v=dixie-dash-1",
       "/festival/characters.js": "/festival/characters.js?v=console-128",
       "/festival/pixel-renderer.js": "/festival/pixel-renderer.js?v=console-128",
       "/festival/performer-model.js": "/festival/performer-model.js?v=festival-artists-02",
       "/festival/stage-art.js": "/festival/stage-art.js?v=console-128",
-      "/festival/console-lighting.js": "/festival/console-lighting.js?v=console-128",
+      "/festival/console-lighting.js": "/festival/console-lighting.js?v=dixie-dash-1",
       "/festival/crowd-models.js": "/festival/crowd-models.js?v=console-128",
+      "/festival/stage-murals.js": "/festival/stage-murals.js?v=dixie-dash-1",
       "/festival/terrain.js": "/festival/terrain.js?v=console-128"
     } }
   </script>
@@ -36,8 +37,8 @@
       <a class="wordmark-top" href="/skumic/arcade/" aria-label="Naar Skumic Arcade"><span class="spark" aria-hidden="true">✦</span><span>SKUMIC</span></a>
       <h1>FESTIVAL</h1>
       <div class="visit-status" aria-live="polite">
-        <span id="visit-dots" aria-hidden="true"><i></i><i></i><i></i></span>
-        <span id="visit-count">0 van 3 stands bezocht</span>
+        <span id="visit-dots" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+        <span id="visit-count">0 van 4 stands bezocht</span>
       </div>
       <button id="change-artist" class="change-artist" type="button" aria-haspopup="dialog" hidden>
         <span id="artist-name"></span><span>Wisselen</span>
@@ -49,7 +50,7 @@
         <span class="map-symbol" aria-hidden="true"></span><span>Plattegrond</span><span class="map-caret" aria-hidden="true"></span>
       </button>
       <div id="map-content">
-        <div class="map-image"><canvas id="minimap" width="424" height="300" aria-label="Overzicht van de drie stands en je positie"></canvas><span class="north" aria-hidden="true">N</span></div>
+        <div class="map-image"><canvas id="minimap" width="424" height="300" aria-label="Overzicht van de vier stands en je positie"></canvas><span class="north" aria-hidden="true">N</span></div>
         <div id="map-legend" aria-label="Kies een stand om aan te wijzen"></div>
       </div>
       <button class="camera-toggle" id="camera-toggle" type="button" hidden>Vogelperspectief</button>
@@ -103,6 +104,6 @@
     </div>
     <div id="game-view" class="game-view"></div>
   </dialog>
-  <script type="module" src="/festival/main.js?v=follow-camera"></script>
+  <script type="module" src="/festival/main.js?v=dixie-dash-1"></script>
 </body>
 </html>

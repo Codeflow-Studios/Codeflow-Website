@@ -144,7 +144,7 @@ function refreshStops() {
     state.textContent = visited.has(venue.id) ? '✓' : '';
     button.title = visited.has(venue.id) ? 'Bezocht · Wijs de stand aan' : 'Wijs de stand aan';
   }
-  $('visit-count').textContent = `${visited.size} van 3 stands bezocht`;
+  $('visit-count').textContent = `${visited.size} van ${venues.length} stands bezocht`;
   [...$('visit-dots').children].forEach((dot, index) => {
     dot.classList.toggle('is-visited', index < visited.size);
   });

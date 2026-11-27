@@ -20,6 +20,12 @@ export const venues = [
     x: 33, z: 0, width: 20, depth: 13, signHeight: 8.8,
     doorX: 33, doorZ: 11, url: 'https://codeflow-studios-production.up.railway.app/games/bluvn-goan/',
   },
+  {
+    id: 'dixie', title: 'Dixie Dash', type: 'Drum-’n-bass arcade',
+    color: '#ffa6d3', cover: '/skumic/assets/dixie-dash.webp',
+    x: -15, z: 32, width: 13, depth: 7, signHeight: 6.2,
+    doorX: -15, doorZ: 38.5, url: '/skumic/games/dixie-dash/index.html',
+  },
 ];
 
 export const paths = [
@@ -32,6 +38,7 @@ export const paths = [
   { x: 23, z: 28, width: 17, depth: 10 },
   { x: -10, z: 27, width: 18, depth: 3.1 },
   { x: 9, z: 28, width: 18, depth: 3.1 },
+  { x: -8, z: 38.5, width: 16, depth: 4 },
 ];
 
 export const sideStands = [

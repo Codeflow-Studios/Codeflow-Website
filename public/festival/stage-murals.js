@@ -18,7 +18,20 @@ export function drawMarquee(venue) {
     }
   }
   const dark = '#1e1830';
-  if (venue === 'crowd') {
+  if (venue === 'dixie') {
+    paint('#362343', 0, 0, width, height);
+    for (let i = 0; i < 6; i++) {
+      const x = 4 + 20 * i;
+      paint('#6a4d78', x, 11, 17, 33);
+      paint('#272137', x + 2, 16, 13, 25);
+      paint('#ffacd4', x + 6, 18, 5, 2);
+    }
+    for (let i = 0; i < 8; i++) {
+      const x = 29 + i * 11, y = 39 - i * 2;
+      paint('#c2aaca', x, y, 8, 7);
+      paint('#18152a', x + 1, y, 6, 2);
+    }
+  } else if (venue === 'crowd') {
     paint('#254955', 0, 0, width, height);
     for (let n = -55; n < 160; n += 13) line('#2d6468', n, 49, Math.round(61 + (n - 61) * .48), 1, 3);
     sun(67, 23, 22, '#d9f391', '#94d08d');
