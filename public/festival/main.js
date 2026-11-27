@@ -48,16 +48,18 @@ let pickupMessageUntil = 0;
 let rig;
 let paintPointer = null;
 let paintQueued = false;
-let pitchGesture = null;
+let worldTouch = null;
+const tapSlop = 10;
+const tapDuration = 320;
 const pitchKeys = ['r', 'v'];
 
 function updateLookHint() {
   const hint=$('walk-hint');
   if (!player.hasPaintball) hint.textContent = 'De paintballgun zweeft bij de ingang';
-  else if (!rig) hint.textContent = touchControls.matches ? 'Loop om te richten · Veeg omhoog of omlaag voor hoogte' : 'Loop om te richten · R/V voor hoogte';
+  else if (!rig) hint.textContent = touchControls.matches ? 'Loop om te richten · Veeg voor hoogte · Tik om te schieten' : 'Loop om te richten · R/V voor hoogte';
   else if (rig.overview) hint.textContent = 'Kies een podium op de plattegrond';
   else if (document.pointerLockElement === worldElement) hint.textContent = 'Muis om te richten · Scroll om te zoomen · Esc voor cursor';
-  else if (touchControls.matches) hint.textContent = 'Joystick om te lopen · Veeg om te richten';
+  else if (touchControls.matches) hint.textContent = 'Veeg om te richten · Tik om te schieten';
   else if (worldElement.requestPointerLock) hint.textContent = 'Klik op het terrein om rond te kijken · Scroll om te zoomen';
   else hint.textContent = 'Loop naar een podium · Scroll om te zoomen';
 }
@@ -70,6 +72,7 @@ function toggleOverview() {
 }
 
 function setMap(open) {
+  clearWorldTouch();
   rig?.releaseLook();
   mapToggle.setAttribute('aria-expanded', String(open));
   mapContent.hidden = !open;
@@ -89,7 +92,7 @@ function clearInput() {
   held.clear();
   paintPointer = null;
   paintQueued = false;
-  pitchGesture = null;
+  clearWorldTouch();
   clearStick();
 }
 
@@ -288,9 +291,12 @@ paintButton.addEventListener('click', event => {
 });
 worldElement.addEventListener('pointerdown', event => {
   if (event.button !== 0) return;
-  if (!rig && event.pointerType === 'touch' && !pitchGesture) {
-    pitchGesture = { id: event.pointerId, y: event.clientY };
+  if (event.pointerType === 'touch' || event.pointerType === 'pen') {
+    if (worldTouch || rig?.overview || artistDialog.open || gameDialog.open) return;
+    const { clientX: x, clientY: y, timeStamp: started, pointerId: id } = event;
+    worldTouch = { id, x, y, lastX: x, lastY: y, started, dragging: false };
     worldElement.setPointerCapture(event.pointerId);
+    return;
   }
   if (player.hasPaintball && document.pointerLockElement === worldElement) {
     paintPointer = event.pointerId;
@@ -298,10 +304,32 @@ worldElement.addEventListener('pointerdown', event => {
   }
 });
 worldElement.addEventListener('pointermove', event => {
-  if (pitchGesture?.id !== event.pointerId) return;
-  adjustPaintElevation((pitchGesture.y - event.clientY) * .006);
-  pitchGesture.y = event.clientY;
+  if (worldTouch?.id !== event.pointerId) return;
+  if (!worldTouch.dragging && touchDistance(event) < tapSlop) return;
+  worldTouch.dragging = true;
+  const dx = event.clientX - worldTouch.lastX, dy = event.clientY - worldTouch.lastY;
+  if (rig) rig.touchLook(dx, dy);
+  else adjustPaintElevation(-dy * .006);
+  worldTouch.lastX = event.clientX;
+  worldTouch.lastY = event.clientY;
 });
+worldElement.addEventListener('pointerup', event => {
+  if (worldTouch?.id !== event.pointerId) return;
+  if (player.hasPaintball && !worldTouch.dragging && touchDistance(event) < tapSlop &&
+      event.timeStamp - worldTouch.started <= tapDuration) {
+    paintQueued = true;
+  }
+  clearWorldTouch();
+});
+function touchDistance(event) {
+  return Math.hypot(event.clientX - worldTouch.x, event.clientY - worldTouch.y);
+}
+function clearWorldTouch() {
+  const id = worldTouch?.id;
+  worldTouch = null;
+  rig?.endTouchLook();
+  if (id !== undefined && worldElement.hasPointerCapture(id)) worldElement.releasePointerCapture(id);
+}
 worldElement.addEventListener('lostpointercapture', releasePaintPointer);
 function adjustPaintElevation(amount) {
   if (rig && !rig.overview) rig.adjustPaintElevation(amount);
@@ -309,7 +337,7 @@ function adjustPaintElevation(amount) {
 }
 function releasePaintPointer(event) {
   if (event.pointerId === paintPointer) paintPointer = null;
-  if (event.pointerId === pitchGesture?.id) pitchGesture = null;
+  if (event.pointerId === worldTouch?.id) clearWorldTouch();
 }
 window.addEventListener('pointerup', releasePaintPointer);
 window.addEventListener('pointercancel', releasePaintPointer);

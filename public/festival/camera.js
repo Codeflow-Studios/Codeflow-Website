@@ -36,7 +36,7 @@ export function createCameraRig(THREE, container, reduceMotion) {
   let yaw = 0, elevation = 0, zoom = 1, overview = false, first = true;
   let yawVelocity = 0, boomDistance = 0, lift = 0, baseFov = 55;
   let viewYaw = yaw, viewElevation = elevation, viewZoom = zoom;
-  let touch = null, lastX, lastY, wantsLock = false;
+  let touchLooking = false, wantsLock = false;
   let steering = false, steeringYaw = yaw, followYaw = null, manualLookTime = 0;
   const locked = () => document.pointerLockElement === container;
   function look(dx, dy, sensitivity) {
@@ -51,8 +51,6 @@ export function createCameraRig(THREE, container, reduceMotion) {
   function releaseLook() {
     wantsLock = false;
     if (locked()) document.exitPointerLock();
-    if (touch !== null && container.hasPointerCapture(touch)) container.releasePointerCapture(touch);
-    touch = null;
   }
   function lockFailed() {
     if (!wantsLock || locked()) return;
@@ -60,21 +58,12 @@ export function createCameraRig(THREE, container, reduceMotion) {
     container.dispatchEvent(new Event('lookunavailable'));
   }
   container.addEventListener('pointerdown', e => {
-    if (overview || e.button !== 0) return;
-    if (e.pointerType === 'mouse') {
-      if (locked() || wantsLock) return;
-      wantsLock = true;
-      container.focus({preventScroll:true});
-      if (!container.requestPointerLock) { lockFailed(); return; }
-      try { container.requestPointerLock()?.catch(lockFailed); }
-      catch { lockFailed(); }
-      return;
-    }
-    if (touch !== null) return;
-    touch = e.pointerId;
-    lastX = e.clientX;
-    lastY = e.clientY;
-    container.setPointerCapture(touch);
+    if (overview || e.pointerType !== 'mouse' || e.button !== 0 || locked() || wantsLock) return;
+    wantsLock = true;
+    container.focus({preventScroll:true});
+    if (!container.requestPointerLock) { lockFailed(); return; }
+    try { container.requestPointerLock()?.catch(lockFailed); }
+    catch { lockFailed(); }
   });
   document.addEventListener('pointerlockchange', () => {
     if (locked() && !wantsLock) document.exitPointerLock();
@@ -84,13 +73,6 @@ export function createCameraRig(THREE, container, reduceMotion) {
   document.addEventListener('mousemove', e => {
     if (wantsLock && locked()) look(e.movementX,e.movementY,.0035);
   });
-  container.addEventListener('pointermove', e => {
-    if (e.pointerId !== touch) return;
-    look(e.clientX-lastX,e.clientY-lastY,.006);
-    lastX = e.clientX;
-    lastY = e.clientY;
-  });
-  container.addEventListener('lostpointercapture', e => { if (touch===e.pointerId) touch=null; });
   container.addEventListener('wheel', e => {
     if (overview || e.ctrlKey) return;
     e.preventDefault();
@@ -175,6 +157,11 @@ export function createCameraRig(THREE, container, reduceMotion) {
 
   return {
     camera,
+    touchLook(dx, dy) {
+      touchLooking = true;
+      look(dx, dy, .006);
+    },
+    endTouchLook() { touchLooking = false; },
     get overview() { return overview; },
     get paintHeading() { return yaw + Math.PI; },
     get paintElevation() { return elevation; },
@@ -220,7 +207,7 @@ export function createCameraRig(THREE, container, reduceMotion) {
         return;
       }
       manualLookTime = Math.max(0, manualLookTime - dt);
-      if (steering && touch === null && manualLookTime === 0) followYaw = player.heading + Math.PI;
+      if (steering && !touchLooking && manualLookTime === 0) followYaw = player.heading + Math.PI;
       if (followYaw !== null) aimBehindPlayer(dt);
       placeCamera(player, dt, snap);
     },
