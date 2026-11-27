@@ -1,6 +1,6 @@
 import { benches, grounds, lanterns, paths, sideStands, trees, venues } from './layout.js';
 import { drawMarquee } from './stage-murals.js';
-import { paintDots } from './paintball.js';
+import { markerGrip, markerTip, paintDots } from './paintball.js';
 import { createFlatArtistSprites, createFlatWalkerSprites } from './characters.js';
 import { makeFestivalSurfaceCanvas } from './terrain.js';
 import { festivalLights, puddles } from './ground-light.js';
@@ -204,12 +204,21 @@ export function createFlatWorld(container, paintball) {
       ctx.translate(sway,0);
       ctx.drawImage(sprite, -width / 2, .68 - size - height*1.45, width, size);
       ctx.save();
-      ctx.translate(Math.cos(player.heading) * .24, -(1.53 + height) * 1.3);
-      ctx.rotate(-player.heading);
-      const kick = reduceMotion.matches ? 0 : player.markerKick * .24;
-      rectangle(0, .43 - kick, .39, .83, '#47d9b7');
-      rectangle(0, .53 - kick, .50, .39, '#84a7ff');
-      rectangle(0, 1.06 - kick, .21, .52, '#ff9a66');
+      const dx = Math.sin(player.heading), dz = Math.cos(player.heading);
+      const elevation = player.paintElevation || 0;
+      const kick = reduceMotion.matches ? 0 : player.markerKick * .09;
+      const gripZ = markerGrip.z - kick;
+      const barrelZ = markerTip.z * Math.cos(elevation) - markerTip.y * Math.sin(elevation);
+      const barrelY = markerTip.y * Math.cos(elevation) + markerTip.z * Math.sin(elevation);
+      ctx.translate(markerGrip.x * dz + gripZ * dx,
+        -markerGrip.x * dx + gripZ * dz - (markerGrip.y + height) * 1.3);
+      const endX = dx * barrelZ, endY = dz * barrelZ - barrelY * 1.3;
+      const length = Math.max(.12, Math.hypot(endX,endY));
+      ctx.rotate(Math.atan2(endY,endX));
+      rectangle(-.29, -.17, .68, .34, '#fa2d82');
+      rectangle(-.12, -.26, .40, .41, '#9b5f99');
+      rectangle(.27, -.072, Math.max(.08,length-.24), .144, '#b082a6');
+      rectangle(length-.09, -.094, .18, .188, '#dcf105');
       ctx.restore();
     }
     ctx.restore();

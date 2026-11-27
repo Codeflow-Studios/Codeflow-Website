@@ -16,12 +16,41 @@ const routes = [
 export const paintColors = ['#72ff92', '#ff80db', '#88edff', '#ffe06e'];
 export const maxPaintDistance = 23;
 export const paintDots = [[0, 0, .14], [-.13, .04, .07], [.12, .11, .065], [.06, -.14, .045], [-.16, -.14, .04]];
-const launchHeight = 1.53;
 const speed = 32;
+const flightTime = maxPaintDistance / speed;
+const sampleTime = .23 / speed;
+const drop = 1.15;
+export const markerGrip = { x: -.45, y: 1.59, z: .46 };
+export const markerTip = { y: .14, z: .72 };
+export const limitPaintElevation = elevation => Math.max(-.68, Math.min(.64, elevation));
 
-// Paintballs can pass through a path without using the wider clearance needed by a person.
-function hitsScenery(x, z) {
-  return solids.some(({ left, right, back, front }) => x > left && x < right && z > back && z < front);
+function launch(player, heading, elevation) {
+  const dx = Math.sin(heading), dz = Math.cos(heading);
+  const raised = Math.sin(elevation), forward = Math.cos(elevation);
+  const length = markerGrip.z + markerTip.z * forward - markerTip.y * raised;
+  const height = markerGrip.y + markerTip.y * forward + markerTip.z * raised;
+  return {
+    originX: player.x + markerGrip.x * dz + length * dx,
+    originY: .024 + player.jumpHeight + height,
+    originZ: player.z - markerGrip.x * dx + length * dz,
+    vx: dx * forward * speed, vy: raised * speed, vz: dz * forward * speed,
+  };
+}
+
+function placeBall(ball, time) {
+  ball.x = ball.originX + ball.vx * time;
+  ball.y = ball.originY + ball.vy * time - drop * time * time;
+  ball.z = ball.originZ + ball.vz * time;
+}
+
+function hitsScenery({ x, y, z }) {
+  return y < .08 || solids.some(({ left, right, back, front, top }) =>
+    y < top && x > left && x < right && z > back && z < front);
+}
+
+function hitWalker({ x, y, z }, walkers) {
+  return walkers.find(walker =>
+    y < walker.size && (x - walker.x)**2 + (z - walker.z)**2 < .53**2);
 }
 
 export function createPaintball(onHit) {
@@ -35,21 +64,39 @@ export function createPaintball(onHit) {
   const bursts = [];
   let cooldown = 0, fired = 0, hits = 0;
 
-  function fire(player, heading) {
+  function preview(player, heading, elevation) {
+    const trace = launch(player, heading, elevation);
+    const steps = Math.ceil(flightTime / sampleTime);
+    for (let i = 0; i <= steps; i++) {
+      placeBall(trace, i * flightTime / steps);
+      if (hitsScenery(trace)) {
+        trace.y = Math.max(.08, trace.y);
+        return trace;
+      }
+      if (hitWalker(trace, walkers)) {
+        trace.onTarget = true;
+        return trace;
+      }
+    }
+    return trace;
+  }
+
+  function fire(player, heading, elevation) {
     if (cooldown > 0) return;
-    const dx = Math.sin(heading), dz = Math.cos(heading);
-    const y = launchHeight + player.jumpHeight;
-    const color = paintColors[fired++ % paintColors.length];
-    balls.push({ x: player.x, y, z: player.z, dx, dz, age: 0, color });
+    const ball = launch(player, heading, elevation);
+    ball.age = 0;
+    ball.color = paintColors[fired++ % paintColors.length];
+    placeBall(ball, 0);
+    balls.push(ball);
     player.markerKick = 1;
     player.heading = heading;
     cooldown = .19;
   }
 
-  function update(player, dt, firing, heading) {
+  function update(player, dt, firing, heading, elevation = 0) {
     cooldown = Math.max(0, cooldown - dt);
     player.markerKick *= Math.exp(-dt * 19);
-    if (firing) fire(player, heading);
+    if (firing) fire(player, heading, elevation);
     for (const walker of walkers) {
       walker.paintTime = Math.max(0, walker.paintTime - dt);
       walker.react = Math.max(0, walker.react - dt);
@@ -74,16 +121,13 @@ export function createPaintball(onHit) {
 
     for (let i = balls.length - 1; i >= 0; i--) {
       const ball = balls[i];
-      const steps = Math.max(1, Math.ceil(dt * speed / .28));
-      for (let step = 0; step < steps; step++) {
-        const time = dt / steps;
-        ball.age += time;
-        ball.x += ball.dx * speed * time;
-        ball.z += ball.dz * speed * time;
-        ball.y -= ball.age * 2.3 * time;
-        const blocked = hitsScenery(ball.x, ball.z) || ball.y < .08;
-        const target = blocked ? null : walkers.find(walker =>
-          ball.y < walker.size && Math.hypot(ball.x - walker.x, ball.z - walker.z) < .53);
+      const steps = Math.max(1, Math.ceil(dt / sampleTime));
+      for (let step = 0; step <= steps; step++) {
+        const time = Math.min(flightTime, ball.age + (step === 0 ? 0 : dt / steps));
+        placeBall(ball, time);
+        ball.age = time;
+        const blocked = hitsScenery(ball);
+        const target = blocked ? null : hitWalker(ball, walkers);
         if (blocked || target) {
           bursts.push({ x: ball.x, y: Math.max(.08, ball.y), z: ball.z,
             color: ball.color, age: 0, surface: blocked ? .5 : 1 });
@@ -94,7 +138,7 @@ export function createPaintball(onHit) {
             onHit(++hits);
           }
         }
-        if (blocked || target || ball.age * speed >= maxPaintDistance) {
+        if (blocked || target || ball.age >= flightTime) {
           balls.splice(i, 1);
           break;
         }
@@ -106,5 +150,5 @@ export function createPaintball(onHit) {
     }
   }
 
-  return { walkers, balls, bursts, update };
+  return { walkers, balls, bursts, update, preview };
 }

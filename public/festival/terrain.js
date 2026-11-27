@@ -1,5 +1,4 @@
 import { paths } from './layout.js';
-import { festivalLights } from './ground-light.js';
 
 const extent = 260;
 const tau = 2 * Math.PI;
@@ -162,83 +161,6 @@ export function makeDeckMaterial(THREE,width,depth) {
   return new THREE.MeshStandardMaterial({map:texture,roughness:.79,metalness:.06});
 }
 
-function nightPanorama(THREE) {
-  const sky = raster(1024,512);
-  const random = randomSource(0x5457494c);
-  const noise = noiseField(0x62616e6b);
-  const dark = Number.parseInt(festivalLights.dark.slice(1), 16);
-  const purple = Number.parseInt(festivalLights.purple.slice(1), 16);
-  const pink = Number.parseInt(festivalLights.pink.slice(1), 16);
-  const stops = [[0,dark],[.22,blendRGB(dark,purple,.24)],[.39,blendRGB(dark,purple,.68)],
-    [.485,blendRGB(purple,pink,.11)],[.54,blendRGB(dark,purple,.56)],[.66,blendRGB(dark,purple,.23)],[1,dark]];
-  const moonX=.736, moonY=.395;
-  let band=1;
-  for(let y=0;y<sky.height;y++) {
-    const v=y/sky.height;
-    while (v>stops[band][0]) band++;
-    const [y0,c0]=stops[band-1], [y1,c1]=stops[band];
-    const base=blendRGB(c0,c1,(v-y0)/(y1-y0));
-    const cloudBand=smooth(clamp((v-.23)*14))*smooth(clamp((.49-v)*29));
-    for(let x=0;x<sky.width;x++) {
-      const u=x/sky.width, dx=(u-moonX)*1.89;
-      const dy=v-moonY, radius=dx*dx+dy*dy;
-      const glow=.16/(1+radius*350);
-      let color=blendRGB(base,0xc3a2ee,glow);
-      if(cloudBand>0) {
-        // Thin clouds catch violet moonlight along their edges.
-        const shear=.78*Math.sin(u*tau*2+.7)+.35*Math.cos(u*tau*3);
-        const a=noise(u*16,v*59+shear,16);
-        const b=noise(u*32+2,v*134+shear*2,32);
-        const c=noise(u*64+4,v*271+shear*4,64);
-        const cloud=a*.61+b*.28+c*.11;
-        const opacity=smooth(clamp((cloud-.49)*4.9))*cloudBand;
-        if(opacity>.003) {
-          const edge=noise(u*16,(v+.006)*59+shear,16)-a;
-          const light=clamp(.38-edge*3.2+c*.15+glow*.21);
-          const cloudColor=blendRGB(0x231238,0x684783,light);
-          color=blendRGB(color,cloudColor,opacity*.57);
-        }
-      }
-      if (radius < .0002) {
-        const detail = noise(dx * 300 + 13, dy * 300 + 17);
-        color = blendRGB(0xc2a9e2,0xfcf0ff,smooth(clamp((detail-.25)*2)));
-      }
-      sky.pixel(x,y,color);
-    }
-  }
-  for(let i=0;i<190;i++) {
-    const u=random(), v=.05+random()*.345;
-    if (((u-moonX)*1.89)**2+(v-moonY)**2 < .00029) continue;
-    const x=u*sky.width, y=v*sky.height;
-    sky.pixel(x,y,i%13 ? 0x93829f : 0xe8d7f8);
-    if (i%23 === 0) {
-      sky.pixel(x+1,y,0xbaa1cf);
-      sky.pixel(x,y+1,0xbaa1cf);
-    }
-  }
-  function ridge(base, amplitude, color, shade, horizontal, offset) {
-    for(let x=0;x<sky.width;x++) {
-      const u=x/sky.width;
-      const heightAt=q=>noise(q*horizontal+offset,11.1,horizontal)*.54+
-        noise(q*horizontal*2+offset*2,21.8,horizontal*2)*.3+
-        noise(q*horizontal*4,12.5,horizontal*4)*.16;
-      const h=heightAt(u), silhouette=Math.round(sky.height*(base-h*amplitude));
-      const southernFace=clamp(.50+(h-heightAt(u-.005))*4.8);
-      sky.rect(x,silhouette,1,sky.height-silhouette,blendRGB(shade,color,southernFace));
-    }
-  }
-  ridge(.51,.068,0x392650,0x2a1a3b,8,3);
-  ridge(.522,.055,0x2b2039,0x21162f,12,7);
-  ridge(.534,.044,0x251733,0x1c142b,16,11);
-  for(let x=0;x<sky.width;x+=2+Math.floor(random()*4)) {
-    const y=sky.height*(.525+Math.sin(x/sky.width*tau*6)*.004);
-    const h=2+random()*6;
-    sky.polygon([[x-2,y+3],[x,y-h],[x+2,y+3]],0x180f25);
-  }
-  ridge(.55,.036,0x170d23,0x120a1b,13,5);
-  return asTexture(THREE,sky);
-}
-
 function pathMask(THREE) {
   const size = 1024;
   const pixels = new Uint8Array(size*size);
@@ -348,21 +270,4 @@ export function addTerrain(THREE, scene) {
   ground.receiveShadow=true;
   scene.add(ground,meadowClumps(THREE,trails));
 
-  // Use the panorama directly on the dome. A reflection conversion would soften pixel edges.
-  const sky=nightPanorama(THREE);
-  const dome=new THREE.Mesh(new THREE.SphereGeometry(145,64,32),new THREE.MeshBasicMaterial({
-    map:sky,side:THREE.BackSide,depthTest:false,depthWrite:false,fog:false,toneMapped:false,
-  }));
-  dome.name='Festival night sky';
-  dome.renderOrder=-100;
-  dome.frustumCulled=false;
-  dome.onBeforeRender=(_renderer,_scene,camera)=>{
-    dome.matrixWorld.copyPosition(camera.matrixWorld);
-  };
-  scene.add(dome);
-  const reflections=sky.clone();
-  reflections.mapping=THREE.EquirectangularReflectionMapping;
-  reflections.needsUpdate=true;
-  scene.environment=reflections;
-  scene.environmentIntensity=.26;
 }

@@ -40,10 +40,10 @@ function makeTexture(width, height, paint) {
 export function createWorld(container, reduceMotion, paintball) {
   const renderer = new THREE.WebGLRenderer({ antialias: false, powerPreference: 'high-performance', alpha: false });
   renderer.outputColorSpace = THREE.SRGBColorSpace;
-  renderer.setClearColor(dark);
+  renderer.setClearColor(dark, 0);
   renderer.domElement.setAttribute('aria-hidden', 'true');
   container.append(renderer.domElement);
-  const pixelRenderer = createPixelRenderer(THREE, renderer);
+  const pixelRenderer = createPixelRenderer(THREE, renderer, dark);
 
   const scene = new THREE.Scene();
   scene.fog = new THREE.FogExp2(new THREE.Color(dark).lerp(new THREE.Color(purple), .29), .0084);

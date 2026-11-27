@@ -1,5 +1,5 @@
 // Render the geometry at a bounded device resolution and composite a softer bloom.
-export function createPixelRenderer(THREE, renderer) {
+export function createPixelRenderer(THREE, renderer, sky) {
   const type = renderer.extensions.has('EXT_color_buffer_float') ? THREE.HalfFloatType : THREE.UnsignedByteType;
   const options = { type, minFilter: THREE.LinearFilter, magFilter: THREE.LinearFilter };
   const gl = renderer.getContext();
@@ -53,16 +53,19 @@ export function createPixelRenderer(THREE, renderer) {
   const horizontal = blur(sceneTarget.texture, true);
   const vertical = blur(bloomX.texture, false);
   const texel = new THREE.Vector2();
+  const skyTint = new THREE.Color(sky).convertLinearToSRGB();
   const finish = new THREE.ShaderMaterial({
-    uniforms: { source: { value: sceneTarget.texture }, bloom: { value: bloomY.texture }, texel: { value: texel } },
+    uniforms: { source: { value: sceneTarget.texture }, bloom: { value: bloomY.texture }, texel: { value: texel }, skyTint: { value: skyTint } },
     depthWrite: false, depthTest: false, vertexShader,
     fragmentShader: `
       varying vec2 coord;
       uniform sampler2D source, bloom;
       uniform vec2 texel;
+      uniform vec3 skyTint;
       float brightness(vec3 c) { return dot(c, vec3(.25,.58,.17)); }
       void main() {
-        vec3 hdr = texture2D(source, coord).rgb;
+        vec4 sampleColor = texture2D(source, coord);
+        vec3 hdr = sampleColor.rgb;
         vec3 n = texture2D(source, coord + vec2(0.,texel.y)).rgb;
         vec3 s = texture2D(source, coord - vec2(0.,texel.y)).rgb;
         vec3 e = texture2D(source, coord + vec2(texel.x,0.)).rgb;
@@ -73,7 +76,8 @@ export function createPixelRenderer(THREE, renderer) {
         // Soften stair steps along diagonals while preserving printed signs and textures.
         float diagonal = min(abs(dx), abs(dy)) / max(.001, contrast);
         hdr = mix(hdr, (n+s+e+w)*.25, diagonal * smoothstep(.035,.36,contrast) * ${samples ? ".18" : ".54"});
-        hdr += texture2D(bloom, coord).rgb * .21;
+        vec3 glow = texture2D(bloom, coord).rgb;
+        hdr += glow * .21;
         gl_FragColor = vec4(hdr, 1.);
         #include <tonemapping_fragment>
         #include <colorspace_fragment>
@@ -83,7 +87,9 @@ export function createPixelRenderer(THREE, renderer) {
         rgb *= 1. - .12 * smoothstep(.26, .72, length(edge));
         rgb = mix(vec3(luma), rgb, 1.08);
         rgb += (1. - smoothstep(.04, .4, luma)) * vec3(.004,.004,.014);
-        gl_FragColor = vec4(clamp(rgb, 0., 1.), 1.);
+        // Restore the specified sky colour wherever the scene target was empty.
+        float coverage = max(sampleColor.a, smoothstep(.0, .35, max(glow.r, max(glow.g, glow.b))));
+        gl_FragColor = vec4(mix(skyTint, clamp(rgb, 0., 1.), coverage), 1.);
       }`,
   });
   renderer.domElement.style.imageRendering = 'auto';

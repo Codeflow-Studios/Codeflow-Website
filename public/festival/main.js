@@ -2,7 +2,7 @@ import { canWalk, entrance, venues } from './layout.js';
 import { createWorld } from './world.js';
 import { createFlatWorld } from './flat-world.js';
 import { createMap } from './map.js';
-import { createPaintball } from './paintball.js';
+import { createPaintball, limitPaintElevation } from './paintball.js';
 
 const $ = id => document.getElementById(id);
 const worldElement = $('world');
@@ -25,7 +25,7 @@ const artistKey = 'skumic.festival.artist';
 let preferredArtist = null;
 try { preferredArtist = localStorage.getItem(artistKey); } catch { /* Private storage can be unavailable. */ }
 const player = { ...entrance, heading: Math.PI, speed: 0, strafe: 0, forward: 0,
-  markerKick: 0, jumpAge: -1, jumpHeight: 0, liftPose: 0, crouch: 0,
+  markerKick: 0, paintElevation: 0, jumpAge: -1, jumpHeight: 0, liftPose: 0, crouch: 0,
   artist: Object.hasOwn(artistNames, preferredArtist) ? preferredArtist : null };
 const visited = new Set();
 const held = new Set();
@@ -45,14 +45,15 @@ let lastFrame = 0;
 let rig;
 let paintPointer = null;
 let paintQueued = false;
-const aimingHeading = () => rig && !rig.overview ? rig.paintHeading : player.heading;
+let pitchGesture = null;
+const pitchKeys = ['r', 'v'];
 
 function updateLookHint() {
   const hint=$('walk-hint');
-  if (!rig) return;
-  if (rig.overview) hint.textContent = 'Kies een podium op de plattegrond';
-  else if (document.pointerLockElement === worldElement) hint.textContent = 'Muis om rond te kijken · Scroll om te zoomen · Esc voor cursor';
-  else if (touchControls.matches) hint.textContent = 'Joystick om te lopen · Veeg om rond te kijken';
+  if (!rig) hint.textContent = touchControls.matches ? 'Loop om te richten · Veeg omhoog of omlaag voor hoogte' : 'Loop om te richten · R/V voor hoogte';
+  else if (rig.overview) hint.textContent = 'Kies een podium op de plattegrond';
+  else if (document.pointerLockElement === worldElement) hint.textContent = 'Muis om te richten · Scroll om te zoomen · Esc voor cursor';
+  else if (touchControls.matches) hint.textContent = 'Joystick om te lopen · Veeg om te richten';
   else if (worldElement.requestPointerLock) hint.textContent = 'Klik op het terrein om rond te kijken · Scroll om te zoomen';
   else hint.textContent = 'Loop naar een podium · Scroll om te zoomen';
 }
@@ -84,6 +85,7 @@ function clearInput() {
   held.clear();
   paintPointer = null;
   paintQueued = false;
+  pitchGesture = null;
   clearStick();
 }
 
@@ -257,12 +259,29 @@ paintButton.addEventListener('click', event => {
   if (event.detail === 0) paintQueued = true;
 });
 worldElement.addEventListener('pointerdown', event => {
-  if (event.button !== 0 || document.pointerLockElement !== worldElement) return;
-  paintPointer = event.pointerId;
-  paintQueued = true;
+  if (event.button !== 0) return;
+  if (!rig && event.pointerType === 'touch' && !pitchGesture) {
+    pitchGesture = { id: event.pointerId, y: event.clientY };
+    worldElement.setPointerCapture(event.pointerId);
+  }
+  if (document.pointerLockElement === worldElement) {
+    paintPointer = event.pointerId;
+    paintQueued = true;
+  }
 });
+worldElement.addEventListener('pointermove', event => {
+  if (pitchGesture?.id !== event.pointerId) return;
+  adjustPaintElevation((pitchGesture.y - event.clientY) * .006);
+  pitchGesture.y = event.clientY;
+});
+worldElement.addEventListener('lostpointercapture', releasePaintPointer);
+function adjustPaintElevation(amount) {
+  if (rig && !rig.overview) rig.adjustPaintElevation(amount);
+  else player.paintElevation = limitPaintElevation(player.paintElevation + amount);
+}
 function releasePaintPointer(event) {
   if (event.pointerId === paintPointer) paintPointer = null;
+  if (event.pointerId === pitchGesture?.id) pitchGesture = null;
 }
 window.addEventListener('pointerup', releasePaintPointer);
 window.addEventListener('pointercancel', releasePaintPointer);
@@ -292,7 +311,7 @@ window.addEventListener('keydown', event => {
     held.add(key);
     return;
   }
-  if (movementKeys.includes(key)) {
+  if (movementKeys.includes(key) || pitchKeys.includes(key)) {
     event.preventDefault();
     held.add(key);
   }
@@ -393,7 +412,7 @@ async function start() {
   }
   const drawMap = createMap($('minimap'));
   rig = world.rig;
-  if (!rig) $('walk-hint').textContent = 'Loop om te richten · F om te paintballen';
+  updateLookHint();
   if (rig) {
     const cameraButton = $('camera-toggle');
     cameraButton.hidden = false;
@@ -410,18 +429,25 @@ async function start() {
       const steps = Math.max(1, Math.ceil(elapsed / .045));
       if (!artistDialog.open) {
         for (let step = 0; step < steps; step++) {
-          advanceJump(elapsed / steps);
-          walk(elapsed / steps);
-          paintball.update(player, elapsed / steps, paintQueued || held.has('f') || paintPointer !== null, aimingHeading());
+          const dt = elapsed / steps;
+          advanceJump(dt);
+          walk(dt);
+          adjustPaintElevation((Number(held.has('r')) - Number(held.has('v'))) * dt * 1.25);
+          if (rig && !rig.overview) {
+            player.heading = rig.paintHeading;
+            player.paintElevation = rig.paintElevation;
+          }
+          paintball.update(player, dt, paintQueued || held.has('f') || paintPointer !== null,
+            player.heading, player.paintElevation);
           paintQueued = false;
         }
       }
       updateNearby();
       world.frame(player, elapsed, now / 1000, marked, nearby);
       positionSigns(world);
-      const heading = aimingHeading();
-      const aim = (world.projectPaint || world.project)(player.x + Math.sin(heading) * 9,
-        1.44 + player.jumpHeight, player.z + Math.cos(heading) * 9);
+      const point = paintball.preview(player, player.heading, player.paintElevation);
+      const aim = (world.projectPaint || world.project)(point.x, point.y, point.z);
+      paintAim.classList.toggle('on-target', Boolean(point.onTarget));
       paintAim.hidden = !player.artist || aim.inFront === false ||
         aim.x < 10 || aim.y < 10 || aim.x > worldElement.clientWidth - 10 || aim.y > worldElement.clientHeight - 10;
       if (!paintAim.hidden) paintAim.style.transform = `translate(${aim.x}px, ${aim.y}px)`;

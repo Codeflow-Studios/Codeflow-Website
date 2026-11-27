@@ -62,18 +62,18 @@ export const trees = [
   [-45, 27, 5.8], [-39, 36, 6.8], [41, 27, 7.6], [44, 35, 5.9], [34, 36, 5.0],
 ];
 
-export const bounds = (x, z, width, depth) => ({
-  left: x - width / 2, right: x + width / 2, back: z - depth / 2, front: z + depth / 2,
+export const bounds = (x, z, width, depth, top) => ({
+  left: x - width / 2, right: x + width / 2, back: z - depth / 2, front: z + depth / 2, top,
 });
 
 export const solids = [
-  bounds(-33, -17.8, 17.6, 6.4),
-  ...venues.map(({ x, z, width, depth }) => bounds(x, z, width, depth)),
-  ...sideStands.map(({ x, z, width, depth }) => bounds(x, z, width, depth)),
-  ...benches.map(([x, z]) => bounds(x, z, 3.4, 1.5)),
-  ...lanterns.map(([x, z]) => bounds(x, z, 0.65, 0.65)),
-  ...trees.map(([x, z, size]) => bounds(x, z, size * .21, size * .21)),
-  bounds(-6, 41, 1.25, 1.25), bounds(6, 41, 1.25, 1.25),
+  bounds(-33, -17.8, 17.6, 6.4, 14),
+  ...venues.map(({ x, z, width, depth, signHeight }) => bounds(x, z, width, depth, signHeight)),
+  ...sideStands.map(({ x, z, width, depth }) => bounds(x, z, width, depth, 4.4)),
+  ...benches.map(([x, z]) => bounds(x, z, 3.4, 1.5, .95)),
+  ...lanterns.map(([x, z]) => bounds(x, z, 0.65, 0.65, 5.74)),
+  ...trees.map(([x, z, size]) => bounds(x, z, size * .21, size * .21, size)),
+  bounds(-6, 41, 1.25, 1.25, 4.88), bounds(6, 41, 1.25, 1.25, 4.88),
 ];
 
 export function canWalk(x, z) {

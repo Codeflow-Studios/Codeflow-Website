@@ -1,4 +1,5 @@
 import { venues, sideStands } from './layout.js';
+import { limitPaintElevation } from './paintball.js';
 
 function cameraObstacles(THREE) {
   const obstacles = [];
@@ -32,16 +33,16 @@ export function createCameraRig(THREE, container, reduceMotion) {
   const desiredPosition = new THREE.Vector3();
   const hit = new THREE.Vector3();
   const obstacles = cameraObstacles(THREE);
-  let yaw = 0, pitch = .225, zoom = 1, overview = false, first = true;
+  let yaw = 0, elevation = 0, zoom = 1, overview = false, first = true;
   let yawVelocity = 0, boomDistance = 0, lift = 0, baseFov = 55;
-  let viewYaw = yaw, viewPitch = pitch, viewZoom = zoom;
+  let viewYaw = yaw, viewElevation = elevation, viewZoom = zoom;
   let touch = null, lastX, lastY, wantsLock = false;
   let steering = false, steeringYaw = yaw, followYaw = null, manualLookTime = 0;
   const locked = () => document.pointerLockElement === container;
   function look(dx, dy, sensitivity) {
     if (!dx && !dy) return;
     yaw = THREE.MathUtils.euclideanModulo(yaw - dx * sensitivity, Math.PI * 2);
-    pitch = THREE.MathUtils.clamp(pitch + dy * sensitivity, -.12, 1.16);
+    elevation = limitPaintElevation(elevation - dy * sensitivity);
     steeringYaw = yaw;
     followYaw = null;
     manualLookTime = .4;
@@ -120,22 +121,23 @@ export function createCameraRig(THREE, container, reduceMotion) {
   function placeCamera(player, dt, snap) {
     if (snap) {
       viewYaw = yaw;
-      viewPitch = pitch;
+      viewElevation = elevation;
       viewZoom = zoom;
     } else {
       const turn = Math.atan2(Math.sin(yaw - viewYaw), Math.cos(yaw - viewYaw));
       viewYaw += turn * (1 - Math.exp(-24 * dt));
-      viewPitch = THREE.MathUtils.damp(viewPitch, pitch, 22, dt);
+      viewElevation = THREE.MathUtils.damp(viewElevation, elevation, 22, dt);
       viewZoom = THREE.MathUtils.damp(viewZoom, zoom, 13, dt);
     }
     const dx = Math.sin(viewYaw), dz = Math.cos(viewYaw);
-    const distance = (camera.aspect < .9 ? 9.4 : 10.0) * viewZoom * Math.cos(viewPitch);
-    const shoulder = Math.min(distance * .07, .68);
-    const slope = Math.tan(viewPitch);
+    const distance = (camera.aspect < .9 ? 5.7 : 5.35) * viewZoom;
+    const shoulder = Math.min(distance * .25, 1.30);
+    const slope = Math.tan(viewElevation);
+    const pivotHeight = 1.74 + player.jumpHeight * .65;
     desiredPosition.set(focus.x + dx * distance + dz * shoulder,
-      Math.max(.55, 1.68 + distance * slope), focus.z + dz * distance - dx * shoulder);
-    // Test the view from the real player position, including the shoulder offset and pitch.
-    ray.origin.set(player.x, 1.68, player.z);
+      pivotHeight + .78 - Math.sin(viewElevation) * .53, focus.z + dz * distance - dx * shoulder);
+    // Test camera clearance from the player before it swings past scenery.
+    ray.origin.set(player.x, pivotHeight, player.z);
     ray.direction.subVectors(desiredPosition, ray.origin);
     let desiredDistance = ray.direction.length();
     ray.direction.normalize();
@@ -163,9 +165,11 @@ export function createCameraRig(THREE, container, reduceMotion) {
       camera.fov = fov;
       camera.updateProjectionMatrix();
     }
-    const lookAhead = THREE.MathUtils.lerp(9.5, .18, confined);
-    const aimHeight = 1.12 + .23 * confined - lookAhead * (slope - Math.tan(.225));
-    aim.set(focus.x - dx * lookAhead, aimHeight, focus.z - dz * lookAhead);
+    const lookAhead = THREE.MathUtils.lerp(7.8, 3.4, confined);
+    const aimHeight = 1.56 + player.jumpHeight + lookAhead * slope;
+    const aimOffset = .36 * (1 - confined);
+    aim.set(focus.x - dx * lookAhead + dz * aimOffset, aimHeight,
+      focus.z - dz * lookAhead - dx * aimOffset);
     camera.lookAt(aim);
   }
 
@@ -173,6 +177,8 @@ export function createCameraRig(THREE, container, reduceMotion) {
     camera,
     get overview() { return overview; },
     get paintHeading() { return yaw + Math.PI; },
+    get paintElevation() { return elevation; },
+    adjustPaintElevation(amount) { elevation = limitPaintElevation(elevation + amount); },
     movementYaw(moving) {
       if (overview) return 0;
       // Keep the start bearing while a direction is held so camera follow can't curve the walk.
