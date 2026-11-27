@@ -24,7 +24,7 @@ export const venues = [
     id: 'dixie', title: 'Dixie Dash', type: 'Drum-’n-bass arcade',
     color: '#ffa6d3', cover: '/skumic/assets/dixie-dash.webp',
     x: -15, z: 32, width: 13, depth: 7, signHeight: 6.2,
-    doorX: -15, doorZ: 38.5, url: '/skumic/games/dixie-dash/index.html?v=dixie-varied-targets-1',
+    doorX: -15, doorZ: 38.5, url: '/skumic/games/dixie-dash/index.html?v=dixie-door-bonus-1',
   },
 ];
 
