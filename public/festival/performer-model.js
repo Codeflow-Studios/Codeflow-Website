@@ -5,7 +5,7 @@ const supportGrip = { x: .10, y: -.005, z: .22 };
 
 // The sculpt is assembled in joint-local space. Every rigid section shares
 // one vertex-coloured surface for its fabric, skin, seams and accessories.
-export function createPerformer(THREE, scene) {
+export function createPerformer(THREE, scene, pickupGroup) {
   const surface = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: .82, metalness: .035 });
   // Keep dark fabric and facial features readable in the long shadows across the midway.
   surface.onBeforeCompile = shader => {
@@ -418,8 +418,13 @@ export function createPerformer(THREE, scene) {
       s.finish();
       legs.push({side,hip,knee,foot});
     }
-    const marker=joint(root,markerGrip.x,markerGrip.y,markerGrip.z);
+    const marker=buildMarker(root);
     marker.name='Right-hand paintball marker';
+    return {root,pelvis,chest,head,arms,legs,marker};
+  }
+
+  function buildMarker(parent) {
+    const marker=joint(parent,0,0,0);
     const gear=sculpt(marker);
     const shell='#532657', pink='#fa2d82', yellow='#dcf105', alloy='#a578ad';
     gear.slab(shell,0,.095,.015,.15,.225,.46);
@@ -459,8 +464,10 @@ export function createPerformer(THREE, scene) {
       [-.013,.053,.053],[0,.046,.046],[0,.028,.028],[-.023,.028,.028]],yellow,20);
     muzzle.slab('#2a192e',0,-.024,0,.041,.009,.039);
     muzzle.finish();
-    return {root,pelvis,chest,head,arms,legs,marker};
+    return marker;
   }
+
+  if (pickupGroup) buildMarker(pickupGroup);
   const models={gauthier:build(false),matar:build(true)};
   const target = new THREE.Vector3();
   const direction = new THREE.Vector3();
@@ -521,19 +528,30 @@ export function createPerformer(THREE, scene) {
     model.pelvis.position.y=1.17+(.012-.036*stride*stride-.037*run)*motion+idle*.004-compression*.14;
     model.pelvis.rotation.y=stride*.045*motion*longitudinal;
     model.pelvis.rotation.z=-lateral*.035*motion;
-    model.chest.rotation.set(.08+(.055+.072*run)*motion*longitudinal,-.55-stride*.06*motion*longitudinal,
+    const equipped = player.hasPaintball;
+    model.marker.visible = equipped;
+    model.chest.rotation.set((equipped ? .08 : 0)+(.055+.072*run)*motion*longitudinal,
+      (equipped ? -.55 : 0)-stride*.06*motion*longitudinal,
       (swing*.025-lateral*.11)*motion);
     model.chest.rotation.x+=compression*.17-airborne*.11;
     model.head.rotation.set(-(.048+.064*run)*motion,stride*.067*motion+idle*.022,-swing*.017*motion);
-    const elevation = player.paintElevation || 0;
-    model.head.rotation.x -= elevation * .36 + kick * .11;
-    model.head.rotation.y += .26;
-    model.marker.position.set(markerGrip.x, markerGrip.y + kick * .028, markerGrip.z - kick * .19);
-    model.marker.rotation.x = -elevation - kick * .15;
-    model.chest.rotation.x += kick * .15;
-    model.chest.rotation.y -= kick * .09;
-    gripMarker(model, model.arms[0], 0, 0, 0);
-    gripMarker(model, model.arms[1], supportGrip.x, supportGrip.y, supportGrip.z);
+    if (equipped) {
+      const elevation = player.paintElevation || 0;
+      model.head.rotation.x -= elevation * .36 + kick * .11;
+      model.head.rotation.y += .26;
+      model.marker.position.set(markerGrip.x, markerGrip.y + kick * .028, markerGrip.z - kick * .19);
+      model.marker.rotation.x = -elevation - kick * .15;
+      model.chest.rotation.x += kick * .15;
+      model.chest.rotation.y -= kick * .09;
+      gripMarker(model, model.arms[0], 0, 0, 0);
+      gripMarker(model, model.arms[1], supportGrip.x, supportGrip.y, supportGrip.z);
+    } else {
+      for (const { side, shoulder, elbow } of model.arms) {
+        shoulder.rotation.set(-.07 + side * stride * motion * .36 * longitudinal - airborne * .42,
+          0, side * (.19 + airborne * .12));
+        elbow.rotation.set(-.28 - motion * .24 - airborne * .28, 0, 0);
+      }
+    }
     for(const {side,hip,knee,foot} of model.legs){
       // Target the sole first so the planted foot sits flat while the pelvis moves.
       const forward=side*stride*(.26+.13*run)*motion*longitudinal+airborne*(side<0?.16:-.046);

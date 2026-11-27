@@ -2,7 +2,7 @@ import { canWalk, entrance, venues } from './layout.js';
 import { createWorld } from './world.js';
 import { createFlatWorld } from './flat-world.js';
 import { createMap } from './map.js';
-import { createPaintball, limitPaintElevation } from './paintball.js';
+import { createPaintball, limitPaintElevation, paintballPickup } from './paintball.js';
 
 const $ = id => document.getElementById(id);
 const worldElement = $('world');
@@ -17,6 +17,8 @@ const jumpButton = $('jump');
 const paintButton = $('paint');
 const paintAim = $('paint-aim');
 const paintCount = $('paint-count');
+const pickupCard = $('paintball-pickup');
+const pickupMessage = $('paintball-acquired');
 const paintball = createPaintball(hits => { paintCount.textContent = `${hits} verftreffers`; });
 const nearbyCard = $('nearby');
 const artistDialog = $('artist-dialog');
@@ -25,7 +27,7 @@ const artistKey = 'skumic.festival.artist';
 let preferredArtist = null;
 try { preferredArtist = localStorage.getItem(artistKey); } catch { /* Private storage can be unavailable. */ }
 const player = { ...entrance, heading: Math.PI, speed: 0, strafe: 0, forward: 0,
-  markerKick: 0, paintElevation: 0, jumpAge: -1, jumpHeight: 0, liftPose: 0, crouch: 0,
+  hasPaintball: false, markerKick: 0, paintElevation: 0, jumpAge: -1, jumpHeight: 0, liftPose: 0, crouch: 0,
   artist: Object.hasOwn(artistNames, preferredArtist) ? preferredArtist : null };
 const visited = new Set();
 const held = new Set();
@@ -42,6 +44,7 @@ const movementKeys = [...northKeys, ...southKeys, ...westKeys, ...eastKeys, 'shi
 let marked = null;
 let nearby = null;
 let lastFrame = 0;
+let pickupMessageUntil = 0;
 let rig;
 let paintPointer = null;
 let paintQueued = false;
@@ -50,7 +53,8 @@ const pitchKeys = ['r', 'v'];
 
 function updateLookHint() {
   const hint=$('walk-hint');
-  if (!rig) hint.textContent = touchControls.matches ? 'Loop om te richten · Veeg omhoog of omlaag voor hoogte' : 'Loop om te richten · R/V voor hoogte';
+  if (!player.hasPaintball) hint.textContent = 'De paintballgun zweeft bij de ingang';
+  else if (!rig) hint.textContent = touchControls.matches ? 'Loop om te richten · Veeg omhoog of omlaag voor hoogte' : 'Loop om te richten · R/V voor hoogte';
   else if (rig.overview) hint.textContent = 'Kies een podium op de plattegrond';
   else if (document.pointerLockElement === worldElement) hint.textContent = 'Muis om te richten · Scroll om te zoomen · Esc voor cursor';
   else if (touchControls.matches) hint.textContent = 'Joystick om te lopen · Veeg om te richten';
@@ -222,6 +226,30 @@ gameDialog.addEventListener('close', () => {
 $('back-to-festival').addEventListener('click', () => gameDialog.close());
 $('enter-game').addEventListener('click', enterGame);
 
+function canPickUpPaintball() {
+  return player.artist && !player.hasPaintball && !gameDialog.open && !artistDialog.open &&
+    Math.hypot(player.x - paintballPickup.x, player.z - paintballPickup.z) <= paintballPickup.radius;
+}
+
+function pickUpPaintball() {
+  if (!canPickUpPaintball()) return false;
+  player.hasPaintball = true;
+  paintQueued = false;
+  paintPointer = null;
+  held.delete('f');
+  pickupMessageUntil = performance.now() + 3600;
+  pickupMessage.textContent = '+1 Paintballgun';
+  pickupMessage.hidden = false;
+  pickupCard.hidden = true;
+  paintButton.hidden = false;
+  $('paint-shortcut').hidden = false;
+  updateLookHint();
+  worldElement.focus({ preventScroll: true });
+  return true;
+}
+
+$('pick-up-paintball').addEventListener('click', pickUpPaintball);
+
 const jumpWindup = .07;
 const jumpFlight = .66;
 const jumpRecovery = .14;
@@ -249,14 +277,14 @@ function advanceJump(dt) {
 
 jumpButton.addEventListener('click',jump);
 paintButton.addEventListener('pointerdown', event => {
-  if (event.button !== 0) return;
+  if (!player.hasPaintball || event.button !== 0) return;
   paintPointer = event.pointerId;
   paintQueued = true;
   paintButton.setPointerCapture(event.pointerId);
 });
 paintButton.addEventListener('lostpointercapture', releasePaintPointer);
 paintButton.addEventListener('click', event => {
-  if (event.detail === 0) paintQueued = true;
+  if (player.hasPaintball && event.detail === 0) paintQueued = true;
 });
 worldElement.addEventListener('pointerdown', event => {
   if (event.button !== 0) return;
@@ -264,7 +292,7 @@ worldElement.addEventListener('pointerdown', event => {
     pitchGesture = { id: event.pointerId, y: event.clientY };
     worldElement.setPointerCapture(event.pointerId);
   }
-  if (document.pointerLockElement === worldElement) {
+  if (player.hasPaintball && document.pointerLockElement === worldElement) {
     paintPointer = event.pointerId;
     paintQueued = true;
   }
@@ -305,6 +333,7 @@ window.addEventListener('keydown', event => {
     return;
   }
   if (key === 'f') {
+    if (!player.hasPaintball) return;
     if (event.target?.closest?.('input,textarea,select,[contenteditable=true]')) return;
     event.preventDefault();
     if (!event.repeat) paintQueued = true;
@@ -315,9 +344,13 @@ window.addEventListener('keydown', event => {
     event.preventDefault();
     held.add(key);
   }
-  if (key === 'e' && !event.repeat && nearby) {
-    event.preventDefault();
-    enterGame();
+  if (key === 'e' && !event.repeat) {
+    if (pickUpPaintball()) {
+      event.preventDefault();
+    } else if (nearby) {
+      event.preventDefault();
+      enterGame();
+    }
   }
 });
 window.addEventListener('keyup', event => held.delete(event.key.toLowerCase()));
@@ -368,10 +401,12 @@ function walk(elapsed) {
 
 function updateNearby() {
   const next = venues.find(zone => Math.hypot(player.x - zone.doorX, player.z - zone.doorZ) < 4.8) || null;
+  const pickup = Boolean(canPickUpPaintball());
+  pickupCard.hidden = !pickup;
+  nearbyCard.hidden = pickup || !next;
+  $('walk-hint').hidden = pickup || Boolean(next);
   if (next === nearby) return;
   nearby = next;
-  nearbyCard.hidden = !nearby;
-  $('walk-hint').hidden = Boolean(nearby);
   if (nearby) {
     nearbyCard.style.setProperty('--accent', nearby.color);
     $('nearby-type').textContent = nearby.type;
@@ -437,21 +472,26 @@ async function start() {
             player.heading = rig.paintHeading;
             player.paintElevation = rig.paintElevation;
           }
-          paintball.update(player, dt, paintQueued || held.has('f') || paintPointer !== null,
-            player.heading, player.paintElevation);
+          const firing = player.hasPaintball && (paintQueued || held.has('f') || paintPointer !== null);
+          paintball.update(player, dt, firing, player.heading, player.paintElevation);
           paintQueued = false;
         }
       }
       updateNearby();
       world.frame(player, elapsed, now / 1000, marked, nearby);
       positionSigns(world);
-      const point = paintball.preview(player, player.heading, player.paintElevation);
-      const aim = (world.projectPaint || world.project)(point.x, point.y, point.z);
-      paintAim.classList.toggle('on-target', Boolean(point.onTarget));
-      paintAim.hidden = !player.artist || aim.inFront === false ||
-        aim.x < 10 || aim.y < 10 || aim.x > worldElement.clientWidth - 10 || aim.y > worldElement.clientHeight - 10;
-      if (!paintAim.hidden) paintAim.style.transform = `translate(${aim.x}px, ${aim.y}px)`;
-      paintCount.hidden = !player.artist;
+      if (player.hasPaintball) {
+        const point = paintball.preview(player, player.heading, player.paintElevation);
+        const aim = (world.projectPaint || world.project)(point.x, point.y, point.z);
+        paintAim.classList.toggle('on-target', Boolean(point.onTarget));
+        paintAim.hidden = aim.inFront === false || aim.x < 10 || aim.y < 10 ||
+          aim.x > worldElement.clientWidth - 10 || aim.y > worldElement.clientHeight - 10;
+        if (!paintAim.hidden) paintAim.style.transform = `translate(${aim.x}px, ${aim.y}px)`;
+      } else {
+        paintAim.hidden = true;
+      }
+      paintCount.hidden = !player.hasPaintball;
+      pickupMessage.hidden = now >= pickupMessageUntil;
       if (!mapContent.hidden) drawMap(player, marked, visited);
       $('loading').hidden = true;
     }

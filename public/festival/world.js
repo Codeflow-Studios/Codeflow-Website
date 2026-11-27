@@ -10,6 +10,7 @@ import { addCharacters } from './characters.js';
 import { spruceCrown, festoonGlow } from './forest.js';
 import { createPixelRenderer } from './pixel-renderer.js';
 import { stageMural } from './stage-murals.js';
+import { paintballHover, paintballPickup } from './paintball.js';
 import { addPaintballEffects } from './paintball-visuals.js';
 import { createPerformer } from './performer-model.js';
 import { createFestivalAtmosphere } from './console-lighting.js';
@@ -574,7 +575,11 @@ export function createWorld(container, reduceMotion, paintball) {
   const animateScenery = addScenery(THREE, scene, reduceMotion);
   const animateCharacters = addCharacters(THREE, scene, reduceMotion, paintball.walkers);
   const animatePaintball = addPaintballEffects(THREE, scene, paintball, reduceMotion);
-  const animatePlayer = createPerformer(THREE, scene);
+  const pickup = new THREE.Group();
+  pickup.scale.setScalar(1.24);
+  scene.add(pickup);
+  const pickupGlow = floorSpot(pink, paintballPickup.x, paintballPickup.z, 3.9, 3.9, .49, true);
+  const animatePlayer = createPerformer(THREE, scene, pickup);
   const animateAtmosphere = createFestivalAtmosphere(THREE, scene, venues, reduceMotion);
   const gateRing = new THREE.Mesh(new THREE.RingGeometry(1.55, 1.68, 36),
     new THREE.MeshBasicMaterial({ color: yellow, transparent: true, depthWrite: false }));
@@ -595,6 +600,11 @@ export function createWorld(container, reduceMotion, paintball) {
     animateCharacters(player, elapsed, time, rig.overview);
     animatePlayer(player, elapsed, time, rig.overview, reduceMotion);
     animatePaintball();
+    pickup.visible = pickupGlow.visible = Boolean(player.artist) && !player.hasPaintball;
+    if (pickup.visible) {
+      pickup.position.set(paintballPickup.x, paintballHover(time, reduceMotion), paintballPickup.z);
+      pickup.rotation.set(-.13, reduceMotion ? -.85 : time * .93, .06);
+    }
     animateAtmosphere(time);
     animateScenery(time);
     animateStage(time);

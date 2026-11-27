@@ -1,4 +1,4 @@
-import { canWalk, solids } from './layout.js';
+import { canWalk, entrance, solids } from './layout.js';
 
 const routes = [
   [[-4, 16], [4, 16], [4, 21], [-4, 21]],
@@ -22,6 +22,11 @@ const sampleTime = .23 / speed;
 const drop = 1.15;
 export const markerGrip = { x: -.35, y: 1.68, z: .37 };
 export const maxPaintCapsules = 36;
+export const paintballPickup = { x: entrance.x, z: entrance.z - 2.5, radius: 3 };
+export function paintballHover(time, reduceMotion) {
+  return reduceMotion ? 1.45 : 1.45 + Math.sin(time * 2.8) * .18;
+}
+
 export const paintFlashTime = .115;
 export const markerTip = { y: .14, z: .72 };
 export const limitPaintElevation = elevation => Math.max(-.68, Math.min(.64, elevation));

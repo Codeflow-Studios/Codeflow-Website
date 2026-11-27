@@ -300,3 +300,21 @@ kbd { min-width: 18px; padding: 2px 4px; border: 1px solid #9c9aa4; border-botto
   }
   .paint-button:active { background: #d6fff4; }
 }
+
+.pickup-card { --accent: #dcf105; color: #fff3d9; font: 700 clamp(17px, 3.4vw, 24px)/1 var(--pixel); }
+.pickup-message {
+  position: absolute;
+  z-index: 2;
+  top: max(18%, 62px);
+  left: 50%;
+  translate: -50% 0;
+  width: max-content;
+  max-width: calc(100vw - 24px);
+  padding: 11px 16px;
+  border: 2px solid #dcf105;
+  background: #020105f5;
+  box-shadow: 4px 4px #410380, 0 0 24px #fa2d8255;
+  color: #dcf105;
+  font: 700 clamp(21px, 5vw, 32px)/1.1 var(--pixel);
+  pointer-events: none;
+}
