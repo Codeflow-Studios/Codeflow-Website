@@ -20,6 +20,10 @@ const speed = 32;
 const flightTime = maxPaintDistance / speed;
 const sampleTime = .23 / speed;
 const drop = 1.15;
+const hitsToFall = 4;
+const recoveryDelay = 2;
+const fallDuration = .28;
+const riseDuration = .36;
 export const markerGrip = { x: -.35, y: 1.68, z: .37 };
 export const maxPaintCapsules = 36;
 export const paintballPickup = { x: entrance.x, z: entrance.z - 2.5, radius: 3 };
@@ -62,6 +66,7 @@ function hitsScenery({ x, y, z }) {
 
 function hitWalker({ x, y, z }, walkers) {
   return walkers.find(walker =>
+    !walker.downed && walker.fall === 0 &&
     y < walker.size && (x - walker.x)**2 + (z - walker.z)**2 < .53**2);
 }
 
@@ -70,13 +75,13 @@ export function createPaintball(onHit) {
     x: route[0][0], z: route[0][1], y: .066, route, stop: 1, size: 2.25 + i % 4 * .09,
     outfit: 1 + i % 8, phase: i * 1.9, walking: true, pace: 1.35 + (i % 5) * .18,
     heading: Math.atan2(route[1][0] - route[0][0], route[1][1] - route[0][1]),
-    paintTime: 0, react: 0, color: paintColors[0],
+    paintTime: 0, react: 0, color: paintColors[0], hits: 0, downed: false, fall: 0,
   }));
   const balls = [];
   const bursts = [];
   const capsules = [];
   const flashes = [];
-  let cooldown = 0, fired = 0, hits = 0, recoilAge = Infinity;
+  let cooldown = 0, fired = 0, hits = 0, timeSinceShot = Infinity;
 
   function preview(player, heading, elevation) {
     const trace = launch(player, heading, elevation);
@@ -112,7 +117,7 @@ export function createPaintball(onHit) {
       rotation: heading + scatter, spin: 6 + scatter * 5, age: 0, color: ball.color, grounded: false,
     });
     if (capsules.length > maxPaintCapsules) capsules.shift();
-    recoilAge = 0;
+    timeSinceShot = 0;
     player.markerKick = 0;
     player.heading = heading;
     cooldown = .19;
@@ -120,14 +125,21 @@ export function createPaintball(onHit) {
 
   function update(player, dt, firing, heading, elevation = 0) {
     cooldown = Math.max(0, cooldown - dt);
-    recoilAge += dt;
-    const recoil = recoilAge / .034;
+    timeSinceShot += dt;
+    const recoil = timeSinceShot / .034;
     player.markerKick = recoil < 9 ? recoil * Math.exp(1 - recoil) : 0;
     if (firing) fire(player, heading, elevation);
     for (const walker of walkers) {
       walker.paintTime = Math.max(0, walker.paintTime - dt);
       walker.react = Math.max(0, walker.react - dt);
-      walker.walking = walker.react === 0;
+      if (walker.downed && timeSinceShot >= recoveryDelay) {
+        walker.downed = false;
+        walker.hits = 0;
+      }
+      walker.fall = walker.downed
+        ? Math.min(1, walker.fall + dt / fallDuration)
+        : Math.max(0, walker.fall - dt / riseDuration);
+      walker.walking = !walker.downed && walker.fall === 0 && walker.react === 0;
       if (!walker.walking) continue;
       const [destX, destZ] = walker.route[walker.stop];
       const dx = destX - walker.x, dz = destZ - walker.z;
@@ -161,7 +173,13 @@ export function createPaintball(onHit) {
           if (target) {
             target.color = ball.color;
             target.paintTime = 6;
-            target.react = .42;
+            if (++target.hits >= hitsToFall) {
+              target.downed = true;
+              target.walking = false;
+              target.react = 0;
+            } else {
+              target.react = .42;
+            }
             onHit(++hits);
           }
         }

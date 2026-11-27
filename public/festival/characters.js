@@ -312,9 +312,11 @@ export function addCharacters(THREE, scene, reduceMotion, walkers) {
   const stamp = new THREE.Object3D();
   function placeShadow(i) {
     const a = actors[i];
-    stamp.position.set(a.x + .11, a.y + .011, a.z - .05);
-    stamp.rotation.set(-Math.PI / 2, 0, -.2);
-    stamp.scale.set(a.size * .54, a.size * .30, 1);
+    const fall = reduceMotion ? Number(Boolean(a.downed)) : THREE.MathUtils.smootherstep(a.fall || 0, 0, 1);
+    const offset = a.size * .49 * fall;
+    stamp.position.set(a.x + .11 - Math.sin(a.heading) * offset, a.y + .011, a.z - .05 - Math.cos(a.heading) * offset);
+    stamp.rotation.set(-Math.PI / 2, 0, fall ? a.heading : -.2);
+    stamp.scale.set(a.size * .54, a.size * (.30 + fall * .74), 1);
     stamp.updateMatrix();
     shadows.setMatrixAt(i, stamp.matrix);
   }

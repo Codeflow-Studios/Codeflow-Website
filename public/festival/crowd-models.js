@@ -31,6 +31,7 @@ export function createCrowd(THREE, scene, actors, outfits, skinTones, reduceMoti
     const skin = skinTones[skinID][1], dark = '#33333f', sole = '#bbbab2';
     const root = new THREE.Object3D();
     root.position.set(actor.x, actor.y, actor.z);
+    root.rotation.order = 'YXZ';
     root.rotation.y = actor.heading;
     root.scale.setScalar(actor.size);
     const body = joint(root, 0, .48, 0);
@@ -132,8 +133,9 @@ export function createCrowd(THREE, scene, actors, outfits, skinTones, reduceMoti
         hips[k].rotation.set(.035 * sway * sign, 0, sign * (.023 + .03 * step));
       }
       if (actor.route) {
-        root.position.set(actor.x, actor.y, actor.z);
-        root.rotation.y = actor.heading;
+        const fall = reduceMotion ? Number(actor.downed) : THREE.MathUtils.smootherstep(actor.fall, 0, 1);
+        root.position.set(actor.x, actor.y + actor.size * .15 * fall, actor.z);
+        root.rotation.set(-Math.PI / 2 * fall, actor.heading, 0);
         const gait = Math.sin(time * actor.pace * 5.2 + actor.phase) *
           (actor.walking && !reduceMotion ? .54 : 0);
         const reaction = actor.react / .42;
@@ -141,8 +143,8 @@ export function createCrowd(THREE, scene, actors, outfits, skinTones, reduceMoti
         body.position.y = .48 + Math.abs(gait) * .034;
         for (let k = 0; k < 2; k++) {
           const sign = k === 0 ? -1 : 1;
-          hips[k].rotation.set(sign * gait, 0, sign * .055);
-          shoulders[k].rotation.set(-sign * gait - reaction * .38, 0, sign * (.15 + reaction * 1.3));
+          hips[k].rotation.set(sign * gait - fall * .07, 0, sign * (.055 + fall * .11));
+          shoulders[k].rotation.set(-sign * gait - reaction * .38, 0, sign * (.15 + reaction * 1.3 + fall * .48));
           elbows[k].rotation.x = -.33 - reaction * .67;
         }
         const fade = Math.min(1, actor.paintTime);

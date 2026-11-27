@@ -207,16 +207,23 @@ export function createFlatWorld(container, paintball) {
     const pose = walking ? Math.floor(time * walker.pace * 4 + walker.phase) % 4 : 4;
     const size = walker.size * 1.7;
     const width = size * w / h;
-    rectangle(walker.x, walker.z + .18, .98, .40, '#22283b');
+    const fall = reduceMotion.matches ? Number(walker.downed) : walker.fall ** 2 * (3 - 2 * walker.fall);
+    const lean = Math.sin(walker.heading) < 0 ? 1 : -1;
+    rectangle(walker.x + lean * size * .42 * fall, walker.z + .18, .98 + size * .85 * fall,
+      .40 + fall * .24, '#22283b');
+    ctx.save();
+    ctx.translate(walker.x, walker.z + .30);
+    ctx.rotate(lean * Math.PI / 2 * fall);
     ctx.drawImage(sprites.get(walker.outfit), pose * w, direction * h, w, h,
-      walker.x - width / 2, walker.z + .30 - size, width, size);
-    rectangle(walker.x + .48, walker.z - size * .47, .22, .12, '#b4ff95');
+      -width / 2, -size, width, size);
+    rectangle(.48, -.30 - size * .47, .22, .12, '#b4ff95');
     if (walker.paintTime > 0) {
       const fade = Math.min(1, walker.paintTime);
       for (const [x, y, radius] of paintDots) {
-        disc(walker.x + x * 1.7, walker.z - size * .51 + y * 1.7, radius * 1.6 * fade, walker.color);
+        disc(x * 1.7, -.30 - size * .51 + y * 1.7, radius * 1.6 * fade, walker.color);
       }
     }
+    ctx.restore();
   }
 
   function drawMarkerSprite(length) {
