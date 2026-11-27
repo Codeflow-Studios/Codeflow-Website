@@ -383,7 +383,7 @@ export function createPerformer(THREE, scene) {
     return {root,pelvis,chest,head,arms,legs};
   }
   const models={gauthier:build(false),matar:build(true)};
-  let active='',phase=0,weight=0,facing=0;
+  let active='',phase=0,weight=0,facing=0, lateral=0,longitudinal=0;
   return (player,dt,time,overview,reduceMotion)=>{
     const id=player.artist==='matar'?'matar':'gauthier';
     const model=models[id];
@@ -397,29 +397,37 @@ export function createPerformer(THREE, scene) {
     model.root.rotation.y=facing;
     weight+=(Math.min(1,player.speed/6)-weight)*(1-Math.exp(-14*dt));
     phase+=Math.min(15,player.speed*1.38)*dt;
+    const gaitBlend=1-Math.exp(-12*dt);
+    lateral+=(-(player.strafe || 0)-lateral)*gaitBlend;
+    longitudinal+=((player.forward || 0)-longitudinal)*gaitBlend;
     const motion=reduceMotion?0:weight;
     const idle=reduceMotion?0:Math.sin(time*2.1)*(1-weight);
     const run=THREE.MathUtils.clamp((player.speed-6)/6,0,1);
     const stride=Math.sin(phase), swing=Math.cos(phase);
     model.pelvis.position.y=1.17+(.012-.036*stride*stride-.037*run)*motion+idle*.004;
-    model.pelvis.rotation.y=stride*.045*motion;
-    model.chest.rotation.set((.055+.072*run)*motion,-stride*.14*motion,swing*.025*motion);
+    model.pelvis.rotation.y=stride*.045*motion*longitudinal;
+    model.pelvis.rotation.z=-lateral*.035*motion;
+    model.chest.rotation.set((.055+.072*run)*motion*longitudinal,-stride*.14*motion*longitudinal,(swing*.025-lateral*.11)*motion);
     model.head.rotation.set(-(.048+.064*run)*motion,stride*.067*motion+idle*.022,-swing*.017*motion);
     for(const {side,shoulder,elbow} of model.arms){
-      shoulder.rotation.set(-.065+side*stride*(.47+.22*run)*motion,side*swing*.035*motion,side*(.13+.012*idle));
+      shoulder.rotation.set(-.065+side*stride*(.47+.22*run)*motion*longitudinal,side*swing*.035*motion,side*(.13+.012*idle)+lateral*stride*.11*motion);
       elbow.rotation.x=-.19-(.22+.28*run+.12*side*swing)*motion;
     }
     for(const {side,hip,knee,foot} of model.legs){
       // Target the sole first so the planted foot sits flat while the pelvis moves.
-      const forward=side*stride*(.26+.13*run)*motion;
+      const forward=side*stride*(.26+.13*run)*motion*longitudinal;
+      const outward=side*(.035+Math.abs(lateral)*.1)*motion;
+      const sideStep=outward+lateral*side*stride*(.16+.065*run)*motion;
       const lift=Math.max(0,side*swing)**1.6*(.145+.11*run)*motion;
       const down=model.pelvis.position.y-.10-.115-lift;
-      const reachSquared=down*down+forward*forward;
+      const reachSquared=down*down+forward*forward+sideStep*sideStep;
       const bend=Math.acos(THREE.MathUtils.clamp((reachSquared-.55**2-.43**2)/(2*.55*.43),-1,1));
       const thigh=-Math.atan2(forward,down)-Math.atan2(.43*Math.sin(bend),.55+.43*Math.cos(bend));
       hip.rotation.x=thigh;
+      hip.rotation.z=Math.atan2(sideStep,down);
       knee.rotation.x=bend;
       foot.rotation.x=-thigh-bend+.18*side*stride*lift;
+      foot.rotation.z=-hip.rotation.z;
     }
   };
 }

@@ -6,6 +6,7 @@ import { makeFestivalSurfaceCanvas } from './terrain.js';
 export function createFlatWorld(container) {
   const canvas = document.createElement('canvas');
   const ctx = canvas.getContext('2d');
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)');
   canvas.setAttribute('aria-hidden', 'true');
   container.append(canvas);
   let width = 1;
@@ -51,7 +52,7 @@ export function createFlatWorld(container) {
     ctx.fill();
   }
 
-  function frame(player, _elapsed, _time, marked, nearby) {
+  function frame(player, _elapsed, time, marked, nearby) {
     const compact = width < height;
     centerX = player.x * (compact ? .92 : .29);
     centerZ = compact ? player.z - 7 : player.z * .19 - 2;
@@ -117,6 +118,9 @@ export function createFlatWorld(container) {
       rectangle(0, .4, 2.35, .78, '#293c48');
       const size = 4.8;
       const width = size * sprite.width / sprite.height;
+      const side = (player.strafe || 0) * Math.min(1,player.speed/6);
+      const sway = reduceMotion.matches ? 0 : side*Math.sin(time*12)*.12;
+      ctx.translate(sway,0);
       ctx.drawImage(sprite, -width / 2, .68 - size, width, size);
     }
     ctx.restore();

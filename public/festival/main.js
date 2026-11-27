@@ -18,7 +18,7 @@ const artistNames = { gauthier: 'Gauthier', matar: 'Matar' };
 const artistKey = 'skumic.festival.artist';
 let preferredArtist = null;
 try { preferredArtist = localStorage.getItem(artistKey); } catch { /* Private storage can be unavailable. */ }
-const player = { ...entrance, heading: Math.PI, speed: 0,
+const player = { ...entrance, heading: Math.PI, speed: 0, strafe: 0, forward: 0,
   artist: Object.hasOwn(artistNames, preferredArtist) ? preferredArtist : null };
 const visited = new Set();
 const held = new Set();
@@ -254,7 +254,9 @@ function walk(elapsed) {
   const moving = length >= .075;
   const yaw = rig?.movementYaw(moving) ?? 0;
   player.speed = 0;
-  if (!moving) return;
+  player.strafe = 0;
+  player.forward = 0;
+  if (!moving || !elapsed) return;
   const x = side * Math.cos(yaw) + forward * Math.sin(yaw);
   const z = forward * Math.cos(yaw) - side * Math.sin(yaw);
   const speed = (held.has('shift') ? 13.1 : 7.9) / Math.max(length, 1);
@@ -264,8 +266,14 @@ function walk(elapsed) {
   const newZ = player.z + z * speed * elapsed;
   if (canWalk(newX, player.z)) player.x = newX;
   if (canWalk(player.x, newZ)) player.z = newZ;
-  if (elapsed) player.speed = Math.hypot(player.x - previousX, player.z - previousZ) / elapsed;
-  player.heading = Math.atan2(x, z);
+  const deltaX = player.x - previousX, deltaZ = player.z - previousZ;
+  const travel = Math.hypot(deltaX, deltaZ);
+  player.speed = travel / elapsed;
+  if (!travel) return;
+  player.heading = yaw + Math.PI;
+  // Project actual travel back onto the camera axes so wall slides animate correctly.
+  player.strafe = (deltaX * Math.cos(yaw) - deltaZ * Math.sin(yaw)) / travel;
+  player.forward = -(deltaX * Math.sin(yaw) + deltaZ * Math.cos(yaw)) / travel;
 }
 
 function updateNearby() {
